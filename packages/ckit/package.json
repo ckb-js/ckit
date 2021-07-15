@@ -1,0 +1,11 @@
+{
+  "name": "ckit",
+  "version": "0.0.0",
+  "main": "dist",
+  "scripts": {},
+  "dependencies": {
+    "@ckb-lumos/base": "^0.16.0",
+    "bignumber.js": "^9.0.1",
+    "eventemitter3": "^4.0.7"
+  }
+}
