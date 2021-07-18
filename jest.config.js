@@ -4,6 +4,8 @@ module.exports = {
   roots: ['packages'],
   testMatch: ['<rootDir>/**/*.spec.ts'],
   globals: {
-    'ts-jest': {},
+    'ts-jest': {
+      tsconfig: 'tsconfig.build.json'
+    },
   },
 };
