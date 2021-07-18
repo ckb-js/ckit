@@ -1,5 +1,5 @@
 import { EventEmitter } from 'eventemitter3';
-import { Wallet, Signer } from '../interfaces/Wallet';
+import { Wallet, Signer } from '../interfaces';
 import { unimplemented } from '../utils';
 
 export class UnipassSigner implements Signer {

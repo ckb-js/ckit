@@ -2,7 +2,13 @@
   "name": "ckit",
   "version": "0.0.0",
   "main": "dist",
-  "scripts": {},
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn run compile",
+    "clean": "rimraf -rf ./dist",
+    "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "yarn run build"
+  },
   "dependencies": {
     "@ckb-lumos/base": "^0.16.0",
     "bignumber.js": "^9.0.1",
