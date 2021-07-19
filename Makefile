@@ -6,7 +6,7 @@ test-ckit-app:
 test-lib:
 	yarn jest
 
-lint: lint-app
+lint: lint-lib lint-app
 
 lint-app: build-lib
 	yarn workspace ckit-app run lint
