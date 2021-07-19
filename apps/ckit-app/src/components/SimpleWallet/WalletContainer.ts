@@ -1,3 +1,4 @@
+import { Transaction } from '@ckb-lumos/base';
 import { Wallet, ConnectStatus, Signer } from 'ckit';
 import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
@@ -28,7 +29,7 @@ function useWallet() {
 
 interface SignerType {
   address: string | undefined;
-  sign: (tx: unknown) => Promise<unknown>;
+  sign: (tx: Transaction) => Promise<Transaction>;
 }
 
 export function useSigner(signer: Signer): SignerType {

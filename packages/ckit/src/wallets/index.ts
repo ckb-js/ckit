@@ -1,2 +1,2 @@
-export * from './Secp256k1LockWallet';
+export * from './NonAcpPwLockWallet';
 export * from './UnipassWallet';

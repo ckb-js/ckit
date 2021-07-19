@@ -1,3 +1,4 @@
+import { Transaction } from '@ckb-lumos/base';
 import { EventEmitter } from 'eventemitter3';
 import { ConnectStatus, Signer, Wallet } from '../interfaces';
 
@@ -34,7 +35,7 @@ class DummySigner implements Signer {
     return 'ckt1dummyaddress';
   }
 
-  async sign(): Promise<unknown> {
-    return 'signed transaction';
+  async sign(): Promise<Transaction> {
+    return { cell_deps: [], header_deps: [], inputs: [], outputs: [], outputs_data: [], version: '0x0', witnesses: [] };
   }
 }
