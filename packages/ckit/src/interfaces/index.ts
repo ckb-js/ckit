@@ -1,4 +1,5 @@
-import { Transaction } from '@ckb-lumos/base';
+import { Transaction, Hash, OutPoint, Script, HexNumber, ChainInfo } from '@ckb-lumos/base';
+import { Bytes } from '@ckb-lumos/base/lib/core';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -13,9 +14,28 @@ export interface Wallet {
 
 export interface Signer {
   getAddress(): Promise<string>;
-  sign(tx: unknown): Promise<unknown>;
+  sign(tx: Transaction): Promise<Transaction>;
+  // work with witness
+  signMessage?(bytes: Bytes): Promise<Bytes>;
 }
 
 export interface TransactionBuilder {
-  build(): Promise<Transaction>;
+  build(): Promise<unknown>;
+}
+
+export type AddressLike = string | Script;
+
+export interface Provider {
+  /**
+   * check a node is mainnet or testnet
+   */
+  getChainInfo(): Promise<ChainInfo>;
+
+  /**
+   * collect free capacity
+   * @param lock
+   * @param capacity
+   */
+  collectCkbLiveCell(lock: AddressLike, capacity: HexNumber): Promise<OutPoint[]>;
+  sendTransaction(tx: Transaction): Promise<Hash>;
 }
