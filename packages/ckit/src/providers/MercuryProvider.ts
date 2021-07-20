@@ -1,9 +1,9 @@
-import { ChainInfo, Hash, HexNumber, OutPoint, Transaction } from '@ckb-lumos/base';
-import { AddressLike, Provider } from '../interfaces';
+import { ChainInfo, Hash, HexNumber, Transaction } from '@ckb-lumos/base';
+import { AddressLike, Provider, ResolvedOutpoint } from '../interfaces';
 import { unimplemented } from '../utils';
 
 export class MercuryProvider implements Provider {
-  collectCkbLiveCell(_lock: AddressLike, _capacity: HexNumber): Promise<OutPoint[]> {
+  collectCkbLiveCell(_lock: AddressLike, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
     unimplemented();
   }
 
@@ -15,7 +15,7 @@ export class MercuryProvider implements Provider {
     unimplemented();
   }
 
-  collectSudtCell(_lock: AddressLike, _amount: HexNumber): Promise<OutPoint[]> {
+  collectSudtCell(_lock: AddressLike, _amount: HexNumber): Promise<ResolvedOutpoint[]> {
     unimplemented();
   }
 
