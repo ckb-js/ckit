@@ -1,6 +1,7 @@
-import { OutPoint, Transaction } from '@ckb-lumos/base';
+import { Transaction } from '@ckb-lumos/base';
 import { BigNumber } from 'bignumber.js';
-import { AddressLike, Provider, TransactionBuilder } from '../interfaces';
+import { AddressLike, TransactionBuilder } from '../interfaces';
+import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
 interface TransferOptions {
@@ -9,12 +10,8 @@ interface TransferOptions {
   readonly amount: BigNumber;
 }
 
-interface SudtTransferProvider extends Provider {
-  collectSudt(): Promise<OutPoint>;
-}
-
 export class UnipassSudtTransferBuilder implements TransactionBuilder {
-  constructor(private options: TransferOptions, private provider: SudtTransferProvider) {}
+  constructor(private options: TransferOptions, private provider: MercuryProvider) {}
 
   async build(): Promise<Transaction> {
     unimplemented();
