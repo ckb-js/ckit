@@ -39,7 +39,7 @@ test.skip('', async () => {
   expect(address).toEqual('');
 
   const mintAmount = '0x111';
-  const rawTx = await createTxBuilder({ issuer: from, recipient, sudt, amount: mintAmount }).build();
+  const rawTx = await createTxBuilder({ issuer: from, recipients: [] }).build();
 
   const signed = await signer.sign(rawTx);
   const rpc = new RPC('');
