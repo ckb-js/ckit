@@ -1,13 +1,12 @@
-import { Transaction } from '@ckb-lumos/base';
-import { BigNumber } from 'bignumber.js';
-import { AddressLike, TransactionBuilder } from '../interfaces';
+import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
+import { CkbTypeScript, TransactionBuilder } from '../interfaces';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
 interface TransferOptions {
-  readonly sudt: AddressLike;
-  readonly to: AddressLike;
-  readonly amount: BigNumber;
+  readonly sudt: CkbTypeScript;
+  readonly to: Address;
+  readonly amount: HexNumber;
 }
 
 export class UnipassSudtTransferBuilder implements TransactionBuilder {

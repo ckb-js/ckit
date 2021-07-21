@@ -1,6 +1,7 @@
+import { Address } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { BigNumber } from 'bignumber.js';
-import { AddressLike, Signer, Wallet } from '../interfaces';
+import { CkbTypeScript, Signer, Wallet } from '../interfaces';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { MintOptions, PwSudtMintBuilder } from '../tx-builders/PwSudtMintBuilder';
 import { unimplemented } from '../utils';
@@ -17,7 +18,7 @@ function createTxBuilder(_options: MintOptions): PwSudtMintBuilder {
   unimplemented();
 }
 
-function setupTest(): { from: AddressLike; recipient: AddressLike; sudt: AddressLike } {
+function setupTest(): { from: Address; recipient: Address; sudt: CkbTypeScript } {
   unimplemented();
 }
 
