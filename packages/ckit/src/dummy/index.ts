@@ -1,32 +1,18 @@
 import { Transaction } from '@ckb-lumos/base';
-import { EventEmitter } from 'eventemitter3';
-import { ConnectStatus, Signer, Wallet } from '../interfaces';
+import { AbstractWallet, Signer } from '../interfaces';
 
-export class DummyWallet extends EventEmitter implements Wallet {
-  private connectStatus: ConnectStatus = 'disconnected';
-  private signer: Signer | undefined = undefined;
-
-  private setConnectStatus(status: ConnectStatus): void {
-    this.connectStatus = status;
-    this.emit('connectStatusChanged', status);
+export class DummyWallet extends AbstractWallet {
+  constructor() {
+    super();
   }
-
-  private setSigner(signer: Signer): void {
-    this.emit('signerChanged', signer);
-  }
-
   connect(): void {
     if (this.connectStatus !== 'disconnected') return;
-    this.setConnectStatus('connecting');
+    this.onConnectStatusChanged('connecting');
     setTimeout(() => {
       if (this.connectStatus !== 'connecting') return;
-      this.setConnectStatus('connected');
-      this.setSigner(new DummySigner());
+      this.onConnectStatusChanged('connected');
+      this.onSignerChanged(new DummySigner());
     }, 500);
-  }
-
-  disconnect(): void {
-    this.setConnectStatus('disconnected');
   }
 }
 
@@ -36,6 +22,14 @@ class DummySigner implements Signer {
   }
 
   async sign(): Promise<Transaction> {
-    return { cell_deps: [], header_deps: [], inputs: [], outputs: [], outputs_data: [], version: '0x0', witnesses: [] };
+    return {
+      cell_deps: [],
+      header_deps: [],
+      inputs: [],
+      outputs: [],
+      outputs_data: [],
+      version: '0x0',
+      witnesses: [],
+    };
   }
 }

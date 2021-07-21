@@ -3,13 +3,16 @@ import { Bytes } from '@ckb-lumos/base/lib/core';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
+export interface WalletEventListener {
+  (event: 'connectStatusChanged', listener: (status: ConnectStatus) => void): void;
+  (event: 'signerChanged', listener: (signer: Signer) => void): void;
+  (event: 'error', listener: (error?: unknown) => void): void;
+}
+
 export interface Wallet {
   connect(): void;
-  disconnect?(): void;
-
-  on(event: 'connectStatusChanged', listener: (status: ConnectStatus) => void): void;
-  on(event: 'signerChanged', listener: (signer: Signer) => void): void;
-  on(event: 'error', listener: (error?: unknown) => void): void;
+  disconnect(): void;
+  on: WalletEventListener;
 }
 
 export interface Signer {
@@ -61,3 +64,4 @@ export interface Provider {
 }
 
 export { AbstractProvider } from './AbstractProvider';
+export { AbstractWallet } from './AbstractWallet';
