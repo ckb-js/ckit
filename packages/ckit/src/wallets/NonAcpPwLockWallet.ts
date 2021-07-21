@@ -3,6 +3,10 @@ import { AbstractWallet, Signer } from '../interfaces';
 import { unimplemented } from '../utils';
 
 export class NonAcpPwLockWallet extends AbstractWallet {
+  constructor() {
+    super();
+  }
+
   connect(): void {
     unimplemented();
   }
