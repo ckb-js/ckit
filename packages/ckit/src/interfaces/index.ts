@@ -1,4 +1,4 @@
-import { Transaction, Hash, OutPoint, Script, HexNumber, ChainInfo, Output, HexString } from '@ckb-lumos/base';
+import { Transaction, Hash, OutPoint, HexNumber, ChainInfo, Output, HexString, Script, Address } from '@ckb-lumos/base';
 import { Bytes } from '@ckb-lumos/base/lib/core';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
@@ -23,7 +23,7 @@ export interface TransactionBuilder {
   build(): Promise<Transaction>;
 }
 
-export type AddressLike = string | Script;
+export type CkbTypeScript = Script;
 
 export type ResolvedOutpoint = {
   block_number: HexNumber;
@@ -44,6 +44,20 @@ export interface Provider {
    * @param lock
    * @param capacity
    */
-  collectCkbLiveCell(lock: AddressLike, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+  collectCkbLiveCell(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+
+  /**
+   * send a signed transaction to a ckb node
+   * @param tx
+   */
   sendTransaction(tx: Transaction): Promise<Hash>;
+
+  /**
+   * parse a lock script to an address
+   * @param script
+   * @see https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0021-ckb-address-format/0021-ckb-address-format.md
+   */
+  parseToAddress(script: Script): string;
 }
+
+export { AbstractProvider } from './AbstractProvider';

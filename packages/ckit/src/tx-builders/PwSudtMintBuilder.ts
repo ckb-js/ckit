@@ -1,12 +1,12 @@
-import { HexNumber, Transaction } from '@ckb-lumos/base';
-import { AddressLike, TransactionBuilder } from '../interfaces';
+import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
+import { CkbTypeScript, TransactionBuilder } from '../interfaces';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
 export interface MintOptions {
-  issuer: AddressLike;
-  recipient: AddressLike;
-  sudt: AddressLike;
+  issuer: Address;
+  recipient: Address;
+  sudt: CkbTypeScript;
   amount: HexNumber;
 }
 

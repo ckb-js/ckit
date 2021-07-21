@@ -1,10 +1,10 @@
-import { HexNumber, Transaction } from '@ckb-lumos/base';
-import { AddressLike, Provider, TransactionBuilder } from '../interfaces';
+import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
+import { Provider, TransactionBuilder } from '../interfaces';
 import { unimplemented } from '../utils';
 
 interface MintOptions {
-  readonly sudt: AddressLike;
-  readonly to: AddressLike;
+  readonly sudt: Address;
+  readonly to: Address;
   readonly amount: HexNumber;
 }
 
