@@ -1,9 +1,8 @@
 import { Hash, Transaction } from '@ckb-lumos/base';
-import { EventEmitter } from 'eventemitter3';
-import { Signer, Wallet } from '../interfaces';
+import { AbstractWallet, Signer } from '../interfaces';
 import { unimplemented } from '../utils';
 
-export class NonAcpPwLockWallet extends EventEmitter implements Wallet {
+export class NonAcpPwLockWallet extends AbstractWallet {
   connect(): void {
     unimplemented();
   }
