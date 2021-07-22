@@ -1,19 +1,23 @@
 import { default as EventEmitter } from 'eventemitter3';
-import { ConnectStatus, Signer, Wallet, WalletEventListener } from './';
+import { ConnectStatus, Signer, Wallet, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 
-export type WalletEvents = {
-  connectStatusChanged: (status: ConnectStatus) => void;
-  signerChanged: (signer: Signer) => void;
-  error: (error?: unknown) => void;
-};
+type Options = Partial<WalletDescriptor>;
 
 export abstract class AbstractWallet implements Wallet {
   protected connectStatus: ConnectStatus = 'disconnected';
   protected signer: Signer | undefined;
   private readonly emitter: EventEmitter;
 
-  protected constructor() {
+  readonly name: string;
+  readonly description: string;
+  readonly features: WalletFeature[];
+
+  protected constructor(options: Options = {}) {
     this.emitter = new EventEmitter();
+
+    this.name = options.name || this.constructor.name;
+    this.description = options.description || '';
+    this.features = options.features || [];
   }
 
   abstract connect(): void;
@@ -45,11 +49,15 @@ export abstract class AbstractWallet implements Wallet {
     this.signer = undefined;
   }
 
-  protected onError(error: Error = new Error('An unknown error occurred in the wallet')): void {
+  protected onError(error: Error = new Error(`An unknown error occurred in the ${this.name}`)): void {
     this.emitter.emit('error', error);
   }
 
   on = ((event: string, listener: (arg: unknown) => void) => {
     this.emitter.on(event as ConnectStatus, listener);
   }) as unknown as WalletEventListener;
+
+  checkSupported(feature: WalletFeature): boolean {
+    return this.features.includes(feature);
+  }
 }

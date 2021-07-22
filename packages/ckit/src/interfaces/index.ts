@@ -1,5 +1,4 @@
 import { Transaction, Hash, OutPoint, HexNumber, ChainInfo, Output, HexString, Script, Address } from '@ckb-lumos/base';
-import { Bytes } from '@ckb-lumos/base/lib/core';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -9,7 +8,17 @@ export interface WalletEventListener {
   (event: 'error', listener: (error?: unknown) => void): void;
 }
 
-export interface Wallet {
+export type BuiltinFeatures = 'issue-sudt' | 'acp';
+export type WalletFeature = BuiltinFeatures | string;
+
+export interface WalletDescriptor {
+  readonly name: string;
+  readonly description: string;
+  readonly features: WalletFeature[];
+  checkSupported(feature: WalletFeature): boolean;
+}
+
+export interface Wallet extends WalletDescriptor {
   connect(): void;
   disconnect(): void;
   on: WalletEventListener;
@@ -19,7 +28,7 @@ export interface Signer {
   getAddress(): Promise<string>;
   sign(tx: Transaction): Promise<Transaction>;
   // work with witness
-  signMessage?(bytes: Bytes): Promise<Bytes>;
+  signMessage?(bytes: HexString): Promise<HexString>;
 }
 
 export interface TransactionBuilder {
