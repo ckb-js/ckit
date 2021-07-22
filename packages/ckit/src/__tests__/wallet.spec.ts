@@ -1,9 +1,9 @@
-import { Signer, Wallet } from '../interfaces';
+import { Signer } from '../interfaces';
 import { asyncSleep } from '../utils';
 import { NonAcpPwLockWallet } from '../wallets';
 
 test.skip('test wallet', async () => {
-  const wallet: Wallet = new NonAcpPwLockWallet();
+  const wallet = new NonAcpPwLockWallet();
   const connectStatusChanged = jest.fn();
   const signerChanged = jest.fn<void, Signer[]>();
 

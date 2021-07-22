@@ -1,7 +1,7 @@
 {
   "name": "ckit",
   "version": "0.0.0",
-  "main": "dist",
+  "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
     "build": "yarn run compile",
