@@ -1,0 +1,18 @@
+{
+  "name": "@ckit/tippy-client",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn run compile",
+    "clean": "rimraf -rf ./dist",
+    "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "yarn run build"
+  },
+  "peerDependencies": {
+    "@open-rpc/client-js": "^1.7.0"
+  },
+  "devDependencies": {
+    "@open-rpc/client-js": "^1.7.0"
+  }
+}
