@@ -4,12 +4,13 @@ import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
 interface TransferOptions {
+  readonly sender: Address;
+  readonly recipient: Address;
   readonly sudt: CkbTypeScript;
-  readonly to: Address;
   readonly amount: HexNumber;
 }
 
-export class UnipassSudtTransferBuilder implements TransactionBuilder {
+export class AcpTransferSudtBuilder implements TransactionBuilder {
   constructor(private options: TransferOptions, private provider: MercuryProvider) {}
 
   async build(): Promise<Transaction> {

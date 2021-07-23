@@ -17,11 +17,11 @@ lint-lib:
 build: build-lib build-app
 
 build-lib:
-	yarn workspace ckit run build
+	yarn lerna run build
 
 build-app:
 	yarn workspace ckit-app run build
 
 clean:
-	rimraf packages/*/dist
-	rimraf apps/*/dist
+	yarn rimraf packages/*/dist
+	yarn rimraf apps/*/dist

@@ -1,0 +1,16 @@
+{
+  "name": "@ckit/mercury-client",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn run compile",
+    "clean": "rimraf -rf ./dist",
+    "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "yarn run build"
+  },
+  "peerDependencies": {
+    "@ckb-lumos/base": "^0.16.0",
+    "@open-rpc/client-js": "^1.7.0"
+  }
+}

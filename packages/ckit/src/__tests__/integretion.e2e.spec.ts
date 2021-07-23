@@ -3,7 +3,7 @@ import { RPC } from '@ckb-lumos/rpc';
 import { BigNumber } from 'bignumber.js';
 import { CkbTypeScript, Signer, Wallet } from '../interfaces';
 import { MercuryProvider } from '../providers/MercuryProvider';
-import { MintOptions, PwSudtMintBuilder } from '../tx-builders/PwSudtMintBuilder';
+import { MintOptions, MintSudtBuilder } from '../tx-builders/MintSudtBuilder';
 import { unimplemented } from '../utils';
 
 function createWallet(): Wallet {
@@ -14,7 +14,7 @@ function createProvider(): MercuryProvider {
   unimplemented();
 }
 
-function createTxBuilder(_options: MintOptions): PwSudtMintBuilder {
+function createTxBuilder(_options: MintOptions): MintSudtBuilder {
   unimplemented();
 }
 
@@ -22,7 +22,7 @@ function setupTest(): { from: Address; recipient: Address; sudt: CkbTypeScript }
   unimplemented();
 }
 
-test.skip('', async () => {
+test.skip('integration test', async () => {
   const { from, recipient, sudt } = setupTest();
 
   const provider = createProvider();

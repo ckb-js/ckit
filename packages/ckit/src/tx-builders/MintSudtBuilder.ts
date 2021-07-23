@@ -23,7 +23,7 @@ export interface MintOptions {
   recipients: RecipientOptions[];
 }
 
-export class PwSudtMintBuilder implements TransactionBuilder {
+export class MintSudtBuilder implements TransactionBuilder {
   constructor(private options: MintOptions, private provider: MercuryProvider) {}
 
   async build(): Promise<Transaction> {
