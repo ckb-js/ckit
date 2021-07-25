@@ -1,17 +1,15 @@
-import { Hash, Transaction } from '@ckb-lumos/base';
+import { HexString } from '@ckb-lumos/base';
 import { Signer, AbstractWallet } from '../interfaces';
 import { unimplemented } from '../utils';
 
 export class UnipassSigner implements Signer {
+  constructor(private address: string) {}
+
   getAddress(): Promise<string> {
-    unimplemented();
+    return Promise.resolve(this.address);
   }
 
-  sign(_tx: Transaction): Promise<Transaction> {
-    unimplemented();
-  }
-
-  sendTransaction(_tx: unknown): Promise<Hash> {
+  signMessage(_tx: HexString): Promise<HexString> {
     unimplemented();
   }
 }

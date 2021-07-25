@@ -1,5 +1,5 @@
 import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
-import { CkbTypeScript, TransactionBuilder } from '../interfaces';
+import { CkbTypeScript, Signer, TransactionBuilder } from '../interfaces';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
@@ -11,7 +11,7 @@ interface TransferOptions {
 }
 
 export class AcpTransferSudtBuilder implements TransactionBuilder {
-  constructor(private options: TransferOptions, private provider: MercuryProvider) {}
+  constructor(private options: TransferOptions, private provider: MercuryProvider, private signer: Signer) {}
 
   async build(): Promise<Transaction> {
     unimplemented();

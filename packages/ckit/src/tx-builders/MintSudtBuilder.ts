@@ -1,5 +1,5 @@
 import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
-import { TransactionBuilder } from '../interfaces';
+import { Signer, TransactionBuilder } from '../interfaces';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
@@ -14,17 +14,22 @@ type CapacityPolicy =
 type RecipientOptions = {
   recipient: Address;
   amount: HexNumber;
-  additionalCapacity: HexNumber;
-  capacityPolicy: CapacityPolicy;
+  /**
+   * additional transfer CKBytes
+   */
+  additionalCapacity?: HexNumber;
+  /**
+   * defaults to findAcp
+   */
+  capacityPolicy?: CapacityPolicy;
 };
 
 export interface MintOptions {
-  issuer: Address;
   recipients: RecipientOptions[];
 }
 
 export class MintSudtBuilder implements TransactionBuilder {
-  constructor(private options: MintOptions, private provider: MercuryProvider) {}
+  constructor(private options: MintOptions, private provider: MercuryProvider, private signer: Signer) {}
 
   async build(): Promise<Transaction> {
     unimplemented();

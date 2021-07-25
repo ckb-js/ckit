@@ -1,23 +1,15 @@
 import { default as EventEmitter } from 'eventemitter3';
-import { ConnectStatus, Signer, Wallet, WalletDescriptor, WalletEventListener, WalletFeature } from './';
+import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 
 type Options = Partial<WalletDescriptor>;
 
-export abstract class AbstractWallet implements Wallet {
+export abstract class AbstractConnectableWallet implements WalletConnector {
   protected connectStatus: ConnectStatus = 'disconnected';
   protected signer: Signer | undefined;
   private readonly emitter: EventEmitter;
 
-  readonly name: string;
-  readonly description: string;
-  readonly features: WalletFeature[];
-
-  protected constructor(options: Options = {}) {
+  protected constructor() {
     this.emitter = new EventEmitter();
-
-    this.name = options.name || this.constructor.name;
-    this.description = options.description || '';
-    this.features = options.features || [];
   }
 
   abstract connect(): void;
@@ -49,15 +41,34 @@ export abstract class AbstractWallet implements Wallet {
     this.signer = undefined;
   }
 
-  protected onError(error: Error = new Error(`An unknown error occurred in the ${this.name}`)): void {
+  protected onError(error: Error = new Error(`An unknown error occurred in the ${this.constructor.name}`)): void {
     this.emitter.emit('error', error);
   }
 
   on = ((event: string, listener: (arg: unknown) => void) => {
     this.emitter.on(event as ConnectStatus, listener);
   }) as unknown as WalletEventListener;
+}
 
-  checkSupported(feature: WalletFeature): boolean {
+export abstract class AbstractWallet extends AbstractConnectableWallet implements WalletDescriptor {
+  readonly name: string;
+  readonly description: string;
+  readonly features: WalletFeature[];
+
+  protected constructor(options: Options) {
+    super();
+    this.name = options.name || this.constructor.name;
+    this.description = options.description || '';
+    this.features = options.features || [];
+  }
+
+  abstract connect(): void;
+
+  override onError(error: Error = new Error(`An unknown error occurred in the ${this.name}`)): void {
+    super.onError(error);
+  }
+
+  public checkSupported(feature: WalletFeature): boolean {
     return this.features.includes(feature);
   }
 }
