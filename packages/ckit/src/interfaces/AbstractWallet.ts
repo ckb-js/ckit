@@ -55,7 +55,7 @@ export abstract class AbstractWallet extends AbstractConnectableWallet implement
   readonly description: string;
   readonly features: WalletFeature[];
 
-  protected constructor(options: Options) {
+  protected constructor(options: Options = {}) {
     super();
     this.name = options.name || this.constructor.name;
     this.description = options.description || '';
