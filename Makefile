@@ -8,10 +8,10 @@ test-lib:
 
 lint: lint-lib lint-app
 
-lint-app: build-lib
+lint-app:
 	yarn workspace ckit-app run lint
 
-lint-lib:
+lint-lib: build-lib
 	yarn eslint packages/*/src/**/*.{ts,tsx} --format=pretty
 
 build: build-lib build-app

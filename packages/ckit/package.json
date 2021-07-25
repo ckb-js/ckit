@@ -12,10 +12,15 @@
   "dependencies": {
     "@ckb-lumos/base": "^0.16.0",
     "@ckb-lumos/config-manager": "^0.16.0",
+    "@ckb-lumos/hd": "^0.16.0",
     "@ckb-lumos/helpers": "^0.16.0",
     "@ckb-lumos/rpc": "^0.16.0",
+    "@ckit/mercury-client": "*",
     "@lay2/pw-core": "^0.4.0-alpha.8",
     "bignumber.js": "^9.0.1",
     "eventemitter3": "^4.0.7"
+  },
+  "devDependencies": {
+    "@ckit/tippy-client": "*"
   }
 }

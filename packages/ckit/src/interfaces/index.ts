@@ -15,10 +15,9 @@ export interface WalletDescriptor {
   readonly name: string;
   readonly description: string;
   readonly features: WalletFeature[];
-  checkSupported(feature: WalletFeature): boolean;
 }
 
-export interface Wallet extends WalletDescriptor {
+export interface WalletConnector {
   connect(): void;
   disconnect(): void;
   on: WalletEventListener;
@@ -26,9 +25,7 @@ export interface Wallet extends WalletDescriptor {
 
 export interface Signer {
   getAddress(): Promise<string>;
-  sign(tx: Transaction): Promise<Transaction>;
-  // work with witness
-  signMessage?(bytes: HexString): Promise<HexString>;
+  signMessage(message: HexString): Promise<HexString>;
 }
 
 export interface TransactionBuilder {
