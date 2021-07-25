@@ -1,12 +1,9 @@
-import { Transaction } from '@ckb-lumos/base';
+import { HexString } from '@ckb-lumos/base';
 import { AbstractWallet, Signer } from '../interfaces';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
-    super({
-      description: '',
-      features: ['issue-sudt'],
-    });
+    super({ features: ['issue-sudt'] });
   }
 
   connect(): void {
@@ -25,15 +22,7 @@ class DummySigner implements Signer {
     return 'ckt1qj2fmdr6437352sdjgf5fhzurh00mgussyap3qw4dgy894ucurtzj0zrsk22amhe0evutcsup8ydmshf47t9xhsnl9c';
   }
 
-  async sign(): Promise<Transaction> {
-    return {
-      cell_deps: [],
-      header_deps: [],
-      inputs: [],
-      outputs: [],
-      outputs_data: [],
-      version: '0x0',
-      witnesses: [],
-    };
+  async signMessage(): Promise<HexString> {
+    return '0x';
   }
 }
