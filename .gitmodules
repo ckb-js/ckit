@@ -1,3 +1,6 @@
 [submodule "deps/pw-lock"]
 	path = deps/pw-lock
 	url = https://github.com/homura/pw-lock.git
+[submodule "deps/ckb-production-scripts"]
+	path = deps/ckb-production-scripts
+	url = https://github.com/nervosnetwork/ckb-production-scripts.git
