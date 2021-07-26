@@ -1,5 +1,5 @@
 import { Address, ChainInfo, Hash, HexNumber, Script, Transaction } from '@ckb-lumos/base';
-import { predefined, Config } from '@ckb-lumos/config-manager';
+import { predefined, Config, ScriptConfig } from '@ckb-lumos/config-manager';
 import { generateAddress } from '@ckb-lumos/helpers';
 import { Provider, ResolvedOutpoint } from './';
 
@@ -10,6 +10,10 @@ export abstract class AbstractProvider implements Provider {
   get config(): Config {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');
     return this._config;
+  }
+
+  getScriptConfig(key: string): ScriptConfig | undefined {
+    return this.config.SCRIPTS[key];
   }
 
   /**
