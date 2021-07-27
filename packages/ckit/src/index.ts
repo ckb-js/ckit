@@ -1,4 +1,4 @@
-export * from './interfaces';
+export * from '@ckit/base';
 export * from './wallets';
 
 // TODO remove when publish it

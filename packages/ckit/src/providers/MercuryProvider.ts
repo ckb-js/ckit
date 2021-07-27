@@ -1,17 +1,24 @@
 import { Address, ChainInfo, Hash, HexNumber, Transaction } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
+import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
 import { MercuryClient } from '@ckit/mercury-client';
-import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '../interfaces';
 import { asyncSleep, unimplemented } from '../utils';
 
 export class MercuryProvider extends AbstractProvider {
   mercury: MercuryClient;
   rpc: RPC;
 
-  constructor(mercuryUri = 'http://127.0.0.1:8116', ckbRpcUri = 'http://127.0.0.1:8114') {
+  constructor(
+    mercuryRpc: MercuryClient | string = 'http://127.0.0.1:8116',
+    ckbRpc: RPC | string = 'http://127.0.0.1:8114',
+  ) {
     super();
-    this.mercury = new MercuryClient(mercuryUri);
-    this.rpc = new RPC(ckbRpcUri);
+
+    if (mercuryRpc instanceof MercuryClient) this.mercury = mercuryRpc;
+    else this.mercury = new MercuryClient(mercuryRpc);
+
+    if (ckbRpc instanceof RPC) this.rpc = ckbRpc;
+    else this.rpc = new RPC(ckbRpc);
   }
 
   collectCkbLiveCell(_lock: Address, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
