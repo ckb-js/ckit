@@ -14,7 +14,7 @@ import {
 } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
-import { MercuryClient } from '@ckit/mercury-client';
+import { MercuryClient, GetCellsPayload } from '@ckit/mercury-client';
 import { asyncSleep, unimplemented } from '../utils';
 
 export enum ScriptType {
@@ -69,8 +69,8 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
     unimplemented();
   }
 
-  sendTransaction(_tx: Transaction): Promise<Hash> {
-    unimplemented();
+  sendTransaction(tx: Transaction): Promise<Hash> {
+    return this.rpc.send_transaction(tx);
   }
 
   collectSudtCell(_lock: Address, _amount: HexNumber): Promise<ResolvedOutpoint[]> {
@@ -173,7 +173,7 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
       }
     }
     const queryData = queries.data || '0x';
-    const get_cells = this.mercury.get_cells;
+    const mercury = this.mercury;
     return {
       collect(): CellCollectorResults {
         return {
@@ -183,8 +183,15 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
             let cursor = null;
             for (;;) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const params: any = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-              const res = await get_cells(params);
+              //const params: GetCellsPayload = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
+              const params: GetCellsPayload = {
+                search_key: searchKey,
+                order,
+                limit: `0x${sizeLimit.toString(16)}`,
+                after_cursor: cursor,
+              };
+
+              const res = await mercury.get_cells(params);
               const liveCells = res.objects;
               cursor = res.last_cursor;
               for (const cell of liveCells) {

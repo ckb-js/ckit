@@ -1,0 +1,20 @@
+{
+  "name": "@ckit/scripts",
+  "version": "0.0.0",
+  "main": "dist",
+  "license": "MIT",
+  "scripts": {
+    "build": "npm run build:js && npm run build:types",
+    "clean": "rimraf -rf ./dist",
+    "build:js": "babel --root-mode upward --extensions '.ts' --out-dir dist src",
+    "build:types": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "yarn run build"
+  },
+  "dependencies": {
+    "ckit": "*",
+    "@ckb-lumos/base": "^0.16.0",
+    "@ckb-lumos/common-scripts": "^0.16.0",
+    "@ckb-lumos/hd": "^0.16.0",
+    "@ckb-lumos/helpers": "^0.16.0"
+  }
+}

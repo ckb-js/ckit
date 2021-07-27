@@ -12,7 +12,7 @@ export interface GetCellsPayload {
   search_key: SearchKey;
   order?: 'asc' | 'desc';
   limit?: HexNumber;
-  after_cursor?: HexString;
+  after_cursor?: HexString | null;
 }
 
 interface GetPayloadResponse {
