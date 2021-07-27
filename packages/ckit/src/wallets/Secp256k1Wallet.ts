@@ -1,6 +1,6 @@
 import { HexString, Script } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { AbstractWallet, Signer } from '../interfaces';
+import { AbstractWallet, Signer } from '@ckit/base';
 import { MercuryProvider } from '../providers/MercuryProvider';
 
 type ScriptTmpl = Pick<Script, 'hash_type' | 'code_hash'>;

@@ -1,33 +1,9 @@
-import { utils } from '@ckb-lumos/base';
-import { ScriptConfig, predefined } from '@ckb-lumos/config-manager';
-import { RPC } from '@ckb-lumos/rpc';
+import { predefined } from '@ckb-lumos/config-manager';
 import { TippyClient } from '@ckit/tippy-client';
-import { MercuryProvider } from '../providers/MercuryProvider';
+import { CkitProvider } from '../providers/CkitProvider';
 import { randomHexString } from '../utils';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { MintSudtBuilder } from './MintSudtBuilder';
-
-export async function loadSecp256k1ScriptConfig(rpc: RPC): Promise<ScriptConfig> {
-  const genesisBlock = await rpc.get_block_by_number('0x0');
-
-  if (!genesisBlock) throw new Error('cannot load genesis block');
-
-  const secp256k1DepTxHash = genesisBlock.transactions[1]?.hash;
-  const typeScript = genesisBlock.transactions[0]?.outputs[1]?.type;
-
-  if (!secp256k1DepTxHash) throw new Error('Cannot load secp256k1 transaction');
-  if (!typeScript) throw new Error('cannot load secp256k1 type script');
-
-  const secp256k1TypeHash = utils.computeScriptHash(typeScript);
-
-  return {
-    HASH_TYPE: 'type',
-    CODE_HASH: secp256k1TypeHash,
-    INDEX: '0x0',
-    TX_HASH: secp256k1DepTxHash,
-    DEP_TYPE: 'dep_group',
-  };
-}
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const SECP256k1_BLAKE160_CONFIG = predefined.AGGRON4.SCRIPTS.SECP256K1_BLAKE160!;
@@ -56,8 +32,9 @@ test.skip('test mint tx', async () => {
   });
   await tippy.set_active_chain(tippyInstance.id);
   await tippy.start_chain();
+  await tippy.start_miner();
 
-  const provider = new MercuryProvider();
+  const provider = new CkitProvider();
   await provider.init(predefined.AGGRON4);
 
   // TODO replace with an ACP lock

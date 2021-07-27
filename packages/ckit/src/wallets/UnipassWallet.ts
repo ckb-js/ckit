@@ -1,5 +1,5 @@
 import { HexString } from '@ckb-lumos/base';
-import { Signer, AbstractWallet } from '../interfaces';
+import { Signer, AbstractWallet } from '@ckit/base';
 import { unimplemented } from '../utils';
 
 export class UnipassSigner implements Signer {

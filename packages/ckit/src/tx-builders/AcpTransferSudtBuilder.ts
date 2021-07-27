@@ -1,5 +1,5 @@
 import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
-import { CkbTypeScript, Signer, TransactionBuilder } from '../interfaces';
+import { CkbTypeScript, Signer, TransactionBuilder } from '@ckit/base';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 

@@ -1,10 +1,10 @@
-import { Transaction } from '@ckb-lumos/base';
-import { Wallet, ConnectStatus, Signer } from 'ckit';
+import { WalletConnector } from '@ckit/base';
+import { ConnectStatus, Signer } from 'ckit';
 import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
 
 function useWallet() {
-  const [wallet, setWallet] = useState<Wallet>();
+  const [wallet, setWallet] = useState<WalletConnector>();
   const [signer, setSigner] = useState<Signer>();
   const [error, setError] = useState<Error>();
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>('disconnected');
@@ -29,7 +29,6 @@ function useWallet() {
 
 interface SignerType {
   address: string | undefined;
-  sign: (tx: Transaction) => Promise<Transaction>;
 }
 
 export function useSigner(signer: Signer): SignerType {
@@ -40,7 +39,7 @@ export function useSigner(signer: Signer): SignerType {
     void signer.getAddress().then(setAddress);
   }, [signer]);
 
-  return { address, sign: signer.sign.bind(signer) };
+  return { address };
 }
 
 export const WalletContainer = createContainer(useWallet);
