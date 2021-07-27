@@ -1,65 +1,92 @@
-import { predefined } from '@ckb-lumos/config-manager';
-import { TippyClient } from '@ckit/tippy-client';
-import { CkitProvider } from '../providers/CkitProvider';
+import { utils } from '@ckb-lumos/base';
+import { key } from '@ckb-lumos/hd';
+import { TestProvider } from '../__tests__/TestProvider';
+import { AcpTransferSudtBuilder } from '../tx-builders/AcpTransferSudtBuilder';
 import { randomHexString } from '../utils';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { MintSudtBuilder } from './MintSudtBuilder';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const SECP256k1_BLAKE160_CONFIG = predefined.AGGRON4.SCRIPTS.SECP256K1_BLAKE160!;
+test.skip('test mint and transfer', async () => {
+  const provider = new TestProvider();
+  await provider.init();
 
-test.skip('test mint tx', async () => {
-  const issuerPrivateKey = randomHexString(64);
-  // TODO replace with another random key after any one can pay loaded
-  const recipientPrivateKey = issuerPrivateKey;
+  const issuerPrivateKey = provider.assemberPrivateKey;
 
-  const tippy = new TippyClient();
-  const SECP256K1_BLAKE160 = SECP256k1_BLAKE160_CONFIG;
+  const recipientPrivKey0 = randomHexString(64);
+  const recipientPrivKey1 = randomHexString(64);
 
-  const issuerLockArgs = Secp256k1Signer.privateKeyToBlake160(issuerPrivateKey);
-  const tippyInstance = await tippy.create_chain({
-    assembler_lock_arg: issuerLockArgs,
-    genesis_issued_cells: [
-      {
-        capacity: '0xffffffffffff',
-        lock: {
-          hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-          args: issuerLockArgs,
-          code_hash: SECP256K1_BLAKE160.CODE_HASH,
-        },
-      },
-    ],
+  const { SECP256K1_BLAKE160, ANYONE_CAN_PAY, SUDT } = provider.config.SCRIPTS;
+
+  const recipientAddr0 = provider.parseToAddress({
+    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+    code_hash: ANYONE_CAN_PAY.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey0),
   });
-  await tippy.set_active_chain(tippyInstance.id);
-  await tippy.start_chain();
-  await tippy.start_miner();
 
-  const provider = new CkitProvider();
-  await provider.init(predefined.AGGRON4);
+  const recipientAddr1 = provider.parseToAddress({
+    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+    code_hash: ANYONE_CAN_PAY.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey1),
+  });
 
-  // TODO replace with an ACP lock
-  const recipientAddress = provider.parseToAddress({
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+  const issuerLockHash = utils.computeScriptHash({
     code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivateKey),
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+    args: key.privateKeyToBlake160(issuerPrivateKey),
   });
 
-  const signer = new Secp256k1Signer(issuerPrivateKey, provider, {
+  const testUdt = {
+    code_hash: SUDT.CODE_HASH,
+    hash_type: SUDT.HASH_TYPE,
+    args: issuerLockHash,
+  };
+  const beforeBalance0 = await provider.getUdtBalance(recipientAddr0, testUdt);
+
+  expect(beforeBalance0).toBe('0');
+
+  const issuerSigner = new Secp256k1Signer(issuerPrivateKey, provider, {
     code_hash: SECP256K1_BLAKE160.CODE_HASH,
     hash_type: SECP256K1_BLAKE160.HASH_TYPE,
   });
 
   const recipients = [
+    // create acp cell
     {
-      recipient: recipientAddress,
-      additionalCapacity: '100000000',
-      amount: '100000000',
+      recipient: recipientAddr0,
+      additionalCapacity: Math.ceil(Math.random() * 10 ** 8).toString(),
+      amount: '0',
+    },
+
+    // mint random udt
+    {
+      recipient: recipientAddr1,
+      additionalCapacity: Math.ceil(Math.random() * 10 ** 8).toString(),
+      amount: Math.ceil(Math.random() * 10 ** 8).toString(),
     },
   ];
-  const signedTx = await new MintSudtBuilder({ recipients }, provider, signer).build();
 
-  const txHash = await provider.rpc.send_transaction(signedTx);
-  const tx = await provider.waitForTransactionCommitted(txHash);
+  const signedMintTx = await new MintSudtBuilder({ recipients }, provider, issuerSigner).build();
+  const mintTxHash = await provider.rpc.send_transaction(signedMintTx);
+  const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
-  expect(tx != null).toBe(true);
+  expect(mintTx != null).toBe(true);
+
+  expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('0');
+  expect(await provider.getUdtBalance(recipientAddr1, testUdt)).toBe(recipients[1]?.amount);
+
+  // recipient1 -> recipient0
+  const signedTransferTx = await new AcpTransferSudtBuilder(
+    { amount: '1', recipient: recipientAddr0, sudt: testUdt },
+    provider,
+    new Secp256k1Signer(recipientPrivKey1, provider, {
+      code_hash: ANYONE_CAN_PAY.CODE_HASH,
+      hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+    }),
+  ).build();
+
+  const transferTxHash = await provider.sendTransaction(signedTransferTx);
+  const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
+
+  expect(transferTx != null).toBe(true);
+  expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('1');
 });

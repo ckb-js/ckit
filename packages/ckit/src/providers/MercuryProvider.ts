@@ -5,8 +5,8 @@ import { MercuryClient } from '@ckit/mercury-client';
 import { asyncSleep, unimplemented } from '../utils';
 
 export class MercuryProvider extends AbstractProvider {
-  mercury: MercuryClient;
-  rpc: RPC;
+  readonly mercury: MercuryClient;
+  readonly rpc: RPC;
 
   constructor(
     mercuryRpc: MercuryClient | string = 'http://127.0.0.1:8116',
@@ -21,16 +21,16 @@ export class MercuryProvider extends AbstractProvider {
     else this.rpc = new RPC(ckbRpc);
   }
 
-  collectCkbLiveCell(_lock: Address, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
+  override collectCkbLiveCell(_lock: Address, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
     unimplemented();
   }
 
-  getChainInfo(): Promise<ChainInfo> {
-    unimplemented();
+  override getChainInfo(): Promise<ChainInfo> {
+    return this.rpc.get_blockchain_info();
   }
 
-  sendTransaction(_tx: Transaction): Promise<Hash> {
-    unimplemented();
+  override sendTransaction(tx: Transaction): Promise<Hash> {
+    return this.rpc.send_transaction(tx);
   }
 
   collectSudtCell(_lock: Address, _amount: HexNumber): Promise<ResolvedOutpoint[]> {
@@ -38,10 +38,6 @@ export class MercuryProvider extends AbstractProvider {
   }
 
   getUdtBalance(_lock: Address, _udt: CkbTypeScript): Promise<HexNumber> {
-    unimplemented();
-  }
-
-  getBlockNumber(): Promise<HexNumber> {
     unimplemented();
   }
 

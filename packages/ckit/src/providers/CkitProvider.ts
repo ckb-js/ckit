@@ -16,10 +16,6 @@ export interface CkitConfig extends Config {
 }
 
 export class CkitProvider extends MercuryProvider {
-  constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114/rpc') {
-    super(mercuryRpc, ckbRpc);
-  }
-
   override get config(): CkitConfig {
     return super.config as CkitConfig;
   }
