@@ -22,15 +22,7 @@ export function randomHexString(lengthWithOut0x: number): HexString {
   return '0x' + [...Array(lengthWithOut0x)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 }
 
-export function boom(message?: string): never {
-  throw new Error(message);
-}
-
-export function asserts(condition: unknown, err?: string | Error | (() => never)): asserts condition {
-  if (condition) return;
-  if (typeof err === 'function') err();
-  if (typeof err === 'string') boom(err);
-  if (err instanceof Error) throw err;
-
-  boom();
+export function nonNullable<X>(x: X): NonNullable<X> {
+  if (x == null) throw new Error('Null check failed');
+  return x as NonNullable<X>;
 }

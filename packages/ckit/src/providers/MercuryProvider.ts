@@ -13,9 +13,8 @@ import {
   Hexadecimal,
 } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
+import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
 import { MercuryClient } from '@ckit/mercury-client';
-
-import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '../interfaces';
 import { asyncSleep, unimplemented } from '../utils';
 
 export enum ScriptType {
@@ -46,11 +45,20 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
   mercury: MercuryClient;
   rpc: RPC;
 
-  constructor(mercuryUri = 'http://127.0.0.1:8116', ckbRpcUri = 'http://127.0.0.1:8114') {
+  constructor(
+    mercuryRpc: MercuryClient | string = 'http://127.0.0.1:8116',
+    ckbRpc: RPC | string = 'http://127.0.0.1:8114',
+  ) {
     super();
-    this.uri = ckbRpcUri;
-    this.mercury = new MercuryClient(mercuryUri);
-    this.rpc = new RPC(ckbRpcUri);
+
+    //Todo fill uri
+    this.uri = '';
+
+    if (mercuryRpc instanceof MercuryClient) this.mercury = mercuryRpc;
+    else this.mercury = new MercuryClient(mercuryRpc);
+
+    if (ckbRpc instanceof RPC) this.rpc = ckbRpc;
+    else this.rpc = new RPC(ckbRpc);
   }
 
   collectCkbLiveCell(_lock: Address, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
@@ -96,12 +104,8 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
 
   // Indexer inplements
 
-  getCkbRpc(): RPC {
-    return new RPC(this.uri);
-  }
-
   async tip(): Promise<Tip> {
-    return await this.mercury.getTip();
+    return this.mercury.get_tip();
   }
 
   running(): boolean {
@@ -130,7 +134,7 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
   }
 
   async waitForSync(blockDifference = 0): Promise<void> {
-    const rpcTipNumber = parseInt((await this.getCkbRpc().get_tip_header()).number, 16);
+    const rpcTipNumber = parseInt((await this.rpc.get_tip_header()).number, 16);
     for (;;) {
       const indexerTipNumber = parseInt((await this.tip()).block_number, 16);
       if (indexerTipNumber + blockDifference >= rpcTipNumber) {
@@ -169,7 +173,7 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
       }
     }
     const queryData = queries.data || '0x';
-    const getCells = this.mercury.getCells;
+    const get_cells = this.mercury.get_cells;
     return {
       collect(): CellCollectorResults {
         return {
@@ -180,7 +184,7 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
             for (;;) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const params: any = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-              const res = await getCells(params);
+              const res = await get_cells(params);
               const liveCells = res.objects;
               cursor = res.last_cursor;
               for (const cell of liveCells) {

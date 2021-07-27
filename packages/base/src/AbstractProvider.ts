@@ -1,6 +1,6 @@
 import { Address, ChainInfo, Hash, HexNumber, Script, Transaction } from '@ckb-lumos/base';
 import { predefined, Config, ScriptConfig } from '@ckb-lumos/config-manager';
-import { generateAddress } from '@ckb-lumos/helpers';
+import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { Provider, ResolvedOutpoint } from './';
 
 export abstract class AbstractProvider implements Provider {
@@ -35,8 +35,12 @@ export abstract class AbstractProvider implements Provider {
     this.initialied = true;
   }
 
-  parseToAddress(script: Script): string {
+  parseToAddress(script: Script): Address {
     return generateAddress(script, { config: this.config });
+  }
+
+  parseToScript(address: Address): Script {
+    return parseAddress(address);
   }
 
   abstract getChainInfo(): Promise<ChainInfo>;

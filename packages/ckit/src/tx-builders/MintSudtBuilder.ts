@@ -7,7 +7,7 @@ import {
   TransactionSkeleton,
   TransactionSkeletonType,
 } from '@ckb-lumos/helpers';
-import { Signer, TransactionBuilder } from '../interfaces';
+import { Signer, TransactionBuilder } from '@ckit/base';
 import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
