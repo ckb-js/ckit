@@ -4,8 +4,8 @@ import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventLi
 type Options = Partial<WalletDescriptor>;
 
 export abstract class AbstractConnectableWallet implements WalletConnector {
-  protected connectStatus: ConnectStatus = 'disconnected';
-  protected signer: Signer | undefined;
+  connectStatus: ConnectStatus = 'disconnected';
+  signer: Signer | undefined;
   private readonly emitter: EventEmitter;
 
   protected constructor() {
@@ -19,20 +19,20 @@ export abstract class AbstractConnectableWallet implements WalletConnector {
     this.emitter.removeAllListeners();
   }
 
-  getConnectStatus(): ConnectStatus {
+  get getConnectStatus(): ConnectStatus {
     return this.connectStatus;
   }
 
-  getSigner(): Signer | undefined {
+  get getSigner(): Signer | undefined {
     return this.signer;
   }
 
-  protected onConnectStatusChanged(status: ConnectStatus): void {
+  onConnectStatusChanged(status: ConnectStatus): void {
     this.connectStatus = status;
     this.emitter.emit('connectStatusChanged', status);
   }
 
-  protected onSignerChanged(signer: Signer): void {
+  onSignerChanged(signer: Signer): void {
     this.signer = signer;
     this.emitter.emit('signerChanged', signer);
   }

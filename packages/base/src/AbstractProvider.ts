@@ -4,7 +4,7 @@ import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { Provider, ResolvedOutpoint } from './';
 
 export abstract class AbstractProvider implements Provider {
-  private initialied = false;
+  private initialized = false;
   private _config: Config | undefined;
 
   get config(): Config {
@@ -21,7 +21,7 @@ export abstract class AbstractProvider implements Provider {
    * @param config if no config is provided, {@link getChainInfo} will be called to check the network type, and using the predefined config
    */
   async init(config?: Config): Promise<void> {
-    if (this.initialied) return;
+    if (this.initialized) return;
 
     if (config) {
       this._config = config;
@@ -32,7 +32,7 @@ export abstract class AbstractProvider implements Provider {
       this._config = isMainnet ? predefined.LINA : predefined.AGGRON4;
     }
 
-    this.initialied = true;
+    this.initialized = true;
   }
 
   parseToAddress(script: Script): Address {
