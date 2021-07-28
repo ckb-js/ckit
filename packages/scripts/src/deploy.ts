@@ -20,10 +20,6 @@ async function loadSecp256k1ScriptDep(provider: MercuryProvider): Promise<CellDe
 
   if (!genesisBlock) throw new Error('cannot load genesis block');
 
-  //   let secp256k1DepTxHash;
-  //   if (genesisBlock.transactions[1]) {
-  //     secp256k1DepTxHash = genesisBlock.transactions[1]?.hash;
-  //   }
   const secp256k1DepTxHash = nonNullable(genesisBlock.transactions[1]).hash;
   const typeScript = nonNullable(nonNullable(genesisBlock.transactions[0]).outputs[1]).type;
 
