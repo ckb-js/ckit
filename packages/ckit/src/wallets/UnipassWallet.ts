@@ -1,25 +1,32 @@
 import { HexString } from '@ckb-lumos/base';
 import { Signer, AbstractWallet } from '@ckit/base';
-import { unimplemented } from '../utils';
+import { default as Unipass } from './unipass/UnipassProvider';
 
 export class UnipassSigner implements Signer {
-  constructor(private address: string) {}
+  constructor(private unipass: Unipass) {}
 
   getAddress(): Promise<string> {
-    return Promise.resolve(this.address);
+    return Promise.resolve(this.unipass.address.toCKBAddress());
   }
 
-  signMessage(_tx: HexString): Promise<HexString> {
-    unimplemented();
+  signMessage(message: HexString): Promise<HexString> {
+    return this.unipass.sign(message);
   }
 }
 
-export class UnipassIframeWalletConnector extends AbstractWallet {
+export class UnipassWallet extends AbstractWallet {
+  unipassConnector: Unipass;
+
   constructor(private uri = 'https://unipass.me') {
-    super();
+    super({ features: ['issue-sudt'] });
+    this.unipassConnector = new Unipass();
   }
 
   connect(): void {
-    unimplemented();
+    this.onConnectStatusChanged('connecting');
+    void this.unipassConnector.init().then(() => {
+      this.onConnectStatusChanged('connected');
+      this.onSignerChanged(new UnipassSigner(this.unipassConnector));
+    });
   }
 }
