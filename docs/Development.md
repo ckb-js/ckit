@@ -5,14 +5,21 @@
 It is recommended to use [debug](https://github.com/visionmedia/debug) and the debug output of ckit should start with ckit-, e.g. `ckit-some-module`
 
 ```ts
-import Debug from 'debug';
+import { createDebugger, debug } from '@ckit/base';
 
-const debug = Debug('ckit-some-module');
+const debugSomeModule = createDebugger('ckit-some-module');
 
 export function doSomething() {
   const obj = {};
-  debug('log obj, %o', obj);
+  debugSomeModule('log obj, %o', obj);
+  debug('default debugger');
 }
+```
+
+To output the debug info, we should add an `DEBUG=ckit-*` in env variables
+
+```
+DEBUG=ckit-* node ckit-entry.js
 ```
 
 ## Run With `babel-node` For Debugging Locally
@@ -20,7 +27,5 @@ export function doSomething() {
 Sometimes we want to debug locally, but NodeJS can't run the .ts file directly, so we can use babel-node to run it
 
 ```
-
-yarn babel-node -x ".ts" --config babel.config.json path/to/my/file.ts
-
+yarn babel-node -x ".ts" --config-file babel.config.json path/to/my/file.ts
 ```

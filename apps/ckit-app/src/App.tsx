@@ -1,4 +1,4 @@
-import { dummy } from 'ckit';
+import { UnipassWallet } from 'ckit';
 import React, { useEffect } from 'react';
 import { WalletContainer, WalletConnect } from 'components/SimpleWallet';
 
@@ -6,9 +6,8 @@ import './App.less';
 
 const WalletView: React.FC = () => {
   const { setWallet } = WalletContainer.useContainer();
-
   useEffect(() => {
-    setWallet(new dummy.DummyWallet());
+    setWallet(new UnipassWallet());
   }, [setWallet]);
 
   return <WalletConnect />;
