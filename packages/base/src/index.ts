@@ -71,3 +71,4 @@ export interface Provider {
 
 export { AbstractProvider } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
+export { createDebugger, debug } from './logger';
