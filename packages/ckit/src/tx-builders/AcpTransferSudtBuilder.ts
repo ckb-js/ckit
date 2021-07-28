@@ -4,7 +4,6 @@ import { MercuryProvider } from '../providers/MercuryProvider';
 import { unimplemented } from '../utils';
 
 interface TransferOptions {
-  readonly sender: Address;
   readonly recipient: Address;
   readonly sudt: CkbTypeScript;
   readonly amount: HexNumber;

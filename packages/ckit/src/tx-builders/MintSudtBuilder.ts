@@ -72,10 +72,6 @@ export class MintSudtBuilder implements TransactionBuilder {
     };
   }
 
-  generateACPLockFromAddress(_address: Address): Script {
-    unimplemented();
-  }
-
   async handlerRecipient(
     txSkeleton: TransactionSkeletonType,
     recipientInfo: RecipientOptions,
@@ -85,7 +81,7 @@ export class MintSudtBuilder implements TransactionBuilder {
       case 'createAcp': {
         const sudtOutputCell = <Cell>{
           cell_output: {
-            lock: this.generateACPLockFromAddress(recipientInfo.recipient),
+            lock: parseAddress(recipientInfo.recipient),
             type: sudtTypeScript,
             capacity: `0x0`,
           },

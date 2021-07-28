@@ -41,9 +41,9 @@ export interface SearchKey {
 }
 
 export class MercuryProvider extends AbstractProvider implements Indexer {
-  uri: string;
-  mercury: MercuryClient;
-  rpc: RPC;
+  readonly uri: string;
+  readonly mercury: MercuryClient;
+  readonly rpc: RPC;
 
   constructor(
     mercuryRpc: MercuryClient | string = 'http://127.0.0.1:8116',
@@ -61,15 +61,15 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
     else this.rpc = new RPC(ckbRpc);
   }
 
-  collectCkbLiveCell(_lock: Address, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
+  override collectCkbLiveCell(_lock: Address, _capacity: HexNumber): Promise<ResolvedOutpoint[]> {
     unimplemented();
   }
 
-  getChainInfo(): Promise<ChainInfo> {
-    unimplemented();
+  override getChainInfo(): Promise<ChainInfo> {
+    return this.rpc.get_blockchain_info();
   }
 
-  sendTransaction(tx: Transaction): Promise<Hash> {
+  override sendTransaction(tx: Transaction): Promise<Hash> {
     return this.rpc.send_transaction(tx);
   }
 
@@ -78,10 +78,6 @@ export class MercuryProvider extends AbstractProvider implements Indexer {
   }
 
   getUdtBalance(_lock: Address, _udt: CkbTypeScript): Promise<HexNumber> {
-    unimplemented();
-  }
-
-  getBlockNumber(): Promise<HexNumber> {
     unimplemented();
   }
 
