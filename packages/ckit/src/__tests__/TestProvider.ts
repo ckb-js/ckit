@@ -4,6 +4,7 @@ import { TippyClient } from '@ckit/tippy-client';
 import appRootPath from 'app-root-path';
 import { CkitProvider } from '../providers/CkitProvider';
 import { nonNullable, randomHexString, unimplemented } from '../utils';
+import { deployCkbScripts } from '../deploy/deploy';
 
 export class TestProvider extends CkitProvider {
   readonly #_assemberPrivateKey: HexString;
@@ -32,7 +33,17 @@ export class TestProvider extends CkitProvider {
 
     // TODO deploy deps
     console.log(appRootPath + '/deps');
-    unimplemented();
+
+    const depsPath = appRootPath + '/deps/build';
+    const ckbRpcUrl = 'http://127.0.0.1:8114';
+    const mercuryUrl = 'http://127.0.0.1:8116';
+    const ckbPrivateKey = '0xa800c82df5461756ae99b5c6677d019c98cc98c7786b80d7b2e77256e46ea1fe';
+
+    const scriptConfigs = await deployCkbScripts(depsPath, ckbRpcUrl, mercuryUrl, ckbPrivateKey);
+    return {
+      PREFIX: 'testnet',
+      SCRIPTS: scriptConfigs,
+    };
   }
 }
 
