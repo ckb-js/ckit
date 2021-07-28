@@ -11,13 +11,13 @@ lint: lint-lib lint-app
 lint-app:
 	yarn workspace ckit-app run lint
 
-lint-lib: build-lib
+lint-lib:
 	yarn eslint packages/*/src/**/*.{ts,tsx} --format=pretty
 
 build: build-lib build-app
 
 build-lib:
-	yarn lerna run build
+	yarn lerna run --ignore ckit-app build
 
 build-app:
 	yarn workspace ckit-app run build
