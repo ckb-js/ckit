@@ -1,6 +1,5 @@
 import { HexString } from '@ckb-lumos/base';
 import { Signer, AbstractWallet } from '@ckit/base';
-import { makeObservable, computed, observable } from 'mobx';
 import { default as Unipass } from './unipass/UnipassProvider';
 
 export class UnipassSigner implements Signer {
@@ -21,12 +20,6 @@ export class UnipassWallet extends AbstractWallet {
   constructor(private uri = 'https://unipass.me') {
     super({ features: ['issue-sudt'] });
     this.unipassConnector = new Unipass();
-    makeObservable(this, {
-      connectStatus: observable,
-      signer: observable,
-      getConnectStatus: computed,
-      getSigner: computed,
-    });
   }
 
   connect(): void {

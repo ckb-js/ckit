@@ -1,10 +1,17 @@
 import { ScriptConfig } from '@ckb-lumos/config-manager';
-import { AbstractWallet, ConnectStatus, Signer, dummy, UnipassWallet, NonAcpPwLockWallet } from 'ckit';
+import {
+  AbstractWallet,
+  ConnectStatus,
+  Signer,
+  dummy,
+  ObservableUnipassWallet,
+  ObservableNonAcpPwLockWallet,
+} from 'ckit';
 import { CkitConfig, CkitProvider } from 'ckit/dist/providers/CkitProvider';
 import { randomHexString } from 'ckit/dist/utils';
 import { autorun } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
 
 export type CurrentWalletIndex = number | null;
@@ -17,12 +24,16 @@ export interface WalletConnectError {
 function useWallet() {
   const wallets = useLocalObservable<AbstractWallet[]>(() => [
     new dummy.DummyWallet() as AbstractWallet,
-    new UnipassWallet() as AbstractWallet,
+    new ObservableUnipassWallet() as AbstractWallet,
   ]);
-  // const [signer, setSigner] = useState<Signer>();
   const [currentWalletIndex, setCurrentWalletIndex] = useState<CurrentWalletIndex>(null);
   const [error, setError] = useState<WalletConnectError | null>(null);
-  const [visible, setModalVisible] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  const setModalVisible = useCallback((visible: boolean) => {
+    setVisible(visible);
+    setError(null);
+  }, []);
 
   useEffect(() => {
     const provider = new CkitProvider();
@@ -46,7 +57,7 @@ function useWallet() {
       },
     };
 
-    void provider.init(config).then(() => wallets.push(new NonAcpPwLockWallet(provider)));
+    void provider.init(config).then(() => wallets.push(new ObservableNonAcpPwLockWallet(provider)));
   }, []);
 
   useEffect(
@@ -56,7 +67,7 @@ function useWallet() {
         wallets.forEach((wallet, index) => {
           const onConnectStatusChanged = (connectStatus: ConnectStatus) => {
             if (connectStatus === 'disconnected') {
-              const connectedIndex = wallets.findIndex((w) => w.getConnectStatus === 'connected');
+              const connectedIndex = wallets.findIndex((w) => w.getConnectStatus() === 'connected');
               if (-1 === connectedIndex) {
                 setCurrentWalletIndex(null);
               } else {
@@ -100,3 +111,14 @@ export function useSigner(signer: Signer | undefined): SignerAddress {
 }
 
 export const WalletContainer = createContainer(useWallet);
+
+export const DisplayWalletName = (name: string | undefined): string => {
+  switch (name) {
+    case 'ObservableUnipassWallet':
+      return 'unipass';
+    case 'ObservableNonAcpPwLockWallet':
+      return 'metamask';
+    default:
+      return 'unknown';
+  }
+};

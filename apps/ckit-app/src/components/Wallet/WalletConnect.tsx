@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { WalletContainer } from 'containers/WalletContainer';
+import { WalletContainer, DisplayWalletName } from 'containers/WalletContainer';
 
 export const WalletConnectFC: React.FC = () => {
   const { currentWalletIndex, wallets, setModalVisible } = WalletContainer.useContainer();
@@ -10,7 +10,7 @@ export const WalletConnectFC: React.FC = () => {
     const walletName = wallets[currentWalletIndex]?.name;
     return (
       <Button size="small" type="primary" disabled>
-        Connected to {walletName}
+        connected to {DisplayWalletName(walletName)}
       </Button>
     );
   }

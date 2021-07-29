@@ -1,6 +1,6 @@
 import { HexString } from '@ckb-lumos/base';
 import { AbstractWallet, Signer } from '@ckit/base';
-import { makeObservable, computed, action, observable } from 'mobx';
+import { makeObservable, observable } from 'mobx';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
@@ -8,11 +8,6 @@ export class DummyWallet extends AbstractWallet {
     makeObservable(this, {
       connectStatus: observable,
       signer: observable,
-      getConnectStatus: computed,
-      getSigner: computed,
-      onConnectStatusChanged: action,
-      onSignerChanged: action,
-      connect: action,
     });
   }
 

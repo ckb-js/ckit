@@ -1,4 +1,4 @@
-import { Button, Empty, Space } from 'antd';
+import { Button, Col, Empty, Row } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useSigner, WalletContainer } from 'containers/WalletContainer';
@@ -8,24 +8,26 @@ const NervosExploreUrl = 'https://explorer.nervos.org/aggron/address/';
 export const WalletChange = observer(() => {
   const { wallets, currentWalletIndex, setModalVisible } = WalletContainer.useContainer();
   const wallet = currentWalletIndex === null ? undefined : wallets[currentWalletIndex];
-  console.log(wallet);
-  const signer = wallet?.getSigner;
+  const signer = wallet?.getSigner();
   const { address } = useSigner(signer);
   if (!address) return <Empty />;
   const truncatedAddress = truncateMiddle(address, 6);
   const href = NervosExploreUrl + address;
   return (
-    <div style={{ marginTop: '50px', marginBottom: '30px', textAlign: 'center' }}>
-      <Space>
-        <span style={{ margin: '0 auto', display: 'inline-block' }}>
+    <div style={{ marginTop: '56px', marginBottom: '24px', textAlign: 'center' }}>
+      <Row>
+        <Col span={8} />
+        <Col span={8}>
           <a href={href} target="_blank" rel="noreferrer">
             {truncatedAddress}
           </a>
-        </span>
-        <Button size="small" onClick={() => setModalVisible(true)}>
-          change
-        </Button>
-      </Space>
+        </Col>
+        <Col span={8}>
+          <Button size="small" onClick={() => setModalVisible(true)}>
+            change
+          </Button>
+        </Col>
+      </Row>
     </div>
   );
 });
