@@ -6,12 +6,11 @@ import { useSigner, WalletContainer } from 'containers/WalletContainer';
 const NervosExploreUrl = 'https://explorer.nervos.org/aggron/address/';
 
 export const WalletChange = observer(() => {
-  const { wallets, currentWalletIndex, setModalVisible } = WalletContainer.useContainer();
-  const wallet = currentWalletIndex === null ? undefined : wallets[currentWalletIndex];
-  const signer = wallet?.getSigner();
+  const { selectedWallet, setModalVisible } = WalletContainer.useContainer();
+  const signer = selectedWallet?.getSigner();
   const { address } = useSigner(signer);
   if (!address) return <Empty />;
-  const truncatedAddress = truncateMiddle(address, 6);
+  const truncatedAddress = truncateMiddle(address, 8);
   const href = NervosExploreUrl + address;
   return (
     <div style={{ marginTop: '56px', marginBottom: '24px', textAlign: 'center' }}>

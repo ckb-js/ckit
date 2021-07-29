@@ -11,7 +11,7 @@ import { CkitConfig, CkitProvider } from 'ckit/dist/providers/CkitProvider';
 import { randomHexString } from 'ckit/dist/utils';
 import { autorun } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { createContainer } from 'unstated-next';
 
 export type CurrentWalletIndex = number | null;
@@ -35,8 +35,14 @@ function useWallet() {
     setError(null);
   }, []);
 
+  const selectedWallet = useMemo(
+    () => (currentWalletIndex === null ? undefined : wallets[currentWalletIndex]),
+    [currentWalletIndex, wallets],
+  );
+
   useEffect(() => {
     const provider = new CkitProvider();
+    // TODO replace with env or config file
     const randomScriptConfig = (): ScriptConfig => ({
       HASH_TYPE: 'type',
       DEP_TYPE: 'code',
@@ -91,7 +97,16 @@ function useWallet() {
     [],
   );
 
-  return { currentWalletIndex, setCurrentWalletIndex, wallets, error, setError, visible, setModalVisible };
+  return {
+    currentWalletIndex,
+    setCurrentWalletIndex,
+    wallets,
+    selectedWallet,
+    error,
+    setError,
+    visible,
+    setModalVisible,
+  };
 }
 
 interface SignerAddress {
@@ -112,7 +127,7 @@ export function useSigner(signer: Signer | undefined): SignerAddress {
 
 export const WalletContainer = createContainer(useWallet);
 
-export const DisplayWalletName = (name: string | undefined): string => {
+export const displayWalletName = (name: string | undefined): string => {
   switch (name) {
     case 'ObservableUnipassWallet':
       return 'unipass';

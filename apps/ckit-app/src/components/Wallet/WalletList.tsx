@@ -4,7 +4,7 @@ import { List, Modal, Space, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import styled from 'styled-components';
-import { DisplayWalletName, WalletContainer } from 'containers/WalletContainer';
+import { displayWalletName, WalletContainer } from 'containers/WalletContainer';
 
 const ModalBorderWrapper = styled.div`
   .ant-list-item {
@@ -64,7 +64,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
     return (
       <div>
         <Space>
-          {DisplayWalletName(wallet.name)}
+          {displayWalletName(wallet.name)}
           <UsbOutlined />
         </Space>
         {error && error.index === index && <Typography.Text type="danger"> {error.error.message}</Typography.Text>}
@@ -75,7 +75,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
     return (
       <div>
         <Space>
-          {DisplayWalletName(wallet.name)}
+          {displayWalletName(wallet.name)}
           <SyncOutlined spin />
         </Space>
       </div>
@@ -84,7 +84,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
   return (
     <div>
       <Space>
-        {DisplayWalletName(wallet.name)}
+        {displayWalletName(wallet.name)}
         <CheckCircleTwoTone />
       </Space>
     </div>
