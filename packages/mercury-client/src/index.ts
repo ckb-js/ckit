@@ -1,4 +1,4 @@
-import { HexNumber, HexString, Script } from '@ckb-lumos/base';
+import { Hash, HexNumber, HexString, Script } from '@ckb-lumos/base';
 import { ResolvedOutpoint } from '@ckit/base';
 import { Client, HTTPTransport, RequestManager } from '@open-rpc/client-js';
 
@@ -20,6 +20,11 @@ interface GetPayloadResponse {
   objects: ResolvedOutpoint[];
 }
 
+export interface GetTipResponse {
+  block_hash: Hash;
+  block_number: HexNumber;
+}
+
 export class MercuryClient {
   private client: Client;
 
@@ -34,5 +39,9 @@ export class MercuryClient {
       method: 'get_cells',
       params: [search_key, order, limit, after_cursor],
     });
+  }
+
+  get_tip(): Promise<GetTipResponse> {
+    return this.client.request({ method: 'get_tip' });
   }
 }
