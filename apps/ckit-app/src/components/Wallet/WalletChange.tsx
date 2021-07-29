@@ -12,9 +12,9 @@ export const WalletChange = observer(() => {
   const truncatedAddress = truncateMiddle(address, 8);
   const href = NervosExploreUrl + address;
   return (
-    <div style={{ marginTop: '56px', marginBottom: '24px' }}>
+    <div style={{ marginTop: '48px', marginBottom: '24px' }}>
       <Row>
-        <Col span={8} offset={8}>
+        <Col span={8} offset={6}>
           <a href={href} target="_blank" rel="noreferrer">
             {truncatedAddress}
           </a>
