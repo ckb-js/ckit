@@ -1,9 +1,14 @@
 import { HexString } from '@ckb-lumos/base';
 import { AbstractWallet, Signer } from '@ckit/base';
+import { makeObservable, observable } from 'mobx';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
     super({ features: ['issue-sudt'] });
+    makeObservable(this, {
+      connectStatus: observable,
+      signer: observable,
+    });
   }
 
   connect(): void {
