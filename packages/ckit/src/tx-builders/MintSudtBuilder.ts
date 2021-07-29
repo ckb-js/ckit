@@ -9,7 +9,6 @@ import {
 } from '@ckb-lumos/helpers';
 import { Signer, TransactionBuilder } from '@ckit/base';
 import { MercuryProvider } from '../providers/MercuryProvider';
-import { unimplemented } from '../utils';
 
 type CapacityPolicy =
   // mint only when recipient has ACP cell
@@ -41,9 +40,9 @@ export class MintSudtBuilder implements TransactionBuilder {
   pwLockDep: CellDep;
   acpLockDep: CellDep;
   constructor(private options: MintOptions, private provider: MercuryProvider, private signer: Signer) {
-    this.sudtTypeDep = this.getCellDeps('sudtType');
-    this.pwLockDep = this.getCellDeps('pwLock');
-    this.acpLockDep = this.getCellDeps('acpLock');
+    this.sudtTypeDep = this.getCellDeps('SUDT');
+    this.pwLockDep = this.getCellDeps('PW_NON_ANYONE_CAN_PAY');
+    this.acpLockDep = this.getCellDeps('ANYONE_CAN_PAY');
   }
 
   getCellDeps(scriptKey: string): CellDep {
@@ -134,9 +133,9 @@ export class MintSudtBuilder implements TransactionBuilder {
     });
 
     const fromAddress = await this.signer.getAddress();
-    const fromLockScript = parseAddress(fromAddress);
+    const fromLockScript = this.provider.parseToScript(fromAddress);
     const fromLockScriptHash = utils.computeScriptHash(fromLockScript);
-    const sudtType = this.getScript('sudtType');
+    const sudtType = this.getScript('SUDT');
     sudtType.args = fromLockScriptHash;
 
     for (const recipietInfo of this.options.recipients) {

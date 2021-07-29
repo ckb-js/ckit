@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { Cell, CellDep, utils } from '@ckb-lumos/base';
 import { common } from '@ckb-lumos/common-scripts';
-import { ScriptConfigs } from '@ckb-lumos/config-manager';
+import { ScriptConfig, ScriptConfigs } from '@ckb-lumos/config-manager';
 import { key } from '@ckb-lumos/hd';
 import {
   minimalCellCapacity,
@@ -20,7 +20,7 @@ function calculateCodeHashByBin(scriptBin: Buffer): string {
   return new utils.CKBHasher().update(bin.buffer.slice(bin.byteOffset, bin.byteLength + bin.byteOffset)).digestHex();
 }
 
-async function loadSecp256k1ScriptDep(provider: MercuryProvider): Promise<CellDep> {
+async function loadSecp256k1Script(provider: MercuryProvider): Promise<ScriptConfig> {
   const genesisBlock = await provider.rpc.get_block_by_number('0x0');
 
   if (!genesisBlock) throw new Error('cannot load genesis block');
@@ -31,12 +31,14 @@ async function loadSecp256k1ScriptDep(provider: MercuryProvider): Promise<CellDe
   if (!secp256k1DepTxHash) throw new Error('Cannot load secp256k1 transaction');
   if (!typeScript) throw new Error('cannot load secp256k1 type script');
 
+  const secp256k1TypeHash = utils.computeScriptHash(typeScript);
+
   return {
-    out_point: {
-      tx_hash: secp256k1DepTxHash,
-      index: '0x0',
-    },
-    dep_type: 'dep_group',
+    HASH_TYPE: 'type',
+    CODE_HASH: secp256k1TypeHash,
+    INDEX: '0x0',
+    TX_HASH: secp256k1DepTxHash,
+    DEP_TYPE: 'dep_group',
   };
 }
 
@@ -47,7 +49,14 @@ async function deployScripts(
 ): Promise<ScriptConfigs> {
   let txSkeleton = TransactionSkeleton({ cellProvider: provider });
 
-  const secp256k1Dep = await loadSecp256k1ScriptDep(provider);
+  const secp256k1ScriptConfig = await loadSecp256k1Script(provider);
+  const secp256k1Dep = <CellDep>{
+    out_point: {
+      tx_hash: secp256k1ScriptConfig.TX_HASH,
+      index: secp256k1ScriptConfig.INDEX,
+    },
+    dep_type: secp256k1ScriptConfig.DEP_TYPE,
+  };
 
   const fromAddress = generateSecp256k1Blake160Address(key.privateKeyToBlake160(privateKey));
   const fromLockscript = parseAddress(fromAddress);
@@ -76,28 +85,29 @@ async function deployScripts(
   const txHash = await SignAndSendTransaction(provider, txSkeleton, privateKey);
 
   return {
-    sudt: {
+    SECP256K1_BLAKE160: secp256k1ScriptConfig,
+    SUDT: {
       CODE_HASH: calculateCodeHashByBin(nonNullable(scriptBins[0])),
       HASH_TYPE: 'data',
       TX_HASH: txHash,
       INDEX: '0x0',
       DEP_TYPE: 'code',
     },
-    acp: {
+    ANYONE_CAN_PAY: {
       CODE_HASH: calculateCodeHashByBin(nonNullable(scriptBins[1])),
       HASH_TYPE: 'data',
       TX_HASH: txHash,
       INDEX: '0x1',
       DEP_TYPE: 'code',
     },
-    pwAcp: {
+    PW_ANYONE_CAN_PAY: {
       CODE_HASH: calculateCodeHashByBin(nonNullable(scriptBins[2])),
       HASH_TYPE: 'data',
       TX_HASH: txHash,
       INDEX: '0x2',
       DEP_TYPE: 'code',
     },
-    pwNonAcp: {
+    PW_NON_ANYONE_CAN_PAY: {
       CODE_HASH: calculateCodeHashByBin(nonNullable(scriptBins[3])),
       HASH_TYPE: 'data',
       TX_HASH: txHash,
