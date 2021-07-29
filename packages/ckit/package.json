@@ -21,7 +21,8 @@
     "@ckit/mercury-client": "*",
     "@lay2/pw-core": "^0.4.0-alpha.8",
     "bignumber.js": "^9.0.1",
-    "eventemitter3": "^4.0.7"
+    "eventemitter3": "^4.0.7",
+    "rxjs": "^7.3.0"
   },
   "devDependencies": {
     "@ckit/tippy-client": "*",

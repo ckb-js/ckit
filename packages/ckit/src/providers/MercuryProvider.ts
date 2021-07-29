@@ -1,7 +1,9 @@
 import { Address, ChainInfo, Hash, HexNumber, Transaction } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
-import { MercuryClient } from '@ckit/mercury-client';
+import { MercuryClient, SearchKey } from '@ckit/mercury-client';
+import { toBigUInt128LE } from '@lay2/pw-core';
+import { concatMap, expand, firstValueFrom, from, reduce, scan, takeWhile } from 'rxjs';
 import { asyncSleep, unimplemented } from '../utils';
 
 export class MercuryProvider extends AbstractProvider {
@@ -33,12 +35,56 @@ export class MercuryProvider extends AbstractProvider {
     return this.rpc.send_transaction(tx);
   }
 
-  collectSudtCell(_lock: Address, _amount: HexNumber): Promise<ResolvedOutpoint[]> {
-    unimplemented();
+  async collectUdtCells(address: Address, udt: CkbTypeScript, minimalAmount: HexNumber): Promise<ResolvedOutpoint[]> {
+    const searchKey: SearchKey = {
+      script: this.parseToScript(address),
+      filter: { script: udt },
+      script_type: 'lock',
+    };
+
+    const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
+      expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor })),
+      takeWhile((res) => res.objects.length > 0),
+      concatMap((res) => res.objects),
+      scan(
+        (acc, resolvedCell) => ({
+          cells: acc.cells.concat(resolvedCell),
+          amount: acc.amount + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))),
+        }),
+        { amount: 0n, cells: [] } as { amount: bigint; cells: ResolvedOutpoint[] },
+      ),
+      takeWhile((acc) => acc.amount < BigInt(minimalAmount)),
+    );
+
+    const acc = await firstValueFrom(cells$);
+
+    if (acc.amount < BigInt(minimalAmount)) {
+      throw new Error(`The udt cell is not enough, expected minimal amount: ${minimalAmount}, actual: ${acc.amount}`);
+    }
+
+    return acc.cells;
   }
 
-  getUdtBalance(_lock: Address, _udt: CkbTypeScript): Promise<HexNumber> {
-    unimplemented();
+  getUdtBalance(address: Address, udt: CkbTypeScript): Promise<HexNumber> {
+    const searchKey: SearchKey = {
+      script: this.parseToScript(address),
+      filter: { script: udt },
+      script_type: 'lock',
+    };
+
+    const balance$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
+      expand((res) =>
+        this.mercury.get_cells({
+          search_key: searchKey,
+          after_cursor: res.last_cursor,
+        }),
+      ),
+      takeWhile((res) => res.objects.length > 0),
+      concatMap((res) => res.objects),
+      reduce((acc, resolvedCell) => acc + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))), 0n),
+    );
+
+    return firstValueFrom(balance$).then((x) => String(x));
   }
 
   async waitForTransactionCommitted(
