@@ -40,7 +40,7 @@ export abstract class AbstractProvider implements Provider {
   }
 
   parseToScript(address: Address): Script {
-    return parseAddress(address);
+    return parseAddress(address, { config: this.config });
   }
 
   abstract getChainInfo(): Promise<ChainInfo>;

@@ -4,8 +4,13 @@ import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventLi
 type Options = Partial<WalletDescriptor>;
 
 export abstract class AbstractConnectableWallet implements WalletConnector {
+  // do **NOT** change the value manually
+  // use {@link getConnectStatus} instead of
   connectStatus: ConnectStatus = 'disconnected';
+  // do **NOT** change the value manually
+  // use {@link getSigner} instead of
   signer: Signer | undefined;
+
   private readonly emitter: EventEmitter;
 
   protected constructor() {
@@ -27,12 +32,12 @@ export abstract class AbstractConnectableWallet implements WalletConnector {
     return this.signer;
   }
 
-  onConnectStatusChanged(status: ConnectStatus): void {
+  protected onConnectStatusChanged(status: ConnectStatus): void {
     this.connectStatus = status;
     this.emitter.emit('connectStatusChanged', status);
   }
 
-  onSignerChanged(signer: Signer): void {
+  protected onSignerChanged(signer: Signer): void {
     this.signer = signer;
     this.emitter.emit('signerChanged', signer);
   }
