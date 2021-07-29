@@ -26,3 +26,7 @@ export function nonNullable<X>(x: X): NonNullable<X> {
   if (x == null) throw new Error('Null check failed');
   return x as NonNullable<X>;
 }
+
+export function bytesToHex(bytes: Uint8Array): string {
+  return `0x${[...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
+}

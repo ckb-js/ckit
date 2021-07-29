@@ -1,6 +1,8 @@
 name: Lint And Test
 
 on: [ pull_request, push ]
+env:
+  DEBUG: ckit-*
 
 jobs:
   lint:
