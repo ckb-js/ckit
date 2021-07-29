@@ -1,9 +1,12 @@
+import fs from 'fs';
 import { HexNumber, HexString } from '@ckb-lumos/base';
-import { Config, predefined } from '@ckb-lumos/config-manager';
+import { predefined } from '@ckb-lumos/config-manager';
+import { debug } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
 import appRootPath from 'app-root-path';
-import { CkitProvider } from '../providers/CkitProvider';
-import { nonNullable, randomHexString, unimplemented } from '../utils';
+import { deployCkbScripts } from '../__tests__/deploy';
+import { CkitConfig, CkitProvider } from '../providers/CkitProvider';
+import { nonNullable } from '../utils';
 
 export class TestProvider extends CkitProvider {
   readonly #_assemberPrivateKey: HexString;
@@ -11,9 +14,9 @@ export class TestProvider extends CkitProvider {
 
   constructor() {
     super();
-    this.#_assemberPrivateKey = randomHexString(64);
-
-    void this.deployDeps();
+    // ba_args: 0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7
+    // it is the default tippy ba_args
+    this.#_assemberPrivateKey = '0xd00c06bfd800d27397002dca6fb0993d5ba6399b4238b2f29ee9deb97593d2bc';
   }
 
   override async init(): Promise<void> {
@@ -25,14 +28,24 @@ export class TestProvider extends CkitProvider {
     return this.#_assemberPrivateKey;
   }
 
-  private async deployDeps(): Promise<Config> {
+  private async deployDeps(): Promise<CkitConfig> {
     if (this.setupStatus === 'pending' || this.setupStatus === 'fulfilled') throw new Error('is deploying');
 
     this.setupStatus = 'pending';
 
-    // TODO deploy deps
-    console.log(appRootPath + '/deps');
-    unimplemented();
+    const deployedCachePath = appRootPath.resolve('/tmp/lumos-config.json');
+    const cachedDeployConfig = fs.existsSync(deployedCachePath);
+    if (cachedDeployConfig) {
+      this.setupStatus = 'fulfilled';
+      const lumosConfig = JSON.parse(fs.readFileSync(deployedCachePath).toString()).lumosConfig as CkitConfig;
+      debug('deploy info from cache %o', lumosConfig);
+      return lumosConfig;
+    }
+
+    const scripts = await deployCkbScripts(appRootPath.resolve('/deps/build'), this, this.#_assemberPrivateKey);
+    const config = { PREFIX: 'ckt', SCRIPTS: scripts };
+    fs.writeFileSync(deployedCachePath, JSON.stringify(config, null, 2));
+    return config;
   }
 }
 

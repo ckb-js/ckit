@@ -20,3 +20,6 @@ packages/*/dist
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# temp files, for testing and debuggin
+tmp

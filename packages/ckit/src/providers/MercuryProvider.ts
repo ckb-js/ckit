@@ -5,6 +5,7 @@ import { MercuryClient, SearchKey } from '@ckit/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { concatMap, expand, firstValueFrom, from, reduce, scan, takeWhile } from 'rxjs';
 import { asyncSleep, unimplemented } from '../utils';
+import { MercuryCellProvider } from './mercury/IndexerCellProvider';
 
 export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;
@@ -91,16 +92,34 @@ export class MercuryProvider extends AbstractProvider {
     txHash: string,
     options: { pollIntervalMs?: number; timeoutMs?: number } = {},
   ): Promise<Transaction | null> {
-    const { pollIntervalMs = 3000, timeoutMs = 60000 } = options;
+    const { pollIntervalMs = 1000, timeoutMs = 60000 } = options;
     const start = Date.now();
+
+    let result: Transaction | null = null;
 
     while (Date.now() - start <= timeoutMs) {
       const tx = await this.rpc.get_transaction(txHash);
-      if (tx?.tx_status?.status === 'committed') return tx.transaction;
+      if (tx?.tx_status?.status === 'committed') {
+        result = tx.transaction;
+        break;
+      }
 
       await asyncSleep(pollIntervalMs);
     }
 
-    return null;
+    const rpcTip = Number(await this.rpc.get_tip_block_number());
+
+    while (Date.now() - start <= timeoutMs) {
+      const mercuryTip = await this.mercury.get_tip();
+      if (Number(mercuryTip.block_number) >= rpcTip) break;
+
+      await asyncSleep(pollIntervalMs);
+    }
+
+    return result;
+  }
+
+  asIndexerCellProvider(): MercuryCellProvider {
+    return new MercuryCellProvider(this.mercury);
   }
 }
