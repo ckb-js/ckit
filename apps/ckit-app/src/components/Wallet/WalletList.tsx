@@ -34,10 +34,10 @@ export const WalletList = observer(() => {
             <List.Item
               onClick={() => {
                 setError(null);
-                if (item.getConnectStatus() === 'disconnected') {
+                if (item.connectStatus === 'disconnected') {
                   item.connect();
                 }
-                if (item.getConnectStatus() === 'connected') {
+                if (item.connectStatus === 'connected') {
                   setCurrentWalletIndex(index);
                   setModalVisible(false);
                 }
@@ -60,7 +60,7 @@ export interface WalletListItemProps {
 export const WalletListItem = observer((props: WalletListItemProps) => {
   const { wallet, index } = props;
   const { error } = WalletContainer.useContainer();
-  if (wallet.getConnectStatus() === 'disconnected') {
+  if (wallet.connectStatus === 'disconnected') {
     return (
       <div>
         <Space>
@@ -71,7 +71,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
       </div>
     );
   }
-  if (wallet.getConnectStatus() === 'connecting') {
+  if (wallet.connectStatus === 'connecting') {
     return (
       <div>
         <Space>

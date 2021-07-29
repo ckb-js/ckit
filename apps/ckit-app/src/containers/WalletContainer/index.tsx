@@ -73,7 +73,7 @@ function useWallet() {
         wallets.forEach((wallet, index) => {
           const onConnectStatusChanged = (connectStatus: ConnectStatus) => {
             if (connectStatus === 'disconnected') {
-              const connectedIndex = wallets.findIndex((w) => w.getConnectStatus() === 'connected');
+              const connectedIndex = wallets.findIndex((w) => w.connectStatus === 'connected');
               if (-1 === connectedIndex) {
                 setCurrentWalletIndex(null);
               } else {

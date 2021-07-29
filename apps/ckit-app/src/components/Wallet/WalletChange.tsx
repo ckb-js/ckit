@@ -7,8 +7,7 @@ const NervosExploreUrl = 'https://explorer.nervos.org/aggron/address/';
 
 export const WalletChange = observer(() => {
   const { selectedWallet, setModalVisible } = WalletContainer.useContainer();
-  const signer = selectedWallet?.getSigner();
-  const { address } = useSigner(signer);
+  const { address } = useSigner(selectedWallet?.signer);
   if (!address) return <Empty />;
   const truncatedAddress = truncateMiddle(address, 8);
   const href = NervosExploreUrl + address;
