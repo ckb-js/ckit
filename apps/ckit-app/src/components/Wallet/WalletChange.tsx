@@ -13,15 +13,14 @@ export const WalletChange = observer(() => {
   const truncatedAddress = truncateMiddle(address, 8);
   const href = NervosExploreUrl + address;
   return (
-    <div style={{ marginTop: '56px', marginBottom: '24px', textAlign: 'center' }}>
+    <div style={{ marginTop: '56px', marginBottom: '24px' }}>
       <Row>
-        <Col span={8} />
-        <Col span={8}>
+        <Col span={8} offset={8}>
           <a href={href} target="_blank" rel="noreferrer">
             {truncatedAddress}
           </a>
         </Col>
-        <Col span={8}>
+        <Col span={5} offset={3}>
           <Button size="small" onClick={() => setModalVisible(true)}>
             change
           </Button>
