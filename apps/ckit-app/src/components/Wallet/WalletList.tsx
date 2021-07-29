@@ -1,6 +1,6 @@
 import { SyncOutlined, CheckCircleTwoTone, UsbOutlined } from '@ant-design/icons';
 import { AbstractWallet } from '@ckit/base';
-import { List, Modal, Space } from 'antd';
+import { List, Modal, Space, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import styled from 'styled-components';
@@ -21,7 +21,7 @@ const ModalBorderWrapper = styled.div`
 `;
 
 export const WalletList = observer(() => {
-  const { wallets, visible, setCurrentWalletIndex, setModalVisible } = WalletContainer.useContainer();
+  const { wallets, visible, setCurrentWalletIndex, setError, setModalVisible } = WalletContainer.useContainer();
 
   return (
     <Modal closable width={312} visible={visible} onCancel={() => setModalVisible(false)} footer={null}>
@@ -32,6 +32,7 @@ export const WalletList = observer(() => {
           renderItem={(item, index) => (
             <List.Item
               onClick={() => {
+                setError(null);
                 if (item.getConnectStatus === 'disconnected') {
                   item.connect();
                 }
@@ -41,7 +42,7 @@ export const WalletList = observer(() => {
                 }
               }}
             >
-              <WalletListItem wallet={item} />
+              <WalletListItem wallet={item} index={index} />
             </List.Item>
           )}
         />
@@ -52,10 +53,12 @@ export const WalletList = observer(() => {
 
 export interface WalletListItemProps {
   wallet: AbstractWallet;
+  index: number;
 }
 
 export const WalletListItem = observer((props: WalletListItemProps) => {
-  const { wallet } = props;
+  const { wallet, index } = props;
+  const { error } = WalletContainer.useContainer();
   if (wallet.getConnectStatus === 'disconnected') {
     return (
       <div>
@@ -63,6 +66,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
           {wallet.name}
           <UsbOutlined />
         </Space>
+        {error && error.index === index && <Typography.Text type="danger"> {error.error.message}</Typography.Text>}
       </div>
     );
   }
@@ -71,7 +75,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
       <div>
         <Space>
           {wallet.name}
-          <SyncOutlined />
+          <SyncOutlined spin />
         </Space>
       </div>
     );

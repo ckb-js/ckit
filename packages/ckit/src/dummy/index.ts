@@ -3,8 +3,8 @@ import { AbstractWallet, Signer } from '@ckit/base';
 import { makeObservable, computed, action, observable } from 'mobx';
 
 export class DummyWallet extends AbstractWallet {
-  constructor(name: string | undefined = undefined) {
-    super({ features: ['issue-sudt'], name: name });
+  constructor() {
+    super({ features: ['issue-sudt'] });
     makeObservable(this, {
       connectStatus: observable,
       signer: observable,

@@ -2,6 +2,7 @@ import { HexString } from '@ckb-lumos/base';
 import { AbstractWallet, Signer } from '@ckit/base';
 import { EthProvider, Provider as PwProvider } from '@lay2/pw-core';
 import { CkitProvider } from '../providers/CkitProvider';
+import { computed, makeObservable, observable } from 'mobx';
 
 export class NonAcpPwLockWallet extends AbstractWallet {
   private readonly pwProvider: PwProvider;
@@ -19,6 +20,12 @@ export class NonAcpPwLockWallet extends AbstractWallet {
       }
 
       this.onSignerChanged(new NonAcpPwLockSigner(this.ckitProvider, this.pwProvider));
+    });
+    makeObservable(this, {
+      connectStatus: observable,
+      signer: observable,
+      getConnectStatus: computed,
+      getSigner: computed,
     });
   }
 

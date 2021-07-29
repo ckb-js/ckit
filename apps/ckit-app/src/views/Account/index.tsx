@@ -5,12 +5,12 @@ import { WalletList, WalletChange, WalletConnect } from 'components/Wallet';
 export const AccountView: React.FC = () => {
   return (
     <StyledCardWrapper>
-      <p style={{ marginBottom: '36px' }}>
+      <div style={{ marginBottom: '36px' }}>
         <strong> Account </strong>
         <span style={{ float: 'right' }}>
           <WalletConnect />
         </span>
-      </p>
+      </div>
       <WalletList />
       <WalletChange />
     </StyledCardWrapper>

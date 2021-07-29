@@ -1,8 +1,7 @@
-import { Button, ButtonProps } from 'antd';
-import { Signer } from 'ckit';
+import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
-import { useSigner, WalletContainer } from 'containers/WalletContainer';
+import React from 'react';
+import { WalletContainer } from 'containers/WalletContainer';
 
 export const WalletConnectFC: React.FC = () => {
   const { currentWalletIndex, wallets, setModalVisible } = WalletContainer.useContainer();

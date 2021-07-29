@@ -8,6 +8,7 @@ const NervosExploreUrl = 'https://explorer.nervos.org/aggron/address/';
 export const WalletChange = observer(() => {
   const { wallets, currentWalletIndex, setModalVisible } = WalletContainer.useContainer();
   const wallet = currentWalletIndex === null ? undefined : wallets[currentWalletIndex];
+  console.log(wallet);
   const signer = wallet?.getSigner;
   const { address } = useSigner(signer);
   if (!address) return <Empty />;

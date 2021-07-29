@@ -19,11 +19,11 @@ export abstract class AbstractConnectableWallet implements WalletConnector {
     this.emitter.removeAllListeners();
   }
 
-  get getConnectStatus(): ConnectStatus {
+  getConnectStatus(): ConnectStatus {
     return this.connectStatus;
   }
 
-  get getSigner(): Signer | undefined {
+  getSigner(): Signer | undefined {
     return this.signer;
   }
 
