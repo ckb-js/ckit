@@ -8,10 +8,6 @@ export interface CkitConfig extends Config {
     SUDT: ScriptConfig;
     PW_NON_ANYONE_CAN_PAY: ScriptConfig;
     PW_ANYONE_CAN_PAY: ScriptConfig;
-    /**
-     * **WARNING**: only for test
-     */
-    ALWAYS_SUCCESS: ScriptConfig;
   };
 }
 
