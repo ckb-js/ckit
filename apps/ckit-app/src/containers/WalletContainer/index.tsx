@@ -54,7 +54,6 @@ function useWallet() {
     const config: CkitConfig = {
       PREFIX: 'ckt',
       SCRIPTS: {
-        ALWAYS_SUCCESS: randomScriptConfig(),
         ANYONE_CAN_PAY: randomScriptConfig(),
         PW_NON_ANYONE_CAN_PAY: randomScriptConfig(),
         PW_ANYONE_CAN_PAY: randomScriptConfig(),
