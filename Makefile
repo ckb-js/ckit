@@ -4,7 +4,7 @@ test-ckit-app:
 	#yarn workspace ckit-app run test
 
 test-lib:
-	yarn jest
+	DEBUG=ckit,ckit-* yarn jest --verbose false
 
 lint: lint-lib lint-app
 
@@ -25,3 +25,13 @@ build-app:
 clean:
 	yarn rimraf packages/*/dist
 	yarn rimraf apps/*/dist
+
+start-docker:
+	cd docker && docker-compose up -d
+
+stop-docker:
+	cd docker && docker-compose down
+
+github-ci: build-lib lint stop-docker start-docker
+	test -d tmp && mv tmp tmp-$$(date '+%Y%m%d%H%M%S') || :
+	make test

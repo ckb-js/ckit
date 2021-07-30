@@ -6,8 +6,8 @@ import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
 
 // TODO remove skip when docker available in ci
-test.skip('test mint and transfer', async () => {
-  jest.setTimeout(60000);
+test('test mint and transfer', async () => {
+  jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
 
