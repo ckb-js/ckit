@@ -1,4 +1,4 @@
-name: Lint And Test
+name: github-ci
 
 on: [ pull_request, push ]
 env:

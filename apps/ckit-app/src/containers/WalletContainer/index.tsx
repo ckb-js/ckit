@@ -1,17 +1,18 @@
 import { ScriptConfig } from '@ckb-lumos/config-manager';
 import {
   AbstractWallet,
+  CkitConfig,
+  CkitProvider,
   ConnectStatus,
+  ObservableNonAcpPwLockWallet,
+  ObservableUnipassWallet,
   Signer,
   dummy,
-  ObservableUnipassWallet,
-  ObservableNonAcpPwLockWallet,
 } from 'ckit';
-import { CkitConfig, CkitProvider } from 'ckit/dist/providers/CkitProvider';
 import { randomHexString } from 'ckit/dist/utils';
 import { autorun } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createContainer } from 'unstated-next';
 
 export type CurrentWalletIndex = number | null;

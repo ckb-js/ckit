@@ -1,5 +1,7 @@
 # ckit
 
+[![Github CI](https://github.com/homura/ckit/actions/workflows/ci.yml/badge.svg)](https://github.com/homura/ckit/actions/workflows/ci.yml)
+
 CKB kit
 
 ## Development

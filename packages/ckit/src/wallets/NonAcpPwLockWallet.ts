@@ -1,7 +1,8 @@
 import { HexString } from '@ckb-lumos/base';
+import { key } from '@ckb-lumos/hd';
 import { AbstractWallet, Signer } from '@ckit/base';
-import { EthProvider, Provider as PwProvider } from '@lay2/pw-core';
-import { CkitProvider } from '../providers/CkitProvider';
+import { EthProvider, Provider as PwProvider, Keccak256Hasher, Platform } from '@lay2/pw-core';
+import { CkitProvider } from '../providers';
 
 export class NonAcpPwLockWallet extends AbstractWallet {
   private readonly pwProvider: PwProvider;
@@ -55,5 +56,36 @@ export class NonAcpPwLockSigner implements Signer {
 
   signMessage(message: HexString): Promise<HexString> {
     return this.pwProvider.sign(message);
+  }
+}
+
+export function hashMessage(message: HexString): string {
+  // https://github.com/XuJiandong/pw-lock/blob/develop/c/pw_chain_ethereum.h#L43
+  return new Keccak256Hasher().update('\x19Ethereum Signed Message:\n32').update(message).digest().serializeJson();
+}
+
+export class InternalNonAcpPwLockSigner implements Signer {
+  readonly #privateKey: HexString;
+  constructor(privateKey: HexString, private ckitProvider: CkitProvider) {
+    this.#privateKey = privateKey;
+  }
+
+  async getAddress(): Promise<string> {
+    const config = this.ckitProvider.getScriptConfig('PW_NON_ANYONE_CAN_PAY');
+    return this.ckitProvider.parseToAddress({
+      code_hash: config.CODE_HASH,
+      hash_type: config.HASH_TYPE,
+      args: this.#privateKey,
+    });
+  }
+
+  async signMessage(message: HexString): Promise<HexString> {
+    let result = hashMessage(message);
+    result = key.signRecoverable(result, this.#privateKey);
+
+    let v = Number.parseInt(result.slice(-2), 16);
+    if (v >= 27) v -= 27;
+    result = '0x' + Platform.eth.toString(16).padStart(2, '0') + result.slice(2, -2) + v.toString(16).padStart(2, '0');
+    return result;
   }
 }

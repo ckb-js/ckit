@@ -4,9 +4,9 @@ import { predefined } from '@ckb-lumos/config-manager';
 import { debug } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
 import appRootPath from 'app-root-path';
-import { deployCkbScripts } from '../__tests__/deploy';
-import { CkitConfig, CkitProvider } from '../providers/CkitProvider';
+import { CkitConfig, CkitProvider } from '../providers';
 import { nonNullable } from '../utils';
+import { deployCkbScripts } from './deploy';
 
 export class TestProvider extends CkitProvider {
   readonly #_assemberPrivateKey: HexString;
