@@ -1,5 +1,5 @@
 import { Config, ScriptConfig } from '@ckb-lumos/config-manager';
-import { MercuryProvider } from './MercuryProvider';
+import { MercuryProvider } from './mercury/MercuryProvider';
 
 export interface CkitConfig extends Config {
   SCRIPTS: {

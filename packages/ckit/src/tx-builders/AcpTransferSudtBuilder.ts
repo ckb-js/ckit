@@ -1,6 +1,6 @@
 import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
 import { CkbTypeScript, Signer, TransactionBuilder } from '@ckit/base';
-import { MercuryProvider } from '../providers/MercuryProvider';
+import { MercuryProvider } from '../providers';
 import { unimplemented } from '../utils';
 
 interface TransferOptions {

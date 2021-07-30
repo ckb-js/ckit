@@ -20,7 +20,7 @@ function calculateCodeHashByBin(scriptBin: Buffer): string {
   return new utils.CKBHasher().update(bin.buffer.slice(bin.byteOffset, bin.byteLength + bin.byteOffset)).digestHex();
 }
 
-async function loadSecp256k1ScriptDep(provider: CkitProvider): Promise<ScriptConfig> {
+export async function loadSecp256k1ScriptDep(provider: CkitProvider): Promise<ScriptConfig> {
   const genesisBlock = await provider.rpc.get_block_by_number('0x0');
 
   if (!genesisBlock) throw new Error('cannot load genesis block');

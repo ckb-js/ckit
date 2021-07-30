@@ -1,2 +1,2 @@
-export * from './MercuryProvider';
+export * from './mercury/MercuryProvider';
 export * from './CkitProvider';
