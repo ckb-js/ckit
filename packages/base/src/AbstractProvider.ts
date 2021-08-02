@@ -44,6 +44,6 @@ export abstract class AbstractProvider implements Provider {
   }
 
   abstract getChainInfo(): Promise<ChainInfo>;
-  abstract collectCkbLiveCell(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+  abstract collectCkbLiveCells(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
   abstract sendTransaction(tx: Transaction): Promise<Hash>;
 }
