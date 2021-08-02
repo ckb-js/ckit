@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { WalletContainer } from 'containers/WalletContainer';
-import { AccountView } from 'views/Account';
+import { CkitProviderContainer, WalletContainer } from 'containers';
+import { AccountView, IssueView } from 'views';
 
 import './App.less';
 
@@ -16,13 +16,16 @@ const BodyWrapper = styled.div`
 
 const App: React.FC = () => {
   return (
-    <WalletContainer.Provider>
-      <BodyWrapper>
-        <div className="app">
-          <AccountView />
-        </div>
-      </BodyWrapper>
-    </WalletContainer.Provider>
+    <CkitProviderContainer.Provider>
+      <WalletContainer.Provider>
+        <BodyWrapper>
+          <div className="app">
+            <AccountView />
+            <IssueView />
+          </div>
+        </BodyWrapper>
+      </WalletContainer.Provider>
+    </CkitProviderContainer.Provider>
   );
 };
 

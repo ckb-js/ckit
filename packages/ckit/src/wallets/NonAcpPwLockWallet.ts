@@ -9,7 +9,7 @@ export class NonAcpPwLockWallet extends AbstractWallet {
   private readonly ckitProvider: CkitProvider;
 
   constructor(ckitProvider: CkitProvider) {
-    super();
+    super({ features: ['issue-sudt'] });
     this.ckitProvider = ckitProvider;
 
     // FIXME the PwEthProvider has a bug when all accounts are disconnected
