@@ -42,7 +42,6 @@ export class MercuryProvider extends AbstractProvider {
       filter: { script: udt },
       script_type: 'lock',
     };
-
     const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
       expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor })),
       takeWhile((res) => res.objects.length > 0),
@@ -54,7 +53,7 @@ export class MercuryProvider extends AbstractProvider {
         }),
         { amount: 0n, cells: [] } as { amount: bigint; cells: ResolvedOutpoint[] },
       ),
-      takeWhile((acc) => acc.amount < BigInt(minimalAmount)),
+      takeWhile((acc) => acc.amount < BigInt(minimalAmount), true),
     );
 
     const acc = await firstValueFrom(cells$);
@@ -66,7 +65,7 @@ export class MercuryProvider extends AbstractProvider {
     return acc.cells;
   }
 
-  getUdtBalance(address: Address, udt: CkbTypeScript): Promise<HexNumber> {
+  async getUdtBalance(address: Address, udt: CkbTypeScript): Promise<HexNumber> {
     const searchKey: SearchKey = {
       script: this.parseToScript(address),
       filter: { script: udt },
@@ -84,7 +83,6 @@ export class MercuryProvider extends AbstractProvider {
       concatMap((res) => res.objects),
       reduce((acc, resolvedCell) => acc + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))), 0n),
     );
-
     return firstValueFrom(balance$).then((x) => String(x));
   }
 
