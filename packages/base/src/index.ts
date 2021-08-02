@@ -53,7 +53,7 @@ export interface Provider {
    * @param lock
    * @param capacity
    */
-  collectCkbLiveCell(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+  collectCkbLiveCells(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
 
   /**
    * send a signed transaction to a ckb node
