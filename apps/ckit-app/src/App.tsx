@@ -1,4 +1,5 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import styled from 'styled-components';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { AccountView, IssueView } from 'views';
@@ -15,17 +16,21 @@ const BodyWrapper = styled.div`
 `;
 
 const App: React.FC = () => {
+  const queryClient = new QueryClient();
+
   return (
-    <CkitProviderContainer.Provider>
-      <WalletContainer.Provider>
-        <BodyWrapper>
-          <div className="app">
-            <AccountView />
-            <IssueView />
-          </div>
-        </BodyWrapper>
-      </WalletContainer.Provider>
-    </CkitProviderContainer.Provider>
+    <QueryClientProvider client={queryClient}>
+      <CkitProviderContainer.Provider>
+        <WalletContainer.Provider>
+          <BodyWrapper>
+            <div className="app">
+              <AccountView />
+              <IssueView />
+            </div>
+          </BodyWrapper>
+        </WalletContainer.Provider>
+      </CkitProviderContainer.Provider>
+    </QueryClientProvider>
   );
 };
 

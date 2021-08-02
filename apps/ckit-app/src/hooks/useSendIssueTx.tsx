@@ -1,55 +1,68 @@
-// import { Modal } from 'antd';
-// import React from 'react';
-// import { useMutation, UseMutationResult } from 'react-query';
-// import { WalletContainer } from 'containers/WalletContainer';
-// import { MintSudtBuilder } from 'ckit';
-// import { Address, HexNumber, Hash } from '@ckb-lumos/base';
-//
-// export interface SendIssueTxInput {
-//   recipient: Address;
-//   amount: HexNumber;
-// }
-//
-// export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, SendIssueTxInput> {
-//   const { selectedWallet } = WalletContainer.useContainer();
-//
-//   return useMutation(
-//     ['sendIssueTx'],
-//     async (input: SendIssueTxInput) => {
-//       if (!selectedWallet?.signer) throw new Error('exception: signer not set');
-//       const txBuilder = new MintSudtBuilder(
-//         { recipients: [{ recipient: input.recipient, amount: input.amount }] },
-//         selectedWallet.ckitProvider,
-//         selectedWallet.signer,
-//       );
-//       const issueTx = await txBuilder.build();
-//       const txHash = await selectedWallet.ckitProvider.sendTransaction(issueTx);
-//       return { txHash: txHash };
-//     },
-//     {
-//       onSuccess({ txHash }) {
-//         const fromNetwork = direction === BridgeDirection.In ? network : NERVOS_NETWORK;
-//
-//         Modal.success({
-//           title: 'Bridge Tx sent',
-//           content: (
-//             <p>
-//               The transaction was sent, check it in&nbsp;
-//               <TransactionLink network={fromNetwork} txId={txId}>
-//                 explorer
-//               </TransactionLink>
-//               <details>
-//                 <summary>transaction id</summary>
-//                 {txId}
-//               </details>
-//             </p>
-//           ),
-//         });
-//       },
-//       onError(error) {
-//         const errorMsg: string = utils.hasProp(error, 'message') ? String(error.message) : 'Unknown error';
-//         Modal.error({ title: 'Tx failed', content: errorMsg, width: 360 });
-//       },
-//     },
-//   );
-// }
+import { Address, HexNumber, Hash } from '@ckb-lumos/base';
+import { Modal } from 'antd';
+import { MintSudtBuilder, RecipientOptions } from 'ckit';
+import React from 'react';
+import { useMutation, UseMutationResult } from 'react-query';
+import { useConfigStorage } from './useConfigStorage';
+import { CkitProviderContainer, WalletContainer } from 'containers';
+import { hasProp } from 'utils';
+
+export interface SendIssueTxInput {
+  recipient: Address;
+  amount: HexNumber;
+  operationKind: 'invite' | 'issue';
+  setModalVisible: (visible: boolean) => void;
+}
+
+export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, SendIssueTxInput> {
+  const { selectedWallet } = WalletContainer.useContainer();
+  const ckitProvider = CkitProviderContainer.useContainer();
+  const [localConfig] = useConfigStorage();
+
+  return useMutation(
+    ['sendIssueTx'],
+    async (input: SendIssueTxInput) => {
+      if (!selectedWallet?.signer) throw new Error('exception: signer not set');
+      if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
+
+      const recipientsParams: RecipientOptions = {
+        recipient: input.recipient,
+        amount: input.amount,
+      };
+      if (input.operationKind === 'invite') {
+        recipientsParams.capacityPolicy = 'createAcp';
+      } else {
+        recipientsParams.capacityPolicy = 'findAcp';
+      }
+      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, selectedWallet.signer);
+      const issueTx = await txBuilder.build();
+      const txHash = await ckitProvider.sendTransaction(issueTx);
+      input.setModalVisible(false);
+      return { txHash: txHash };
+    },
+    {
+      onSuccess({ txHash }) {
+        const href = localConfig.nervosExploreTxUrlPrefix + txHash;
+        Modal.success({
+          title: 'Tx sent',
+          content: (
+            <p>
+              The transaction was sent, check it in&nbsp;
+              <a href={href} target="_blank" rel="noreferrer">
+                explorer
+              </a>
+              <details>
+                <summary>transaction id</summary>
+                {txHash}
+              </details>
+            </p>
+          ),
+        });
+      },
+      onError(error) {
+        const errorMsg: string = hasProp(error, 'message') ? String(error.message) : 'Unknown error';
+        Modal.error({ title: 'Tx failed', content: errorMsg, width: 360 });
+      },
+    },
+  );
+}

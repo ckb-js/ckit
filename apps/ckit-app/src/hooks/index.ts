@@ -1,1 +1,2 @@
-// export * from './useSendIssueTx';
+export * from './useSendIssueTx';
+export * from './useConfigStorage';

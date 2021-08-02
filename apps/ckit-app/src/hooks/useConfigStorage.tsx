@@ -8,6 +8,8 @@ export interface LocalConfig {
   ckitConfig: CkitConfig;
   mecuryRPC: string;
   ckbRPC: string;
+  nervosExploreTxUrlPrefix: string;
+  nervosExploreAddressUrlPrefix: string;
 }
 
 export function useConfigStorage(): [LocalConfig, (newValue: LocalConfig) => void, () => void] {
@@ -32,7 +34,15 @@ export function useConfigStorage(): [LocalConfig, (newValue: LocalConfig) => voi
     };
     const mecuryRPC = 'http://127.0.0.1:8116';
     const ckbRPC = 'http://127.0.0.1:8114';
-    return { ckitConfig: ckitConfig, mecuryRPC: mecuryRPC, ckbRPC: ckbRPC };
+    const nervosExploreTxUrlPrefix = 'https://explorer.nervos.org/aggron/transaction/';
+    const nervosExploreAddressUrlPrefix = 'https://explorer.nervos.org/aggron/address/';
+    return {
+      ckitConfig: ckitConfig,
+      mecuryRPC: mecuryRPC,
+      ckbRPC: ckbRPC,
+      nervosExploreTxUrlPrefix: nervosExploreTxUrlPrefix,
+      nervosExploreAddressUrlPrefix: nervosExploreAddressUrlPrefix,
+    };
   }, []);
 
   return useLocalStorage<LocalConfig>('localConfig', initialConfig);
