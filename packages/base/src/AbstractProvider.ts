@@ -1,4 +1,4 @@
-import { Address, ChainInfo, Hash, HexNumber, Script, Transaction } from '@ckb-lumos/base';
+import { Address, CellDep, ChainInfo, Hash, HexNumber, HexString, Script, Transaction } from '@ckb-lumos/base';
 import { predefined, Config, ScriptConfig } from '@ckb-lumos/config-manager';
 import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { Provider, ResolvedOutpoint } from './';
@@ -14,6 +14,23 @@ export abstract class AbstractProvider implements Provider {
 
   getScriptConfig(key: string): ScriptConfig | undefined {
     return this.config.SCRIPTS[key];
+  }
+
+  newScript(configKey: string, args: HexString): Script | undefined {
+    const scriptConfig = this.getScriptConfig(configKey);
+    if (!scriptConfig) return undefined;
+
+    return { code_hash: scriptConfig.CODE_HASH, args, hash_type: scriptConfig.HASH_TYPE };
+  }
+
+  getCellDep(configKey: string): CellDep | undefined {
+    const scriptConfig = this.getScriptConfig(configKey);
+    if (!scriptConfig) return undefined;
+
+    return {
+      dep_type: scriptConfig.DEP_TYPE,
+      out_point: { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX },
+    };
   }
 
   /**
