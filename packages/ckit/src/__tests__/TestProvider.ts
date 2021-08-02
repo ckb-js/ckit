@@ -1,11 +1,12 @@
 import fs from 'fs';
-import { HexNumber, HexString } from '@ckb-lumos/base';
+import { Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
-import { debug } from '@ckit/base';
+import { debug, Signer } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
 import appRootPath from 'app-root-path';
-import { CkitConfig, CkitProvider } from '../providers';
-import { nonNullable } from '../utils';
+import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
+import { nonNullable, randomHexString } from '../utils';
+import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { deployCkbScripts } from './deploy';
 
 export class TestProvider extends CkitProvider {
@@ -61,6 +62,22 @@ export class TestProvider extends CkitProvider {
     fs.writeFileSync(deployedCachePath, JSON.stringify({ lumosConfig: config }, null, 2));
     debug('scripts are deployed %o', config);
     return config;
+  }
+
+  async sendTxUntilCommitted(
+    signed: Transaction,
+    options: { pollIntervalMs?: number; timeoutMs?: number } = {},
+  ): Promise<Hash> {
+    const txHash = await this.sendTransaction(signed);
+    const txWithStatus = await this.waitForTransactionCommitted(txHash, options);
+
+    if (!txWithStatus) throw new Error(`timeout for ${txHash}, the tx is : ${JSON.stringify(signed)}`);
+
+    return txHash;
+  }
+
+  generateAcpSigner(key: CkitConfigKeys = 'ANYONE_CAN_PAY'): Signer {
+    return new Secp256k1Signer(randomHexString(64), this, this.newScript(key));
   }
 }
 
