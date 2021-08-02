@@ -62,6 +62,28 @@ export class MercuryProvider extends AbstractProvider {
     return acc.cells;
   }
 
+  /**
+   * Calculate the capacity of all cells with only locks
+   */
+  async getCkbLiveCellsBalance(address: Address): Promise<HexNumber> {
+    const searchKey: SearchKey = {
+      script: this.parseToScript(address),
+      script_type: 'lock',
+      filter: { output_data_len_range: ['0x0', '0x1'] }, // ckb live cells only
+    };
+
+    const balance$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
+      expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
+      takeWhile((res) => res.objects.length > 0),
+      concatMap((res) => res.objects),
+      filter((cell) => cell.output.type == null),
+      reduce((balance, cell) => balance + BigInt(cell.output.capacity), 0n),
+    );
+
+    const balance = await firstValueFrom(balance$, { defaultValue: '0x0' });
+    return String(balance);
+  }
+
   override getChainInfo(): Promise<ChainInfo> {
     return this.rpc.get_blockchain_info();
   }
