@@ -37,7 +37,7 @@ export class TestProvider extends CkitProvider {
     const cachedDeployConfig = fs.existsSync(deployedCachePath);
     if (cachedDeployConfig) {
       this.setupStatus = 'fulfilled';
-      const lumosConfig = JSON.parse(fs.readFileSync(deployedCachePath).toString()).lumosConfig as CkitConfig;
+      const lumosConfig = JSON.parse(fs.readFileSync(deployedCachePath).toString()) as CkitConfig;
       debug('deploy info from cache %o', lumosConfig);
       return lumosConfig;
     }
