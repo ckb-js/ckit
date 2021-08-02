@@ -2,7 +2,7 @@ import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
 import { AbstractWallet, Signer } from '@ckit/base';
 import { EthProvider, Provider as PwProvider, Keccak256Hasher, Platform } from '@lay2/pw-core';
-import { publicKeyCreate, ecdsaSign } from 'secp256k1';
+import { publicKeyCreate } from 'secp256k1';
 import { CkitProvider } from '../providers';
 import { hexToBytes } from '../utils';
 
