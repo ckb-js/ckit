@@ -4,8 +4,8 @@ import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
 import { MercuryClient, SearchKey } from '@ckit/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { concatMap, expand, firstValueFrom, from, reduce, scan, takeWhile } from 'rxjs';
-import { asyncSleep, unimplemented } from '../utils';
-import { MercuryCellProvider } from './mercury/IndexerCellProvider';
+import { asyncSleep, unimplemented } from '../../utils';
+import { MercuryCellProvider } from './IndexerCellProvider';
 
 export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;

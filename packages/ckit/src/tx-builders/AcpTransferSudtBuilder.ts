@@ -1,10 +1,10 @@
-import { Address, HexNumber, Transaction, CellDep, Script, utils, Cell } from '@ckb-lumos/base';
+import { Address, HexNumber, Transaction, CellDep, utils, Cell } from '@ckb-lumos/base';
 import { common } from '@ckb-lumos/common-scripts';
 import { minimalCellCapacity, sealTransaction, TransactionSkeleton, TransactionSkeletonType } from '@ckb-lumos/helpers';
 import { Signer, TransactionBuilder, CkbTypeScript } from '@ckit/base';
+import { toBigUInt128LE } from '@lay2/pw-core';
 import { CkitConfig, CkitProvider } from '../providers';
 import { nonNullable } from '../utils';
-import { toBigUInt128LE } from '@lay2/pw-core';
 
 interface TransferOptions {
   readonly recipient: Address;
@@ -93,7 +93,6 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
 
     const fromAddress = await this.signer.getAddress();
     const fromCells = await this.provider.collectUdtCells(fromAddress, this.options.sudt, this.options.amount);
-    console.log('fromCells', fromCells);
     txSkeleton.update('inputs', (inputs) => {
       return inputs.push(
         ...fromCells.map((c) => {

@@ -1,4 +1,4 @@
-name: Lint And Test
+name: github-ci
 
 on: [ pull_request, push ]
 env:
@@ -25,11 +25,5 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile --force
 
-      - name: Build Packages
-        run: make build-lib
-
-      - name: Lint
-        run: make lint
-
-      - name: Test
-        run: make test
+      - name: CI
+        run: make github-ci

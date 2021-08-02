@@ -1,5 +1,5 @@
 import { makeObservable, observable } from 'mobx';
-import { CkitProvider } from '../providers/CkitProvider';
+import { CkitProvider } from '../providers';
 import { NonAcpPwLockWallet } from './NonAcpPwLockWallet';
 
 export class ObservableNonAcpPwLockWallet extends NonAcpPwLockWallet {
