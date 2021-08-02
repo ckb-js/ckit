@@ -69,6 +69,6 @@ export interface Provider {
   parseToAddress(script: Script): string;
 }
 
-export { AbstractProvider } from './AbstractProvider';
+export { AbstractProvider, ProviderConfig } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
 export { createDebugger, debug } from './logger';

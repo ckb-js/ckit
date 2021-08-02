@@ -31,6 +31,20 @@ export interface MintOptions {
 }
 
 export class MintSudtBuilder implements TransactionBuilder {
+  public static SUDT_CELL_MINIMAL_CAPACITY =
+    // prettier-ignore
+    8  /* capacity: u64 */ +
+    /* lock script */
+    32 /* code_hash: U256 */ +
+    20 /* lock_args: blake160 */ +
+    1  /* hash_type: u8 */ +
+    /* type script */
+    32 /* code_hash: U256 */ +
+    32 /* args: U256, issuer lock hash */ +
+    1 /* hash_type: u8 */ +
+    /* output_data */
+    16; /* data: u128, amount, little-endian */
+
   sudtTypeDep: CellDep;
   pwLockDep: CellDep;
   acpLockDep: CellDep;

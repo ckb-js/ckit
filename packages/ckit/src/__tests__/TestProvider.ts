@@ -58,7 +58,11 @@ export class TestProvider extends CkitProvider {
 
     debug('scripts are deploying via %s', this.assemberPrivateKey);
     const scripts = await deployCkbScripts(appRootPath.resolve('/deps/build'), this, this.#_assemberPrivateKey);
-    const config = { PREFIX: 'ckt', SCRIPTS: scripts };
+    const config: CkitConfig = {
+      PREFIX: 'ckt',
+      SCRIPTS: scripts,
+      MIN_FEE_RATE: (await this.getTxPoolInfo()).min_fee_rate,
+    };
     fs.writeFileSync(deployedCachePath, JSON.stringify({ lumosConfig: config }, null, 2));
     debug('scripts are deployed %o', config);
     return config;
