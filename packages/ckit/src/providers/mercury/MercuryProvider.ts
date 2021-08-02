@@ -1,4 +1,4 @@
-import { Address, ChainInfo, Hash, HexNumber, Transaction } from '@ckb-lumos/base';
+import { Address, ChainInfo, Hash, HexNumber, Transaction, TxPoolInfo } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
 import { MercuryClient, SearchKey } from '@ckit/mercury-client';
@@ -82,6 +82,10 @@ export class MercuryProvider extends AbstractProvider {
 
     const balance = await firstValueFrom(balance$, { defaultValue: '0x0' });
     return String(balance);
+  }
+
+  override getTxPoolInfo(): Promise<TxPoolInfo> {
+    return this.rpc.tx_pool_info();
   }
 
   override getChainInfo(): Promise<ChainInfo> {

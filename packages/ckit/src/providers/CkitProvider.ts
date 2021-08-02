@@ -1,8 +1,9 @@
 import { Address, CellDep, Script, utils } from '@ckb-lumos/base';
-import { Config, ScriptConfig } from '@ckb-lumos/config-manager';
+import { ScriptConfig } from '@ckb-lumos/config-manager';
+import { ProviderConfig } from '@ckit/base';
 import { MercuryProvider } from './mercury/MercuryProvider';
 
-export interface CkitConfig extends Config {
+export interface CkitConfig extends ProviderConfig {
   SCRIPTS: {
     SECP256K1_BLAKE160: ScriptConfig;
     ANYONE_CAN_PAY: ScriptConfig;
