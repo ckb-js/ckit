@@ -84,6 +84,8 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
       .map((c) => BigInt(c.cell_output.capacity))
       .reduce((a, b) => a + b, BigInt(0));
     const needCapacity = outputCapacity - inputCapacity + BigInt(10) ** BigInt(8);
+
+    console.log('tx', JSON.stringify(txSkeleton));
     txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
       enableDeductCapacity: false,
       config: this.provider.config,
@@ -145,7 +147,7 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
       .map((r) => BigInt(r.amount))
       .reduce((a, b) => a + b, BigInt(0));
     const fromCells = await this.provider.collectUdtCells(fromAddress, this.sudt, recipientTotalAmount.toString());
-    txSkeleton.update('inputs', (inputs) => {
+    txSkeleton = txSkeleton.update('inputs', (inputs) => {
       return inputs.push(
         ...fromCells.map((c) => {
           return <Cell>{
@@ -158,14 +160,14 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
       );
     });
 
-    this.updateRecipientSudt(txSkeleton);
+    txSkeleton = this.updateRecipientSudt(txSkeleton);
 
     const inputSudtAmount = fromCells
       .map((c) => BigInt(toBigUInt128LE(c.output_data.slice(0, 34))))
       .reduce((a, b) => a + b, BigInt(0));
     const changeSudtAmount = inputSudtAmount - recipientTotalAmount;
     if (changeSudtAmount > 0) {
-      this.updateOutputSudt(txSkeleton, fromAddress, changeSudtAmount);
+      txSkeleton = this.updateOutputSudt(txSkeleton, fromAddress, changeSudtAmount);
     }
 
     txSkeleton = await this.completeTx(txSkeleton, fromAddress);
