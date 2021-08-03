@@ -8,7 +8,7 @@
     "clean": "rimraf -rf ./dist",
     "build:js": "babel --root-mode upward --extensions '.ts' --out-dir dist src",
     "build:types": "tsc -p tsconfig.build.json",
-    "prepublishOnly": "yarn run build"
+    "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
     "@ckb-lumos/base": "^0.16.0",
