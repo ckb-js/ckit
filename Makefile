@@ -46,3 +46,6 @@ stop-docker:
 github-ci: build-lib lint stop-docker start-docker
 	test -d tmp && mv tmp tmp-$$(date '+%Y%m%d%H%M%S') || :
 	make test
+
+watch-lib: build-lib
+	yarn lerna exec --parallel yarn run watch

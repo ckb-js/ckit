@@ -1,6 +1,6 @@
 import { Address, HexNumber, Hash } from '@ckb-lumos/base';
 import { Modal } from 'antd';
-import { MintSudtBuilder, RecipientOptions } from 'ckit';
+import { MintSudtBuilder, RecipientOptions, helpers } from 'ckit';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useConfigStorage } from './useConfigStorage';
@@ -31,6 +31,9 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       };
       if (input.operationKind === 'invite') {
         recipientsParams.capacityPolicy = 'createAcp';
+        // TODO make the additionalCapacity configurable
+        // create acp with additionalAcp
+        recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toString();
       } else {
         recipientsParams.capacityPolicy = 'findAcp';
       }
