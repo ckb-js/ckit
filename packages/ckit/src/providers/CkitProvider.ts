@@ -1,6 +1,6 @@
 import { Address, CellDep, Script, utils } from '@ckb-lumos/base';
 import { ScriptConfig } from '@ckb-lumos/config-manager';
-import { ProviderConfig } from '@ckit/base';
+import { ProviderConfig, InitOptions } from '@ckit/base';
 import { MercuryProvider } from './mercury/MercuryProvider';
 
 export interface CkitConfig extends ProviderConfig {
@@ -12,12 +12,16 @@ export interface CkitConfig extends ProviderConfig {
     PW_ANYONE_CAN_PAY: ScriptConfig;
   };
 }
-
+export type CkitInitOptions = InitOptions<CkitConfig>;
 export type CkitConfigKeys = keyof CkitConfig['SCRIPTS'];
 
 export class CkitProvider extends MercuryProvider {
   override get config(): CkitConfig {
     return super.config as CkitConfig;
+  }
+
+  override init(config: CkitInitOptions): Promise<void> {
+    return super.init(config);
   }
 
   override getScriptConfig(key: CkitConfigKeys): ScriptConfig {

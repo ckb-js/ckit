@@ -1,11 +1,11 @@
 import { ScriptConfig } from '@ckb-lumos/config-manager';
 import { useLocalStorage } from '@rehooks/local-storage';
-import { CkitConfig } from 'ckit';
+import { CkitInitOptions } from 'ckit';
 import { randomHexString } from 'ckit/dist/utils';
 import { useMemo } from 'react';
 
 export interface LocalConfig {
-  ckitConfig: CkitConfig;
+  ckitConfig: CkitInitOptions;
   mecuryRPC: string;
   ckbRPC: string;
   nervosExploreTxUrlPrefix: string;
@@ -23,7 +23,7 @@ export function useConfigStorage(): [LocalConfig, (newValue: LocalConfig) => voi
       INDEX: '0x0',
     });
 
-    const ckitConfig: CkitConfig = {
+    const ckitConfig: CkitInitOptions = {
       PREFIX: 'ckt',
       SCRIPTS: {
         ANYONE_CAN_PAY: randomScriptConfig(),
