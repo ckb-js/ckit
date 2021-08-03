@@ -11,7 +11,6 @@ export interface SendIssueTxInput {
   recipient: Address;
   amount: HexNumber;
   operationKind: 'invite' | 'issue';
-  setModalVisible: (visible: boolean) => void;
 }
 
 export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, SendIssueTxInput> {
@@ -22,7 +21,8 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
   return useMutation(
     ['sendIssueTx'],
     async (input: SendIssueTxInput) => {
-      if (!selectedWallet?.signer) throw new Error('exception: signer not set');
+      if (!selectedWallet?.signer)
+        throw new Error('Signer could not be found, the wallet may be disconnected, you can try to reconnect');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
 
       const recipientsParams: RecipientOptions = {
@@ -37,7 +37,6 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, selectedWallet.signer);
       const issueTx = await txBuilder.build();
       const txHash = await ckitProvider.sendTransaction(issueTx);
-      input.setModalVisible(false);
       return { txHash: txHash };
     },
     {

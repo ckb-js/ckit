@@ -12,6 +12,7 @@ export interface LocalConfig {
   nervosExploreAddressUrlPrefix: string;
 }
 
+// TODO remove random when predefined config is ready
 export function useConfigStorage(): [LocalConfig, (newValue: LocalConfig) => void, () => void] {
   const initialConfig = useMemo<LocalConfig>(() => {
     const randomScriptConfig = (): ScriptConfig => ({

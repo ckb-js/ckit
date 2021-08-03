@@ -1,4 +1,4 @@
-import { Address, HexString } from '@ckb-lumos/base';
+import { Address, HexNumber } from '@ckb-lumos/base';
 import { Button, Col, Modal, Row, Typography } from 'antd';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import { observer } from 'mobx-react-lite';
@@ -43,12 +43,12 @@ interface ModalFormProps {
 
 interface ModalFormValues {
   recipient: Address;
-  amount: HexString;
+  amount: HexNumber;
 }
 
 interface ModalFormErrors {
   recipient?: Address;
-  amount?: HexString;
+  amount?: HexNumber;
 }
 
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
@@ -79,8 +79,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
             recipient: values.recipient,
             amount: values.amount,
             operationKind: operationKind,
-            setModalVisible: setVisible,
-          });
+          }).then(() => setVisible(false));
         }}
       >
         {(formik) => (
@@ -97,7 +96,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
               <ErrorMessage
                 name="recipient"
                 children={(errorMessage) => {
-                  return <Typography.Text type={'danger'}>{errorMessage}</Typography.Text>;
+                  return <Typography.Text type="danger">{errorMessage}</Typography.Text>;
                 }}
               />
             </div>
@@ -115,7 +114,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
                 <ErrorMessage
                   name="amount"
                   children={(errorMessage) => {
-                    return <Typography.Text type={'danger'}>{errorMessage}</Typography.Text>;
+                    return <Typography.Text type="danger">{errorMessage}</Typography.Text>;
                   }}
                 />
               </div>
