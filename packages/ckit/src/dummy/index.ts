@@ -4,7 +4,7 @@ import { makeObservable, observable } from 'mobx';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
-    super({ features: ['issue-sudt'] });
+    super();
     makeObservable(this, {
       connectStatus: observable,
       signer: observable,

@@ -1,19 +1,16 @@
-import { ScriptConfig } from '@ckb-lumos/config-manager';
 import {
   AbstractWallet,
-  CkitConfig,
-  CkitProvider,
   ConnectStatus,
   ObservableNonAcpPwLockWallet,
   ObservableUnipassWallet,
   Signer,
   dummy,
 } from 'ckit';
-import { randomHexString } from 'ckit/dist/utils';
 import { autorun } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createContainer } from 'unstated-next';
+import { CkitProviderContainer } from '../CkitProviderContainer';
 
 export type CurrentWalletIndex = number | null;
 
@@ -23,6 +20,8 @@ export interface WalletConnectError {
 }
 
 function useWallet() {
+  const ckitProvider = CkitProviderContainer.useContainer();
+
   const wallets = useLocalObservable<AbstractWallet[]>(() => [
     new dummy.DummyWallet() as AbstractWallet,
     new ObservableUnipassWallet() as AbstractWallet,
@@ -42,29 +41,9 @@ function useWallet() {
   );
 
   useEffect(() => {
-    const provider = new CkitProvider();
-    // TODO replace with env or config file
-    const randomScriptConfig = (): ScriptConfig => ({
-      HASH_TYPE: 'type',
-      DEP_TYPE: 'code',
-      CODE_HASH: randomHexString(64),
-      TX_HASH: randomHexString(64),
-      INDEX: '0x0',
-    });
-
-    const config: CkitConfig = {
-      PREFIX: 'ckt',
-      SCRIPTS: {
-        ANYONE_CAN_PAY: randomScriptConfig(),
-        PW_NON_ANYONE_CAN_PAY: randomScriptConfig(),
-        PW_ANYONE_CAN_PAY: randomScriptConfig(),
-        SECP256K1_BLAKE160: randomScriptConfig(),
-        SUDT: randomScriptConfig(),
-      },
-    };
-
-    void provider.init(config).then(() => wallets.push(new ObservableNonAcpPwLockWallet(provider)));
-  }, []);
+    if (!ckitProvider) return;
+    wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider));
+  }, [ckitProvider, wallets]);
 
   useEffect(
     () =>
@@ -91,7 +70,12 @@ function useWallet() {
             }
           };
           wallet.on('connectStatusChanged', onConnectStatusChanged);
-          wallet.on('error', (err) => setError({ error: err as Error, index: index }));
+          wallet.on('error', (err) =>
+            setError({
+              error: err as Error,
+              index: index,
+            }),
+          );
         });
       }),
     [],

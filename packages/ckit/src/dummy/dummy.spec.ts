@@ -6,7 +6,7 @@ test('test the dummy wallet', async () => {
 
   expect(wallet.name).toBe('DummyWallet');
 
-  expect(wallet.checkSupported('issue-sudt')).toBe(true);
+  expect(wallet.checkSupported('issue-sudt')).toBe(false);
   expect(wallet.checkSupported('acp')).toBe(false);
   expect(wallet.checkSupported('unknown-feature')).toBe(false);
 

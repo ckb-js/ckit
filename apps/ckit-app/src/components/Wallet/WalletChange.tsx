@@ -2,15 +2,15 @@ import { Button, Col, Empty, Row } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useSigner, WalletContainer } from 'containers/WalletContainer';
-
-const NervosExploreUrl = 'https://explorer.nervos.org/aggron/address/';
+import { useConfigStorage } from 'hooks';
 
 export const WalletChange = observer(() => {
   const { selectedWallet, setModalVisible } = WalletContainer.useContainer();
+  const [localConfig] = useConfigStorage();
   const { address } = useSigner(selectedWallet?.signer);
   if (!address) return <Empty />;
   const truncatedAddress = truncateMiddle(address, 8);
-  const href = NervosExploreUrl + address;
+  const href = localConfig.nervosExploreAddressUrlPrefix + address;
   return (
     <div style={{ marginTop: '48px', marginBottom: '24px' }}>
       <Row>

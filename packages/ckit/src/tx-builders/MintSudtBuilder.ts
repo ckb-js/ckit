@@ -13,7 +13,7 @@ type CapacityPolicy =
   // find the recipient's ACP cell, and if not find it, create a new ACP for the recipient
   | 'findOrCreateAcp';
 
-type RecipientOptions = {
+export type RecipientOptions = {
   recipient: Address;
   amount: HexNumber;
   /**
