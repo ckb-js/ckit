@@ -1,47 +1,24 @@
-import { Address, HexNumber, Transaction, CellDep, utils, Cell, Script } from '@ckb-lumos/base';
+import { Address, HexNumber, Transaction, CellDep, utils, Cell } from '@ckb-lumos/base';
 import { common } from '@ckb-lumos/common-scripts';
 import { minimalCellCapacity, sealTransaction, TransactionSkeleton, TransactionSkeletonType } from '@ckb-lumos/helpers';
-import { Signer, TransactionBuilder } from '@ckit/base';
+import { Signer, TransactionBuilder, CkbTypeScript } from '@ckit/base';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { CkitConfig, CkitProvider } from '../providers';
-import { nonNullable, unimplemented } from '../utils';
+import { nonNullable } from '../utils';
 
-type CapacityPolicy =
-  // mint only when recipient has ACP cell
-  | 'findAcp'
-  // mint and create an ACP cell for recipient
-  | 'createAcp'
-  // find the recipient's ACP cell, and if not find it, create a new ACP for the recipient
-  | 'findOrCreateAcp';
-
-export interface TransferOptions {
-  recipients: RecipientOption[];
-}
-
-interface RecipientOption {
-  amount: HexNumber;
-  recipient: Address;
-  /**
-   * defaults to findAcp
-   */
-  capacityPolicy?: CapacityPolicy;
+interface TransferOptions {
+  readonly recipient: Address;
+  readonly sudt: CkbTypeScript;
+  readonly amount: HexNumber;
 }
 
 export class AcpTransferSudtBuilder implements TransactionBuilder {
-  secp256k1Dep: CellDep;
   sudtTypeDep: CellDep;
-  pwLockDep: CellDep;
   acpLockDep: CellDep;
 
-  sudt: Script;
-
   constructor(private options: TransferOptions, private provider: CkitProvider, private signer: Signer) {
-    this.secp256k1Dep = this.getCellDeps('SECP256K1_BLAKE160');
     this.sudtTypeDep = this.getCellDeps('SUDT');
-    this.pwLockDep = this.getCellDeps('PW_NON_ANYONE_CAN_PAY');
     this.acpLockDep = this.getCellDeps('ANYONE_CAN_PAY');
-
-    this.sudt = this.getScript('SUDT');
   }
 
   getCellDeps(scriptKey: keyof CkitConfig['SCRIPTS']): CellDep {
@@ -55,18 +32,6 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
         index: scriptConfig.INDEX,
       },
       dep_type: scriptConfig.DEP_TYPE,
-    };
-  }
-
-  getScript(scriptKey: keyof CkitConfig['SCRIPTS']): Script {
-    const scriptConfig = this.provider.getScriptConfig(scriptKey);
-    if (scriptConfig === undefined) {
-      throw new Error(`${scriptKey} not defined in mercury provider`);
-    }
-    return {
-      code_hash: scriptConfig.CODE_HASH,
-      hash_type: scriptConfig.HASH_TYPE,
-      args: '0x',
     };
   }
 
@@ -85,14 +50,35 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
       .reduce((a, b) => a + b, BigInt(0));
     const needCapacity = outputCapacity - inputCapacity + BigInt(10) ** BigInt(8);
 
+    if (needCapacity > 0) {
+      txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
+        enableDeductCapacity: false,
+        config: this.provider.config,
+      });
+      txSkeleton = await common.payFeeByFeeRate(txSkeleton, [fromAddress], feeRate, undefined, {
+        config: this.provider.config,
+      });
+    } else {
+      //Input Acp Sudt cell can cover output capacity and fee
+
+      //Todo: fix fee to auto
+      const fee = BigInt(10) ** BigInt(8);
+      const changeCapacity = inputCapacity - outputCapacity - fee;
+      if (changeCapacity > BigInt(61) * BigInt(10) ** BigInt(8)) {
+        txSkeleton = txSkeleton.update('outputs', (outputs) => {
+          return outputs.push(<Cell>{
+            cell_output: {
+              lock: this.provider.parseToScript(fromAddress),
+              capacity: `0x${changeCapacity.toString(16)}`,
+            },
+            data: '0x',
+          });
+        });
+      }
+    }
+
     console.log('tx', JSON.stringify(txSkeleton));
-    txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
-      enableDeductCapacity: false,
-      config: this.provider.config,
-    });
-    txSkeleton = await common.payFeeByFeeRate(txSkeleton, [fromAddress], feeRate, undefined, {
-      config: this.provider.config,
-    });
+
     return txSkeleton;
   }
 
@@ -100,7 +86,7 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
     const outputSudtCell = <Cell>{
       cell_output: {
         lock: this.provider.parseToScript(address),
-        type: this.sudt,
+        type: this.options.sudt,
         capacity: `0x0`,
       },
       data: utils.toBigUInt128LE(BigInt(amount)),
@@ -113,28 +99,11 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
     return txSkeleton;
   }
 
-  updateRecipientSudt(txSkeleton: TransactionSkeletonType): TransactionSkeletonType {
-    this.options.recipients.map((recipientInfo) => {
-      switch (recipientInfo.capacityPolicy) {
-        case 'createAcp': {
-          return this.updateOutputSudt(txSkeleton, recipientInfo.recipient, BigInt(recipientInfo.amount));
-        }
-        case 'findOrCreateAcp':
-          unimplemented();
-          break;
-        default:
-          throw new Error('unexpected capacity policy');
-      }
-    });
-
-    return txSkeleton;
-  }
-
   updateCellDeps(txSkeleton: TransactionSkeletonType): TransactionSkeletonType {
     // TODO replace acpLockDep with unipass lock before publishing
     // TODO automatically fill cellDep by from lockscript
     txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
-      return cellDeps.clear().push(this.secp256k1Dep).push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
+      return cellDeps.clear().push(this.sudtTypeDep).push(this.acpLockDep);
     });
     return txSkeleton;
   }
@@ -143,10 +112,8 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
     let txSkeleton = TransactionSkeleton({ cellProvider: this.provider.asIndexerCellProvider() });
 
     const fromAddress = await this.signer.getAddress();
-    const recipientTotalAmount = this.options.recipients
-      .map((r) => BigInt(r.amount))
-      .reduce((a, b) => a + b, BigInt(0));
-    const fromCells = await this.provider.collectUdtCells(fromAddress, this.sudt, recipientTotalAmount.toString());
+
+    const fromCells = await this.provider.collectUdtCells(fromAddress, this.options.sudt, this.options.amount);
     txSkeleton = txSkeleton.update('inputs', (inputs) => {
       return inputs.push(
         ...fromCells.map((c) => {
@@ -160,12 +127,12 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
       );
     });
 
-    txSkeleton = this.updateRecipientSudt(txSkeleton);
+    txSkeleton = this.updateOutputSudt(txSkeleton, this.options.recipient, BigInt(this.options.amount));
 
     const inputSudtAmount = fromCells
       .map((c) => BigInt(toBigUInt128LE(c.output_data.slice(0, 34))))
       .reduce((a, b) => a + b, BigInt(0));
-    const changeSudtAmount = inputSudtAmount - recipientTotalAmount;
+    const changeSudtAmount = inputSudtAmount - BigInt(this.options.amount);
     if (changeSudtAmount > 0) {
       txSkeleton = this.updateOutputSudt(txSkeleton, fromAddress, changeSudtAmount);
     }

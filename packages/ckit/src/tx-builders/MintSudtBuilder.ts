@@ -31,13 +31,25 @@ export interface MintOptions {
 }
 
 export class MintSudtBuilder implements TransactionBuilder {
-  secp256k1Dep: CellDep;
+  public static SUDT_CELL_MINIMAL_CAPACITY =
+    // prettier-ignore
+    8  /* capacity: u64 */ +
+    /* lock script */
+    32 /* code_hash: U256 */ +
+    20 /* lock_args: blake160 */ +
+    1  /* hash_type: u8 */ +
+    /* type script */
+    32 /* code_hash: U256 */ +
+    32 /* args: U256, issuer lock hash */ +
+    1 /* hash_type: u8 */ +
+    /* output_data */
+    16; /* data: u128, amount, little-endian */
+
   sudtTypeDep: CellDep;
   pwLockDep: CellDep;
   acpLockDep: CellDep;
 
   constructor(private options: MintOptions, private provider: CkitProvider, private signer: Signer) {
-    this.secp256k1Dep = this.getCellDeps('SECP256K1_BLAKE160');
     this.sudtTypeDep = this.getCellDeps('SUDT');
     this.pwLockDep = this.getCellDeps('PW_NON_ANYONE_CAN_PAY');
     this.acpLockDep = this.getCellDeps('ANYONE_CAN_PAY');
@@ -128,7 +140,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     // TODO replace acpLockDep with unipass lock before publishing
     // TODO automatically fill cellDep by from lockscript
     txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
-      return cellDeps.clear().push(this.secp256k1Dep).push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
+      return cellDeps.clear().push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
     });
     return txSkeleton;
   }

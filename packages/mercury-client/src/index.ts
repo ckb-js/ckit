@@ -5,7 +5,12 @@ import { Client, HTTPTransport, RequestManager } from '@open-rpc/client-js';
 export interface SearchKey {
   script: Script;
   script_type: 'lock' | 'type';
-  filter?: { script?: Script; block_range?: [HexNumber, HexNumber] };
+  filter?: {
+    script?: Script;
+    block_range?: [HexNumber, HexNumber];
+    output_capacity_range?: [HexNumber, HexNumber];
+    output_data_len_range?: [HexNumber, HexNumber];
+  };
 }
 
 export interface GetCellsPayload {

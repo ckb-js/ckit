@@ -2,7 +2,9 @@ import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
 import { AbstractWallet, Signer } from '@ckit/base';
 import { EthProvider, Provider as PwProvider, Keccak256Hasher, Platform } from '@lay2/pw-core';
+import { publicKeyCreate } from 'secp256k1';
 import { CkitProvider } from '../providers';
+import { hexToBytes } from '../utils';
 
 export class NonAcpPwLockWallet extends AbstractWallet {
   private readonly pwProvider: PwProvider;
@@ -70,22 +72,36 @@ export class InternalNonAcpPwLockSigner implements Signer {
     this.#privateKey = privateKey;
   }
 
+  getEthAddress(): string {
+    const pubkey = publicKeyCreate(hexToBytes(this.#privateKey), false).slice(1);
+    const keccak = new Keccak256Hasher();
+    return (
+      '0x' +
+      keccak
+        .hash(pubkey.buffer as Uint8Array)
+        .serializeJson()
+        .slice(-40)
+    );
+  }
+
   async getAddress(): Promise<string> {
     const config = this.ckitProvider.getScriptConfig('PW_NON_ANYONE_CAN_PAY');
     return this.ckitProvider.parseToAddress({
       code_hash: config.CODE_HASH,
       hash_type: config.HASH_TYPE,
-      args: this.#privateKey,
+      args: this.getEthAddress(),
     });
   }
 
   async signMessage(message: HexString): Promise<HexString> {
-    let result = hashMessage(message);
-    result = key.signRecoverable(result, this.#privateKey);
+    const result = key.signRecoverable(hashMessage(message), this.#privateKey);
 
     let v = Number.parseInt(result.slice(-2), 16);
     if (v >= 27) v -= 27;
-    result = '0x' + Platform.eth.toString(16).padStart(2, '0') + result.slice(2, -2) + v.toString(16).padStart(2, '0');
-    return result;
+
+    const platform = Platform.eth.toString(16).padStart(2, '0');
+    const sig = result.slice(2, -2);
+
+    return '0x' + platform + sig + v.toString(16).padStart(2, '0');
   }
 }

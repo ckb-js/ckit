@@ -1,13 +1,30 @@
-import { Address, ChainInfo, Hash, HexNumber, Script, Transaction } from '@ckb-lumos/base';
-import { predefined, Config, ScriptConfig } from '@ckb-lumos/config-manager';
+import {
+  Address,
+  CellDep,
+  ChainInfo,
+  Hash,
+  Hexadecimal,
+  HexNumber,
+  HexString,
+  Script,
+  Transaction,
+  TxPoolInfo,
+} from '@ckb-lumos/base';
+import { predefined, Config as LumosConfig, ScriptConfig } from '@ckb-lumos/config-manager';
 import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { Provider, ResolvedOutpoint } from './';
 
+export interface ProviderConfig extends LumosConfig {
+  MIN_FEE_RATE: Hexadecimal;
+}
+
+type Options = LumosConfig & { MIN_FEE_RATE?: Hexadecimal };
+
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
-  private _config: Config | undefined;
+  private _config: ProviderConfig | undefined;
 
-  get config(): Config {
+  get config(): ProviderConfig {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');
     return this._config;
   }
@@ -16,20 +33,41 @@ export abstract class AbstractProvider implements Provider {
     return this.config.SCRIPTS[key];
   }
 
+  newScript(configKey: string, args: HexString): Script | undefined {
+    const scriptConfig = this.getScriptConfig(configKey);
+    if (!scriptConfig) return undefined;
+
+    return { code_hash: scriptConfig.CODE_HASH, args, hash_type: scriptConfig.HASH_TYPE };
+  }
+
+  getCellDep(configKey: string): CellDep | undefined {
+    const scriptConfig = this.getScriptConfig(configKey);
+    if (!scriptConfig) return undefined;
+
+    return {
+      dep_type: scriptConfig.DEP_TYPE,
+      out_point: { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX },
+    };
+  }
+
   /**
    * init the provider
    * @param config if no config is provided, {@link getChainInfo} will be called to check the network type, and using the predefined config
    */
-  async init(config?: Config): Promise<void> {
+  async init(config?: Options): Promise<void> {
     if (this.initialized) return;
 
     if (config) {
-      this._config = config;
+      const MIN_FEE_RATE = config.MIN_FEE_RATE ? config.MIN_FEE_RATE : (await this.getTxPoolInfo()).min_fee_rate;
+      this._config = { ...config, MIN_FEE_RATE };
     } else {
       const chainInfo = await this.getChainInfo();
       const isMainnet = chainInfo.chain === 'ckb';
+      const txPoolInfo = await this.getTxPoolInfo();
 
-      this._config = isMainnet ? predefined.LINA : predefined.AGGRON4;
+      this._config = isMainnet
+        ? { ...predefined.LINA, MIN_FEE_RATE: txPoolInfo.min_fee_rate }
+        : { ...predefined.AGGRON4, MIN_FEE_RATE: txPoolInfo.min_fee_rate };
     }
 
     this.initialized = true;
@@ -43,7 +81,8 @@ export abstract class AbstractProvider implements Provider {
     return parseAddress(address, { config: this.config });
   }
 
+  abstract getTxPoolInfo(): Promise<TxPoolInfo>;
   abstract getChainInfo(): Promise<ChainInfo>;
-  abstract collectCkbLiveCell(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+  abstract collectCkbLiveCells(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
   abstract sendTransaction(tx: Transaction): Promise<Hash>;
 }

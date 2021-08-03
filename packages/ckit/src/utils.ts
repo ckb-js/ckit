@@ -30,3 +30,11 @@ export function nonNullable<X>(x: X): NonNullable<X> {
 export function bytesToHex(bytes: Uint8Array): string {
   return `0x${[...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
 }
+
+export function hexToBytes(hex: HexString): Uint8Array {
+  hex = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const match = hex.match(/.{1,2}/g);
+  if (!match) throw new Error(`cannot parse ${hex} into Uint8Array`);
+
+  return Uint8Array.from(match.map((byte) => parseInt(byte, 16)));
+}
