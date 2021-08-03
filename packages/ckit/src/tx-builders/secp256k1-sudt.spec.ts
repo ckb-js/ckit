@@ -87,7 +87,7 @@ test('test mint and transfer', async () => {
   //TODO uncomment when transfer is available
   //recipient1 -> recipient0
   const signedTransferTx = await new AcpTransferSudtBuilder(
-    { recipients: [{ amount: '1', recipient: recipientAddr0, capacityPolicy: 'createAcp' }] },
+    { amount: '1', recipient: recipientAddr0, sudt: testUdt },
     provider,
     new Secp256k1Signer(recipientPrivKey1, provider, {
       code_hash: ANYONE_CAN_PAY.CODE_HASH,

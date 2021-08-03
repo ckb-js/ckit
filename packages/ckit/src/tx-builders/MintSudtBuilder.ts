@@ -45,11 +45,13 @@ export class MintSudtBuilder implements TransactionBuilder {
     /* output_data */
     16; /* data: u128, amount, little-endian */
 
+  secp256k1Dep: CellDep;
   sudtTypeDep: CellDep;
   pwLockDep: CellDep;
   acpLockDep: CellDep;
 
   constructor(private options: MintOptions, private provider: CkitProvider, private signer: Signer) {
+    this.secp256k1Dep = this.getCellDeps('SECP256K1_BLAKE160');
     this.sudtTypeDep = this.getCellDeps('SUDT');
     this.pwLockDep = this.getCellDeps('PW_NON_ANYONE_CAN_PAY');
     this.acpLockDep = this.getCellDeps('ANYONE_CAN_PAY');
@@ -96,7 +98,7 @@ export class MintSudtBuilder implements TransactionBuilder {
           cell_output: {
             lock: this.provider.parseToScript(recipientInfo.recipient),
             type: sudtTypeScript,
-            capacity: `0x0`,
+            capacity: `0x${MintSudtBuilder.SUDT_CELL_MINIMAL_CAPACITY.toString(16)}`,
           },
           data: utils.toBigUInt128LE(BigInt(recipientInfo.amount)),
         };
@@ -126,6 +128,7 @@ export class MintSudtBuilder implements TransactionBuilder {
       .map((c) => BigInt(c.cell_output.capacity))
       .reduce((a, b) => a + b, BigInt(0));
     const needCapacity = outputCapacity - inputCapacity + BigInt(10) ** BigInt(8);
+
     txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
       enableDeductCapacity: false,
       config: this.provider.config,
@@ -133,6 +136,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     txSkeleton = await common.payFeeByFeeRate(txSkeleton, [fromAddress], feeRate, undefined, {
       config: this.provider.config,
     });
+
     return txSkeleton;
   }
 
@@ -140,7 +144,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     // TODO replace acpLockDep with unipass lock before publishing
     // TODO automatically fill cellDep by from lockscript
     txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
-      return cellDeps.clear().push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
+      return cellDeps.clear().push(this.secp256k1Dep).push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
     });
     return txSkeleton;
   }
@@ -161,6 +165,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     txSkeleton = await this.completeTx(txSkeleton, fromAddress);
     txSkeleton = this.updateCellDeps(txSkeleton);
     txSkeleton = common.prepareSigningEntries(txSkeleton, { config: this.provider.config });
+
     const sign = await this.signer.signMessage(nonNullable(txSkeleton.get('signingEntries').get(0)).message);
     return sealTransaction(txSkeleton, [sign]);
   }
