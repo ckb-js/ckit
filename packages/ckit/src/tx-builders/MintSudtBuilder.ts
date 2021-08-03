@@ -1,8 +1,8 @@
 import { Address, HexNumber, Transaction, CellDep, Script, utils, Cell } from '@ckb-lumos/base';
-import { common } from '@ckb-lumos/common-scripts';
-import { minimalCellCapacity, sealTransaction, TransactionSkeleton, TransactionSkeletonType } from '@ckb-lumos/helpers';
+import { common, anyoneCanPay } from '@ckb-lumos/common-scripts';
+import { sealTransaction, TransactionSkeleton, TransactionSkeletonType } from '@ckb-lumos/helpers';
 import { Signer, TransactionBuilder } from '@ckit/base';
-import { CkitConfig, CkitProvider } from '../providers';
+import { CkitProvider } from '../providers';
 import { nonNullable } from '../utils';
 
 type CapacityPolicy =
@@ -51,36 +51,10 @@ export class MintSudtBuilder implements TransactionBuilder {
   acpLockDep: CellDep;
 
   constructor(private options: MintOptions, private provider: CkitProvider, private signer: Signer) {
-    this.secp256k1Dep = this.getCellDeps('SECP256K1_BLAKE160');
-    this.sudtTypeDep = this.getCellDeps('SUDT');
-    this.pwLockDep = this.getCellDeps('PW_NON_ANYONE_CAN_PAY');
-    this.acpLockDep = this.getCellDeps('ANYONE_CAN_PAY');
-  }
-
-  getCellDeps(scriptKey: keyof CkitConfig['SCRIPTS']): CellDep {
-    const scriptConfig = this.provider.getScriptConfig(scriptKey);
-    if (scriptConfig === undefined) {
-      throw new Error(`${scriptKey} not defined in mercury provider`);
-    }
-    return {
-      out_point: {
-        tx_hash: scriptConfig.TX_HASH,
-        index: scriptConfig.INDEX,
-      },
-      dep_type: scriptConfig.DEP_TYPE,
-    };
-  }
-
-  getScript(scriptKey: keyof CkitConfig['SCRIPTS']): Script {
-    const scriptConfig = this.provider.getScriptConfig(scriptKey);
-    if (scriptConfig === undefined) {
-      throw new Error(`${scriptKey} not defined in mercury provider`);
-    }
-    return {
-      code_hash: scriptConfig.CODE_HASH,
-      hash_type: scriptConfig.HASH_TYPE,
-      args: '0x',
-    };
+    this.secp256k1Dep = this.provider.getCellDep('SECP256K1_BLAKE160');
+    this.sudtTypeDep = this.provider.getCellDep('SUDT');
+    this.pwLockDep = this.provider.getCellDep('PW_NON_ANYONE_CAN_PAY');
+    this.acpLockDep = this.provider.getCellDep('ANYONE_CAN_PAY');
   }
 
   async handlerRecipient(
@@ -88,9 +62,9 @@ export class MintSudtBuilder implements TransactionBuilder {
     recipientInfo: RecipientOptions,
     sudtTypeScript: Script,
   ): Promise<TransactionSkeletonType> {
-    let additionalCapacity = 0n;
+    let sudtCellCapacity = BigInt(MintSudtBuilder.SUDT_CELL_MINIMAL_CAPACITY) * BigInt(10) ** BigInt(8);
     if (recipientInfo.additionalCapacity) {
-      additionalCapacity = BigInt(recipientInfo.additionalCapacity);
+      sudtCellCapacity += BigInt(recipientInfo.additionalCapacity);
     }
     switch (recipientInfo.capacityPolicy) {
       case 'createAcp': {
@@ -98,12 +72,10 @@ export class MintSudtBuilder implements TransactionBuilder {
           cell_output: {
             lock: this.provider.parseToScript(recipientInfo.recipient),
             type: sudtTypeScript,
-            capacity: `0x${MintSudtBuilder.SUDT_CELL_MINIMAL_CAPACITY.toString(16)}`,
+            capacity: `0x${sudtCellCapacity.toString(16)}`,
           },
           data: utils.toBigUInt128LE(BigInt(recipientInfo.amount)),
         };
-        const sudtCapacity = minimalCellCapacity(sudtOutputCell) + additionalCapacity;
-        sudtOutputCell.cell_output.capacity = `0x${sudtCapacity.toString(16)}`;
         txSkeleton = txSkeleton.update('outputs', (outputs) => {
           return outputs.push(sudtOutputCell);
         });
@@ -144,7 +116,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     // TODO replace acpLockDep with unipass lock before publishing
     // TODO automatically fill cellDep by from lockscript
     txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
-      return cellDeps.clear().push(this.secp256k1Dep).push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
+      return cellDeps.push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
     });
     return txSkeleton;
   }
@@ -155,13 +127,20 @@ export class MintSudtBuilder implements TransactionBuilder {
     const fromAddress = await this.signer.getAddress();
     const fromLockScript = this.provider.parseToScript(fromAddress);
     const fromLockScriptHash = utils.computeScriptHash(fromLockScript);
-    const sudtType = this.getScript('SUDT');
-    sudtType.args = fromLockScriptHash;
+    const sudtType = this.provider.newScript('SUDT', fromLockScriptHash);
 
     for (const recipientInfo of this.options.recipients) {
       txSkeleton = await this.handlerRecipient(txSkeleton, recipientInfo, sudtType);
     }
 
+    const pwLock = this.provider.newScript('PW_NON_ANYONE_CAN_PAY');
+    common.registerCustomLockScriptInfos([
+      {
+        code_hash: pwLock.code_hash,
+        hash_type: pwLock.hash_type,
+        lockScriptInfo: anyoneCanPay,
+      },
+    ]);
     txSkeleton = await this.completeTx(txSkeleton, fromAddress);
     txSkeleton = this.updateCellDeps(txSkeleton);
     txSkeleton = common.prepareSigningEntries(txSkeleton, { config: this.provider.config });

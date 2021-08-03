@@ -13,7 +13,7 @@ import { TransferCkbBuilder, TransferCkbOptions } from './TransferCkbBuilder';
 const debug = createDebugger('e2e-test');
 
 // TODO remove skip when docker available in ci
-test('test mint and transfer', async () => {
+test.skip('test mint and transfer', async () => {
   jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
@@ -103,7 +103,7 @@ test('test mint and transfer', async () => {
 });
 
 // remove skip when
-test.skip('test non-acp-pw lock mint and transfer', async () => {
+test('test non-acp-pw lock mint and transfer', async () => {
   jest.setTimeout(120000);
 
   const provider = new TestProvider();
