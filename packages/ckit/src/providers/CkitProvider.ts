@@ -31,7 +31,7 @@ export class CkitProvider extends MercuryProvider {
   }
 
   override newScript(configKey: CkitConfigKeys, args = '0x'): Script {
-    const script = super.newScript(args, configKey);
+    const script = super.newScript(configKey, args);
     if (!script) throw new Error(`cannot find the ${configKey} script config, maybe init failed`);
 
     return script;
