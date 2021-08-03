@@ -14,11 +14,11 @@ import { predefined, Config as LumosConfig, ScriptConfig } from '@ckb-lumos/conf
 import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { Provider, ResolvedOutpoint } from './';
 
-export interface ProviderConfig extends LumosConfig {
+type OptionalConfig = {
   MIN_FEE_RATE: Hexadecimal;
-}
-
-type Options = LumosConfig & { MIN_FEE_RATE?: Hexadecimal };
+};
+export type ProviderConfig = LumosConfig & OptionalConfig;
+export type InitOptions<T extends LumosConfig = LumosConfig> = Omit<T, keyof OptionalConfig> & Partial<OptionalConfig>;
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
@@ -54,7 +54,7 @@ export abstract class AbstractProvider implements Provider {
    * init the provider
    * @param config if no config is provided, {@link getChainInfo} will be called to check the network type, and using the predefined config
    */
-  async init(config?: Options): Promise<void> {
+  async init(config?: InitOptions): Promise<void> {
     if (this.initialized) return;
 
     if (config) {
@@ -77,6 +77,10 @@ export abstract class AbstractProvider implements Provider {
     return generateAddress(script, { config: this.config });
   }
 
+  /**
+   * parse an {@link Address} to script, throws an error when parsing failed
+   * @param address
+   */
   parseToScript(address: Address): Script {
     return parseAddress(address, { config: this.config });
   }
