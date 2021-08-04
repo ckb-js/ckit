@@ -2,7 +2,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import styled from 'styled-components';
 import { CkitProviderContainer, WalletContainer } from 'containers';
-import { AccountView, IssueView } from 'views';
+import { AccountView, AssetsView, IssueView } from 'views';
 
 import './App.less';
 
@@ -26,6 +26,7 @@ const App: React.FC = () => {
             <div className="app">
               <AccountView />
               <IssueView />
+              <AssetsView />
             </div>
           </BodyWrapper>
         </WalletContainer.Provider>

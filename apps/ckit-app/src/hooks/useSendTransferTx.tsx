@@ -1,14 +1,12 @@
 import { Address, HexNumber, Hash, Transaction } from '@ckb-lumos/base';
 import { Modal } from 'antd';
-import { MintSudtBuilder, RecipientOptions, helpers, MercuryProvider } from 'ckit';
+import { RecipientOptions, MercuryProvider, AcpTransferSudtBuilder, TransferCkbBuilder } from 'ckit';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
+import { AssetMeta } from './useAssetMetaStorage';
 import { useConfigStorage } from './useConfigStorage';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { hasProp } from 'utils';
-import { AssetMeta } from './useAssetMetaStorage';
-import { AcpTransferSudtBuilder } from 'ckit/src';
-import { TransferCkbBuilder } from 'ckit/src/tx-builders/TransferCkbBuilder';
 
 export interface SendTransferTxInput {
   recipient: Address;
@@ -22,7 +20,7 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
   const [localConfig] = useConfigStorage();
 
   return useMutation(
-    ['sendIssueTx'],
+    ['sendTransferTx'],
     async (input: SendTransferTxInput) => {
       if (!selectedWallet?.signer) throw new Error('exception: signed undifined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
