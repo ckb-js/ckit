@@ -1,9 +1,10 @@
 import { Address, HexNumber, Transaction, CellDep, Script, utils, Cell } from '@ckb-lumos/base';
-import { common, anyoneCanPay } from '@ckb-lumos/common-scripts';
+import { common } from '@ckb-lumos/common-scripts';
 import { sealTransaction, TransactionSkeleton, TransactionSkeletonType } from '@ckb-lumos/helpers';
 import { Signer, TransactionBuilder } from '@ckit/base';
-import { CkitProvider } from '../providers';
+import { CkitConfig, CkitProvider } from '../providers';
 import { nonNullable } from '../utils';
+import { CellCollector, setupInputCell, prepareSigningEntries } from './pwLockHelper';
 
 type CapacityPolicy =
   // mint only when recipient has ACP cell
@@ -86,6 +87,11 @@ export class MintSudtBuilder implements TransactionBuilder {
     }
   }
 
+  buildConfig(): CkitConfig {
+    const config = this.provider.config;
+    return config;
+  }
+
   async completeTx(
     txSkeleton: TransactionSkeletonType,
     fromAddress: string,
@@ -101,12 +107,14 @@ export class MintSudtBuilder implements TransactionBuilder {
       .reduce((a, b) => a + b, BigInt(0));
     const needCapacity = outputCapacity - inputCapacity + BigInt(10) ** BigInt(8);
 
+    const config = this.buildConfig();
     txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
       enableDeductCapacity: false,
-      config: this.provider.config,
+      config: config,
     });
     txSkeleton = await common.payFeeByFeeRate(txSkeleton, [fromAddress], feeRate, undefined, {
-      config: this.provider.config,
+      enableDeductCapacity: true,
+      config: config,
     });
 
     return txSkeleton;
@@ -116,7 +124,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     // TODO replace acpLockDep with unipass lock before publishing
     // TODO automatically fill cellDep by from lockscript
     txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
-      return cellDeps.push(this.sudtTypeDep).push(this.pwLockDep).push(this.acpLockDep);
+      return cellDeps.push(this.sudtTypeDep).push(this.secp256k1Dep);
     });
     return txSkeleton;
   }
@@ -134,17 +142,20 @@ export class MintSudtBuilder implements TransactionBuilder {
     }
 
     const pwLock = this.provider.newScript('PW_NON_ANYONE_CAN_PAY');
-    common.registerCustomLockScriptInfos([
-      {
-        code_hash: pwLock.code_hash,
-        hash_type: pwLock.hash_type,
-        lockScriptInfo: anyoneCanPay,
+    const lockScriptInfo = {
+      code_hash: pwLock.code_hash,
+      hash_type: pwLock.hash_type,
+      lockScriptInfo: {
+        CellCollector,
+        setupInputCell,
+        prepareSigningEntries,
       },
-    ]);
+    };
+    common.registerCustomLockScriptInfos([lockScriptInfo]);
+
     txSkeleton = await this.completeTx(txSkeleton, fromAddress);
     txSkeleton = this.updateCellDeps(txSkeleton);
-    txSkeleton = common.prepareSigningEntries(txSkeleton, { config: this.provider.config });
-
+    txSkeleton = common.prepareSigningEntries(txSkeleton, { config: this.buildConfig() });
     const sign = await this.signer.signMessage(nonNullable(txSkeleton.get('signingEntries').get(0)).message);
     return sealTransaction(txSkeleton, [sign]);
   }
