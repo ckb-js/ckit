@@ -14,7 +14,7 @@ export class Amount {
   }
 
   humanize(options?: HumanizeOptions): string {
-    const { decimalPlaces = Infinity, separator = true } = options ?? {};
+    const { decimalPlaces = Infinity, separator = true } = options ? options : {};
 
     const valWithDecimals = this.val.times(10 ** -this.decimals);
     const originDecimalPlaces = valWithDecimals.decimalPlaces();

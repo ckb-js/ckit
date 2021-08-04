@@ -1,44 +1,56 @@
-import { Address, HexNumber, Hash } from '@ckb-lumos/base';
+import { Address, HexNumber, Hash, Transaction } from '@ckb-lumos/base';
 import { Modal } from 'antd';
-import { MintSudtBuilder, RecipientOptions, helpers } from 'ckit';
+import { RecipientOptions, MercuryProvider, AcpTransferSudtBuilder, TransferCkbBuilder } from 'ckit';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
+import { AssetMeta } from './useAssetMetaStorage';
 import { useConfigStorage } from './useConfigStorage';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { hasProp } from 'utils';
 
-export interface SendIssueTxInput {
+export interface SendTransferTxInput {
   recipient: Address;
   amount: HexNumber;
-  operationKind: 'invite' | 'issue';
+  assetMeta: AssetMeta;
 }
 
-export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, SendIssueTxInput> {
+export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown, SendTransferTxInput> {
   const { selectedWallet } = WalletContainer.useContainer();
   const ckitProvider = CkitProviderContainer.useContainer();
   const [localConfig] = useConfigStorage();
 
   return useMutation(
-    ['sendIssueTx'],
-    async (input: SendIssueTxInput) => {
-      if (!selectedWallet?.signer) throw new Error('exception: signer undifined');
+    ['sendTransferTx'],
+    async (input: SendTransferTxInput) => {
+      if (!selectedWallet?.signer) throw new Error('exception: signed undifined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
+      let txToSend: Transaction;
 
-      const recipientsParams: RecipientOptions = {
-        recipient: input.recipient,
-        amount: input.amount,
-      };
-      if (input.operationKind === 'invite') {
-        recipientsParams.capacityPolicy = 'createAcp';
-        // TODO make the additionalCapacity configurable
-        // create acp with additionalAcp
-        recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toString();
+      if (input.assetMeta.script) {
+        const txBuilder = new AcpTransferSudtBuilder(
+          {
+            recipient: input.recipient,
+            sudt: input.assetMeta.script,
+            amount: input.amount,
+          },
+          ckitProvider as MercuryProvider,
+          selectedWallet.signer,
+        );
+        txToSend = await txBuilder.build();
       } else {
-        recipientsParams.capacityPolicy = 'findAcp';
+        const recipientsParams: RecipientOptions = {
+          recipient: input.recipient,
+          amount: input.amount,
+          capacityPolicy: 'findOrCreateAcp',
+        };
+        const txBuilder = new TransferCkbBuilder(
+          { recipients: [recipientsParams] },
+          ckitProvider,
+          selectedWallet.signer,
+        );
+        txToSend = await txBuilder.build();
       }
-      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, selectedWallet.signer);
-      const issueTx = await txBuilder.build();
-      const txHash = await ckitProvider.sendTransaction(issueTx);
+      const txHash = await ckitProvider.sendTransaction(txToSend);
       return { txHash: txHash };
     },
     {
