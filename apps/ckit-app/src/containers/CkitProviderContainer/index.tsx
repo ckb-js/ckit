@@ -9,7 +9,8 @@ export const CkitProviderContainer = createContainer<CkitProvider | undefined>((
   useEffect(() => {
     if (!ckitProvider) {
       const provider = new CkitProvider();
-      void provider.init(localConfig.ckitConfig).then(() => setCkitProvider(provider));
+      // TODO remove MIN_FEE_RATE
+      void provider.init({ ...localConfig.ckitConfig, MIN_FEE_RATE: '1000' }).then(() => setCkitProvider(provider));
     }
   }, []);
 

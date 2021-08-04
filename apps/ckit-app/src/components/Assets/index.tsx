@@ -23,7 +23,7 @@ export const AssetList: React.FC = () => {
 
   return (
     <div>
-      <Table size="small" showHeader={false} columns={columns} dataSource={assetMeta} />
+      <Table size="small" showHeader={false} columns={columns} dataSource={assetMeta} pagination={{ pageSize: 5 }} />
     </div>
   );
 };

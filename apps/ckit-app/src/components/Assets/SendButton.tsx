@@ -38,7 +38,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const { mutateAsync: sendTransferTransaction, isLoading: isIssueLoading } = useSendTransferTx();
 
   const initialValues: ModalFormValues = { recipient: '', amount: '' };
-  const title = 'send' + assetMeta.name;
+  const title = 'send ' + assetMeta.name;
 
   const validate = (_values: ModalFormValues): ModalFormErrors => {
     // TODO add validate logic

@@ -14,7 +14,7 @@ export const AssetsView: React.FC = observer(() => {
         <div style={{ marginBottom: '36px' }}>
           <strong> Assets </strong>
         </div>
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+        <div>
           {showAssetList && <AssetList />}
           {!showAssetList && <Empty />}
         </div>
