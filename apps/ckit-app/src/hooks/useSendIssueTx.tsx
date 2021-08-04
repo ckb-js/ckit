@@ -21,8 +21,7 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
   return useMutation(
     ['sendIssueTx'],
     async (input: SendIssueTxInput) => {
-      if (!selectedWallet?.signer)
-        throw new Error('Signer could not be found, the wallet may be disconnected, you can try to reconnect');
+      if (!selectedWallet?.signer) throw new Error('exception: signer undifined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
 
       const recipientsParams: RecipientOptions = {

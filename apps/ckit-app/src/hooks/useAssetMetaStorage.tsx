@@ -9,6 +9,7 @@ export interface AssetMeta {
   precision: number;
 }
 
+// TODO use real assets meta data
 export function useAssetMetaStorage(): [AssetMeta[], (newValue: AssetMeta[]) => void, () => void] {
   const initialAssetMeta = useMemo<AssetMeta[]>(
     () => [
