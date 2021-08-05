@@ -50,6 +50,25 @@ export abstract class AbstractProvider implements Provider {
     };
   }
 
+  findCellDepByAddress(address: Address): CellDep | undefined {
+    const script = this.parseToScript(address);
+    const scriptConfigs = Object.values(this.config.SCRIPTS) as ScriptConfig[];
+
+    if (scriptConfigs == null) return undefined;
+
+    const index = scriptConfigs.findIndex(
+      (scriptConfig) => scriptConfig?.CODE_HASH === script.code_hash && scriptConfig?.HASH_TYPE === script.hash_type,
+    );
+    const found = scriptConfigs[index];
+    if (!found) return undefined;
+
+    return { dep_type: found.DEP_TYPE, out_point: { tx_hash: found.TX_HASH, index: found.INDEX } };
+  }
+
+  findCellDepByScript(script: Script): CellDep | undefined {
+    return this.findCellDepByAddress(this.parseToAddress(script));
+  }
+
   /**
    * init the provider
    * @param config if no config is provided, {@link getChainInfo} will be called to check the network type, and using the predefined config
