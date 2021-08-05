@@ -54,7 +54,7 @@ export class NonAcpPwMintBuilder extends Builder {
 
   getWitnessArgsPlaceholder(): WitnessArgs {
     // TODO remove the hard code
-    return Builder.WITNESS_ARGS.RawSecp256k1;
+    return Builder.WITNESS_ARGS.Secp256k1;
   }
 
   async build(): Promise<Transaction> {

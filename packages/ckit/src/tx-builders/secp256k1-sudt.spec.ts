@@ -8,6 +8,7 @@ import { AcpTransferSudtBuilder } from './AcpTransferSudtBuilder';
 import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
 import { MintSudtBuilder2 } from './MintSudtBuilder2';
 import { TransferCkbBuilder, TransferCkbOptions } from './internal/TransferCkbBuilder';
+import { InternalNonAcpPwLockSigner } from '../wallets/NonAcpPwLockWallet';
 
 // TODO remove skip when docker available in ci
 test('test mint and transfer', async () => {
@@ -111,7 +112,8 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const privKey = nonNullable(provider.testPrivateKeys[1]);
   const genesisSigner = new Secp256k1Signer(privKey, provider, provider.newScript('SECP256K1_BLAKE160'));
   // TODO replace with pw signer when it is fixed
-  const pwSigner = new Secp256k1Signer(randomHexString(64), provider, provider.newScript('SECP256K1_BLAKE160'));
+  // const pwSigner = new Secp256k1Signer(randomHexString(64), provider, provider.newScript('SECP256K1_BLAKE160'));
+  const pwSigner = new InternalNonAcpPwLockSigner(randomHexString(64), provider);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
 
