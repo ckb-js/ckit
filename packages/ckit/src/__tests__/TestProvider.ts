@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
-import { debug, Signer } from '@ckit/base';
+import { createDebugger, debug, Signer } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
 import appRootPath from 'app-root-path';
 import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
@@ -10,6 +10,7 @@ import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { deployCkbScripts } from './deploy';
 
 export class TestProvider extends CkitProvider {
+  public readonly debug = createDebugger('ckit-test');
   readonly #_assemberPrivateKey: HexString;
   setupStatus: 'idle' | 'pending' | 'fulfilled' | 'rejected' = 'idle';
 
@@ -38,6 +39,10 @@ export class TestProvider extends CkitProvider {
 
   get assemberPrivateKey(): HexString {
     return this.#_assemberPrivateKey;
+  }
+
+  getGenesisSigner(index: number): Signer {
+    return new Secp256k1Signer(nonNullable(this.testPrivateKeys[index]), this, this.newScript('SECP256K1_BLAKE160'));
   }
 
   private async deployDeps(): Promise<CkitConfig> {
