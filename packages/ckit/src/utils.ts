@@ -38,3 +38,16 @@ export function hexToBytes(hex: HexString): Uint8Array {
 
   return Uint8Array.from(match.map((byte) => parseInt(byte, 16)));
 }
+
+export function boom(message?: string): never {
+  throw new Error(message);
+}
+
+export function asserts(condition: unknown, err?: string | Error | (() => never)): asserts condition {
+  if (condition) return;
+  if (typeof err === 'function') err();
+  if (typeof err === 'string') boom(err);
+  if (err instanceof Error) throw err;
+
+  boom();
+}
