@@ -63,7 +63,11 @@ export class NonAcpPwLockSigner implements Signer {
 
 export function hashMessage(message: HexString): string {
   // https://github.com/XuJiandong/pw-lock/blob/develop/c/pw_chain_ethereum.h#L43
-  return new Keccak256Hasher().update('\x19Ethereum Signed Message:\n32').update(message).digest().serializeJson();
+  return new Keccak256Hasher()
+    .update('\x19Ethereum Signed Message:\n32')
+    .update(hexToBytes(message).buffer)
+    .digest()
+    .serializeJson();
 }
 
 export class InternalNonAcpPwLockSigner implements Signer {
@@ -75,13 +79,7 @@ export class InternalNonAcpPwLockSigner implements Signer {
   getEthAddress(): string {
     const pubkey = publicKeyCreate(hexToBytes(this.#privateKey), false).slice(1);
     const keccak = new Keccak256Hasher();
-    return (
-      '0x' +
-      keccak
-        .hash(pubkey.buffer as Uint8Array)
-        .serializeJson()
-        .slice(-40)
-    );
+    return '0x' + keccak.update(pubkey.buffer).digest().serializeJson().slice(-40);
   }
 
   async getAddress(): Promise<string> {
