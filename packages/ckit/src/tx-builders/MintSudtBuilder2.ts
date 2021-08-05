@@ -10,8 +10,6 @@ export class MintSudtBuilder2 implements TransactionBuilder {
   constructor(private options: MintOptions, private provider: CkitProvider, private signer: Signer) {}
 
   async build(): Promise<RawRawTransaction> {
-    // eslint-disable-next-line no-debugger
-    debugger;
     const builder = new NonAcpPwMintBuilder(this.options, this.provider, await this.signer.getAddress());
 
     const tx = await builder.build();
