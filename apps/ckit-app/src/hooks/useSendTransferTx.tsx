@@ -1,6 +1,6 @@
 import { Address, HexNumber, Hash, Transaction } from '@ckb-lumos/base';
 import { Modal } from 'antd';
-import { RecipientOptions, MercuryProvider, AcpTransferSudtBuilder, TransferCkbBuilder } from 'ckit';
+import { RecipientOptions, AcpTransferSudtBuilder, TransferCkbBuilder } from 'ckit';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
 import { AssetMeta } from './useAssetMetaStorage';
@@ -33,7 +33,7 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
             sudt: input.assetMeta.script,
             amount: input.amount,
           },
-          ckitProvider as MercuryProvider,
+          ckitProvider,
           selectedWallet.signer,
         );
         txToSend = await txBuilder.build();
@@ -41,7 +41,7 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
         const recipientsParams: RecipientOptions = {
           recipient: input.recipient,
           amount: input.amount,
-          capacityPolicy: 'findOrCreateAcp',
+          capacityPolicy: 'createAcp',
         };
         const txBuilder = new TransferCkbBuilder(
           { recipients: [recipientsParams] },
