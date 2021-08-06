@@ -21,7 +21,7 @@ export const IssueOperation = observer(() => {
   };
 
   return (
-    <div>
+    <div style={{ marginBottom: '24px' }}>
       <Row>
         <Col span={4} offset={4}>
           <Button onClick={onClickInvite}>invite</Button>

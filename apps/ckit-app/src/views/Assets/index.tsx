@@ -1,4 +1,4 @@
-import { Empty } from 'antd';
+import { Empty, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { AssetList } from 'components/Assets';
@@ -11,8 +11,8 @@ export const AssetsView: React.FC = observer(() => {
   return (
     <div>
       <StyledCardWrapper>
-        <div style={{ marginBottom: '36px' }}>
-          <strong> Assets </strong>
+        <div style={{ marginBottom: '12px' }}>
+          <Typography.Title level={3}> Assets </Typography.Title>
         </div>
         <div>
           {showAssetList && <AssetList />}

@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { IssueOperation } from 'components/Issue';
@@ -11,10 +12,10 @@ export const IssueView: React.FC = observer(() => {
     <div>
       {showIssueView && (
         <StyledCardWrapper>
-          <div style={{ marginBottom: '36px' }}>
-            <strong> Issue </strong>
+          <div style={{ marginBottom: '24px' }}>
+            <Typography.Title level={3}> Issue </Typography.Title>
           </div>
-          <div style={{ textAlign: 'center', marginBottom: '36px' }}>display-udt-info</div>
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>display issued udt info</div>
           <IssueOperation />
         </StyledCardWrapper>
       )}
