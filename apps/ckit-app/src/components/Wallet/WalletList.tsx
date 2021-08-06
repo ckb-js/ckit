@@ -12,6 +12,7 @@ const ModalBorderWrapper = styled.div`
     margin: 4px 0;
     border-radius: 8px;
     border: 1px solid rgba(0, 0, 0, 0);
+
     &:hover {
       border: 1px solid rgba(0, 0, 0, 0.2);
       border-radius: 8px;
@@ -24,10 +25,16 @@ export const WalletList = observer(() => {
   const { wallets, visible, setCurrentWalletIndex, setError, setModalVisible } = WalletContainer.useContainer();
 
   return (
-    <Modal closable width={312} visible={visible} onCancel={() => setModalVisible(false)} footer={null}>
+    <Modal
+      closable
+      title={'choose wallets'}
+      width={312}
+      visible={visible}
+      onCancel={() => setModalVisible(false)}
+      footer={null}
+    >
       <ModalBorderWrapper>
         <List
-          style={{ marginTop: '24px' }}
           pagination={false}
           dataSource={wallets}
           renderItem={(item, index) => (
