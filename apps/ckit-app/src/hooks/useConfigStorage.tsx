@@ -15,8 +15,8 @@ export function useConfigStorage(): [LocalConfig, (newValue: LocalConfig) => voi
   const initialConfig = useMemo<LocalConfig>(() => {
     // TODO check network first
     const ckitConfig: CkitInitOptions = predefined.Aggron;
-    const mecuryRPC = 'http://127.0.0.1:8116';
-    const ckbRPC = 'http://127.0.0.1:8114';
+    const mecuryRPC = 'https://testnet.ckb.dev/indexer';
+    const ckbRPC = 'https://testnet.ckb.dev/rpc';
     const nervosExploreTxUrlPrefix = 'https://explorer.nervos.org/aggron/transaction/';
     const nervosExploreAddressUrlPrefix = 'https://explorer.nervos.org/aggron/address/';
     return {

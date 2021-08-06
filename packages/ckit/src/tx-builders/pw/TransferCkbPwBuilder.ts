@@ -15,8 +15,6 @@ export class ForceSimpleBuilder extends AbstractPwSenderBuilder {
     const allPolicyCreateAcp = this.options.recipients.every((option) => option.capacityPolicy === 'createAcp');
     if (!allPolicyCreateAcp) boom('Now only createAcp policy is available');
 
-    // eslint-disable-next-line no-debugger
-    debugger;
     const address = nonNullable(this.options.recipients[0]?.recipient);
     const amount = new Amount(nonNullable(this.options.recipients[0]?.amount), 0);
 

@@ -8,9 +8,8 @@ export const CkitProviderContainer = createContainer<CkitProvider | undefined>((
   const [localConfig] = useConfigStorage();
   useEffect(() => {
     if (!ckitProvider) {
-      const provider = new CkitProvider();
-      // TODO remove MIN_FEE_RATE
-      void provider.init({ ...localConfig.ckitConfig, MIN_FEE_RATE: '1000' }).then(() => setCkitProvider(provider));
+      const provider = new CkitProvider(localConfig.mecuryRPC, localConfig.ckbRPC);
+      void provider.init({ ...localConfig.ckitConfig }).then(() => setCkitProvider(provider));
     }
   }, []);
 

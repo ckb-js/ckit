@@ -4,7 +4,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import { CkitProviderContainer, useSigner, WalletContainer } from 'containers';
 import { AssetMeta } from 'hooks';
-import { humanizeAssetAmount } from 'utils';
+import { AssetAmount } from 'utils';
 
 export const AssetBalance: React.FC<AssetMeta> = (props) => {
   const { script, precision } = props;
@@ -22,7 +22,7 @@ export const AssetBalance: React.FC<AssetMeta> = (props) => {
     return <Typography.Text type="danger">error</Typography.Text>;
   }
   if (query.data) {
-    return <Typography.Text>{humanizeAssetAmount(query.data, precision)}</Typography.Text>;
+    return <Typography.Text>{AssetAmount.fromRaw(query.data, precision).toHumanizeString()}</Typography.Text>;
   }
   return <LoadingOutlined />;
 };

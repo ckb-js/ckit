@@ -3,6 +3,7 @@ import { Button, Col, Modal, Row, Typography } from 'antd';
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import React, { useState } from 'react';
 import { AssetMeta, useSendTransferTx } from 'hooks';
+import { AssetAmount } from 'utils';
 
 export const SendButton: React.FC<AssetMeta> = (props) => {
   const [visible, setVisible] = useState<boolean>(false);
@@ -57,7 +58,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
           // }, 400);
           sendTransferTransaction({
             recipient: values.recipient,
-            amount: values.amount,
+            amount: AssetAmount.fromHumanize(values.amount, assetMeta.precision).toRawString(),
             assetMeta: assetMeta,
           }).then(() => setVisible(false));
         }}
