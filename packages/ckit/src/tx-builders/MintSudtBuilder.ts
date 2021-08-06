@@ -30,6 +30,9 @@ export interface MintOptions {
   recipients: RecipientOptions[];
 }
 
+/**
+ * @deprecated
+ */
 export class MintSudtBuilder implements TransactionBuilder {
   public static SUDT_CELL_MINIMAL_CAPACITY =
     // prettier-ignore

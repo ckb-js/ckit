@@ -1,10 +1,10 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
 import { CkbTypeScript, Signer } from '@ckit/base';
-import { Amount, Builder, Cell, CellDep, RawTransaction, Transaction, WitnessArgs } from '@lay2/pw-core';
+import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { boom } from '../../utils';
-import { getCellDeps } from '../unipass/config';
+import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
 interface TransferOptions {
   readonly recipient: Address;
@@ -12,48 +12,9 @@ interface TransferOptions {
   readonly amount: HexNumber;
 }
 
-export class TransferSudtPwBuilder extends Builder {
-  constructor(private options: TransferOptions, private provider: CkitProvider, private signer: Signer) {
-    super();
-  }
-
-  // TODO get witnessArgs by script
-  private getWitnessArgs(_address: Address): WitnessArgs {
-    // TODO fill the witNessArgs
-    return Builder.WITNESS_ARGS.RawSecp256k1;
-  }
-
-  private async getCellDeps(): Promise<CellDep[]> {
-    const sender = await this.signer.getAddress();
-    const recipient = this.options.recipient;
-
-    const senderLockDep = this.provider.findCellDepByAddress(sender);
-    if (!senderLockDep) {
-      boom(`cannot find sender ${sender} lock dep, maybe the provider is not inited`);
-    }
-
-    const recipientLockDep = this.provider.findCellDepByAddress(recipient);
-    if (!recipientLockDep) {
-      boom(`cannot find recipient ${recipient} lock dep, maybe the provider is not inited`);
-    }
-
-    const udtTypeDep = this.provider.findCellDepByScript(this.options.sudt);
-    if (!udtTypeDep) {
-      boom(`cannot find udt ${this.options.sudt} dep, maybe the provider is not inited`);
-    }
-
-    const isSameLockDep = Pw.toPwCellDep(senderLockDep).sameWith(Pw.toPwCellDep(recipientLockDep));
-    const lockDeps = isSameLockDep
-      ? [Pw.toPwCellDep(senderLockDep)]
-      : [Pw.toPwCellDep(senderLockDep), Pw.toPwCellDep(recipientLockDep)];
-
-    return [
-      ...lockDeps,
-      Pw.toPwCellDep(udtTypeDep),
-      Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
-      // unipass deps
-      ...getCellDeps(),
-    ];
+export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
+  constructor(private options: TransferOptions, provider: CkitProvider, private signer: Signer) {
+    super(provider);
   }
 
   async build(): Promise<Transaction> {
@@ -100,7 +61,7 @@ export class TransferSudtPwBuilder extends Builder {
 
     const tx = new Transaction(
       new RawTransaction([...senderInputs, recipientInput], [senderOutput, recipientOutput], cellDeps),
-      senderInputs.map(() => this.getWitnessArgs(sender)),
+      senderInputs.map(() => this.getWitnessPlaceholder(sender)),
     );
 
     // TODO fix fee
