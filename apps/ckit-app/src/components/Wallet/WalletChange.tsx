@@ -12,17 +12,21 @@ export const WalletChange = observer(() => {
   const truncatedAddress = truncateMiddle(address, 8);
   const href = localConfig.nervosExploreAddressUrlPrefix + address;
   return (
-    <div style={{ marginTop: '48px', marginBottom: '24px' }}>
+    <div style={{ marginTop: '32px', marginBottom: '32px' }}>
       <Row>
         <Col span={8} offset={6}>
-          <a href={href} target="_blank" rel="noreferrer">
-            {truncatedAddress}
-          </a>
+          <div style={{ textAlign: 'center' }}>
+            <a href={href} target="_blank" rel="noreferrer">
+              {truncatedAddress}
+            </a>
+          </div>
         </Col>
-        <Col span={5} offset={3}>
-          <Button size="small" onClick={() => setModalVisible(true)}>
-            change
-          </Button>
+        <Col span={8} offset={2}>
+          <div style={{ float: 'right' }}>
+            <Button size="small" onClick={() => setModalVisible(true)}>
+              change
+            </Button>
+          </div>
         </Col>
       </Row>
     </div>
