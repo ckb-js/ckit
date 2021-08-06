@@ -5,11 +5,15 @@ import { MercuryProvider } from './mercury/MercuryProvider';
 
 export interface CkitConfig extends ProviderConfig {
   SCRIPTS: {
+    // lock
     SECP256K1_BLAKE160: ScriptConfig;
     ANYONE_CAN_PAY: ScriptConfig;
-    SUDT: ScriptConfig;
+    UNIPASS: ScriptConfig;
     PW_NON_ANYONE_CAN_PAY: ScriptConfig;
     PW_ANYONE_CAN_PAY: ScriptConfig;
+
+    // type
+    SUDT: ScriptConfig;
   };
 }
 export type CkitInitOptions = InitOptions<CkitConfig>;
