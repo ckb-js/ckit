@@ -254,7 +254,7 @@ function pubkeyToAddress(pubkey: string): string {
   // }
 
   const script = new Script(
-    '0x949db47aac7d1a2a0d921344dc5c1ddefda390813a1881d56a0872d798e0d629',
+    '0x124a60cd799e1fbca664196de46b3f7f0ecb7138133dcaea4893c51df5b02be6',
     hashHex,
     HashType.type,
   );
