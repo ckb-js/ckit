@@ -3,12 +3,12 @@ import { key } from '@ckb-lumos/hd';
 import { TestProvider } from '../__tests__/TestProvider';
 import { CkbAmount } from '../helpers';
 import { nonNullable, randomHexString } from '../utils';
+import { InternalNonAcpPwLockSigner } from '../wallets/NonAcpPwLockWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { AcpTransferSudtBuilder } from './AcpTransferSudtBuilder';
 import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
 import { MintSudtBuilder2 } from './MintSudtBuilder2';
-import { TransferCkbBuilder, TransferCkbOptions } from './internal/TransferCkbBuilder';
-import { InternalNonAcpPwLockSigner } from '../wallets/NonAcpPwLockWallet';
+import { TransferCkbBuilder, TransferCkbOptions } from './TransferCkbBuilder';
 
 // TODO remove skip when docker available in ci
 test('test mint and transfer', async () => {
