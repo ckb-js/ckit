@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
-import { CHAIN_SPECS } from '@lay2/pw-core';
+import { predefined } from '@ckb-lumos/config-manager';
 import { CkitConfig } from '../providers/CkitProvider';
 
-function toScriptConfig(obj: typeof CHAIN_SPECS.Aggron.pwLock): ScriptConfig {
-  return {
-    CODE_HASH: obj.script.codeHash,
-    HASH_TYPE: obj.script.hashType,
-    DEP_TYPE: obj.cellDep.depType,
-    TX_HASH: obj.cellDep.outPoint.txHash,
-    INDEX: obj.cellDep.outPoint.index,
-  };
-}
+// function toScriptConfig(obj: typeof CHAIN_SPECS.Aggron.pwLock): ScriptConfig {
+//   return {
+//     CODE_HASH: obj.script.codeHash,
+//     HASH_TYPE: obj.script.hashType,
+//     DEP_TYPE: obj.cellDep.depType,
+//     TX_HASH: obj.cellDep.outPoint.txHash,
+//     INDEX: obj.cellDep.outPoint.index,
+//   };
+// }
 
 export const SCRIPTS: CkitConfig['SCRIPTS'] = {
   SECP256K1_BLAKE160: predefined.AGGRON4.SCRIPTS.SECP256K1_BLAKE160!,
@@ -19,9 +18,21 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
   SUDT: predefined.AGGRON4.SCRIPTS.SUDT!,
 
   // TODO replace me when deployed
-  PW_ANYONE_CAN_PAY: toScriptConfig(CHAIN_SPECS.Aggron.pwLock),
+  PW_ANYONE_CAN_PAY: {
+    CODE_HASH: '0x093ba9759e1c4a79dd81b0a50de83ab108ffe4eb983b05637bf1f5c1834f31eb',
+    HASH_TYPE: 'data',
+    TX_HASH: '0x834d1827950545da5cca779903ca8268aecbc7bfadb1d1cc18ba90f3b312cd41',
+    INDEX: '0x2',
+    DEP_TYPE: 'code',
+  },
   // TODO replace me when deployed
-  PW_NON_ANYONE_CAN_PAY: toScriptConfig(CHAIN_SPECS.Aggron.pwLock),
+  PW_NON_ANYONE_CAN_PAY: {
+    CODE_HASH: '0x87366c3678f14ccbd6647386a18e05ae27c97978d4a6952fb5820cc698263835',
+    HASH_TYPE: 'data',
+    TX_HASH: '0x834d1827950545da5cca779903ca8268aecbc7bfadb1d1cc18ba90f3b312cd41',
+    INDEX: '0x3',
+    DEP_TYPE: 'code',
+  },
   // TODO replace me when deployed
   UNIPASS: {
     INDEX: '0x0',
