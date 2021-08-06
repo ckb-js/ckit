@@ -1,6 +1,5 @@
-import { makeObservable, observable } from 'mobx';
-import { CkitProvider } from '../providers';
-import { NonAcpPwLockWallet } from './NonAcpPwLockWallet';
+import { CkitProvider, NonAcpPwLockWallet } from 'ckit';
+import { action, makeObservable, observable } from 'mobx';
 
 export class ObservableNonAcpPwLockWallet extends NonAcpPwLockWallet {
   constructor(ckitProvider: CkitProvider) {
@@ -8,6 +7,9 @@ export class ObservableNonAcpPwLockWallet extends NonAcpPwLockWallet {
     makeObservable(this, {
       connectStatus: observable,
       signer: observable,
+      onConnectStatusChanged: action,
+      onSignerChanged: action,
+      onSignerDisconnected: action,
     });
   }
 }
