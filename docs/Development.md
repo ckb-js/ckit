@@ -51,3 +51,13 @@ Sometimes we want to debug locally, but NodeJS can't run the .ts file directly, 
 ```
 yarn babel-node -x ".ts" --config-file babel.config.json path/to/my/file.ts
 ```
+
+## Q&A
+
+### Why My Test Always Failed Even If I Think It Is Right?
+
+Maybe you are right, try to run the command below. Good luck
+
+```
+yarn jest --clearCache
+```
