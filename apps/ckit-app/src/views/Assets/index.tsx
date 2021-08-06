@@ -3,11 +3,11 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { AssetList } from 'components/Assets';
 import { StyledCardWrapper } from 'components/Styled';
-import { WalletContainer } from 'containers/WalletContainer';
+import { useSigner, WalletContainer } from 'containers/WalletContainer';
 
 export const AssetsView: React.FC = observer(() => {
   const { selectedWallet } = WalletContainer.useContainer();
-  const showAssetList = selectedWallet?.signer;
+  const { address: signerAddress } = useSigner(selectedWallet?.signer);
   return (
     <div>
       <StyledCardWrapper>
@@ -15,8 +15,8 @@ export const AssetsView: React.FC = observer(() => {
           <Typography.Title level={3}> Assets </Typography.Title>
         </div>
         <div>
-          {showAssetList && <AssetList />}
-          {!showAssetList && <Empty />}
+          {signerAddress && <AssetList />}
+          {!signerAddress && <Empty />}
         </div>
       </StyledCardWrapper>
     </div>
