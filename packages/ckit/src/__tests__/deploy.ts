@@ -12,6 +12,7 @@ import {
   TransactionSkeletonType,
   generateSecp256k1Blake160Address,
 } from '@ckb-lumos/helpers';
+import { predefined } from '../predefined';
 import { CkitConfig, CkitProvider } from '../providers';
 import { bytesToHex, nonNullable } from '../utils';
 
@@ -111,6 +112,9 @@ async function deployScripts(
       DEP_TYPE: 'code',
     },
     SECP256K1_BLAKE160: secp256k1Config,
+
+    // TODO refactor needed, split it into the deploy script and predefined script
+    UNIPASS: predefined.Aggron.SCRIPTS.UNIPASS,
   };
 }
 
