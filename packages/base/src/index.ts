@@ -1,4 +1,16 @@
-import { Transaction, Hash, OutPoint, HexNumber, ChainInfo, Output, HexString, Script, Address } from '@ckb-lumos/base';
+import {
+  Transaction,
+  Hash,
+  OutPoint,
+  HexNumber,
+  ChainInfo,
+  Output,
+  HexString,
+  Script,
+  Address,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Cell,
+} from '@ckb-lumos/base';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -34,6 +46,9 @@ export interface TransactionBuilder {
 
 export type CkbTypeScript = Script;
 
+/**
+ * @deprecated migrate to {@link Cell}
+ */
 export type ResolvedOutpoint = {
   block_number: HexNumber;
   out_point: OutPoint;
@@ -69,7 +84,7 @@ export interface Provider {
   parseToAddress(script: Script): string;
 }
 
-export { ConfigManager } from './ConfigManager';
+export { ScriptManager } from './ScriptManager';
 export { AbstractProvider, ProviderConfig, InitOptions } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
 export { createDebugger, debug } from './logger';
