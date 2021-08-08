@@ -186,7 +186,7 @@ test('mint sudt with a mix of policies', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerSigner = provider.getGenesisSigner(2);
+  const issuerSigner = provider.getGenesisSigner(1);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
@@ -258,7 +258,9 @@ test('mint sudt with a mix of policies', async () => {
   expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
   expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('300');
 
-  // recipient3 -> recipient1 300
+  // recipient3 sudt
+  //                  --merge-->  recipient3 sudt(142 x 2)   --transfer--> recipient1
+  // recipient3 sudt
   await provider.sendTxUntilCommitted(
     await new AcpTransferSudtBuilder(
       { recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300' },
@@ -270,4 +272,15 @@ test('mint sudt with a mix of policies', async () => {
   expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('400');
   expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
   expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('0');
+
+  const recipient3Cells = await provider.collectUdtCells(await recipient3Signer.getAddress(), sudtType, '0');
+  expect(recipient3Cells).toHaveLength(1);
+  // capacity after sent
+  const twoSudtCellsCapacity = 142n * 2n * 10n ** 8n;
+  const recipient3CellsCapacity = BigInt(recipient3Cells[0]?.output?.capacity || 0);
+  // 142 * 2 - 1 < recipient3_capacity < 142 * 2
+  expect(
+    twoSudtCellsCapacity - recipient3CellsCapacity < 1n * 10n ** 6n &&
+      twoSudtCellsCapacity - recipient3CellsCapacity > 0,
+  ).toBe(true);
 });
