@@ -1,12 +1,15 @@
+// because of hot cell problem
+// we need to ensure that different genesisSigner is used in different cases
+
 import { utils } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
 import { TestProvider } from '../__tests__/TestProvider';
 import { CkbAmount } from '../helpers';
-import { nonNullable, randomHexString } from '../utils';
+import { randomHexString } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/NonAcpPwLockWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { AcpTransferSudtBuilder } from './AcpTransferSudtBuilder';
-import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
+import { MintOptions } from './MintSudtBuilder';
 import { MintSudtBuilder2 } from './MintSudtBuilder2';
 import { TransferCkbBuilder, TransferCkbOptions } from './TransferCkbBuilder';
 
@@ -73,7 +76,7 @@ test('test mint and transfer', async () => {
     },
   ];
 
-  const signedMintTx = await new MintSudtBuilder({ recipients }, provider, issuerSigner).build();
+  const signedMintTx = await new MintSudtBuilder2({ recipients }, provider, issuerSigner).build();
   const mintTxHash = await provider.rpc.send_transaction(signedMintTx);
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
@@ -100,7 +103,6 @@ test('test mint and transfer', async () => {
   // expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('1');
 });
 
-// remove skip when
 test('test non-acp-pw lock mint and transfer', async () => {
   jest.setTimeout(120000);
 
@@ -109,8 +111,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
 
   const { debug } = provider;
 
-  const privKey = nonNullable(provider.testPrivateKeys[1]);
-  const genesisSigner = new Secp256k1Signer(privKey, provider, provider.newScript('SECP256K1_BLAKE160'));
+  const genesisSigner = provider.getGenesisSigner(1);
   // TODO replace with pw signer when it is fixed
   // const pwSigner = new Secp256k1Signer(randomHexString(64), provider, provider.newScript('SECP256K1_BLAKE160'));
   const pwSigner = new InternalNonAcpPwLockSigner(randomHexString(64), provider);
@@ -177,4 +178,96 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const udtCells1 = await provider.collectUdtCells(await recipient1Signer.getAddress(), testUdt, '1');
   const additionalCapacity1 = Number(udtCells1[0]?.output?.capacity) - 142 * 10 ** 8;
   expect(CkbAmount.fromShannon(additionalCapacity1).equals(CkbAmount.fromCkb(1))).toBe(true);
+});
+
+test('mint sudt with a mix of policies', async () => {
+  jest.setTimeout(120000);
+
+  const provider = new TestProvider();
+  await provider.init();
+
+  const issuerSigner = provider.getGenesisSigner(2);
+  const recipient1Signer = provider.generateAcpSigner();
+  const recipient2Signer = provider.generateAcpSigner();
+  const recipient3Signer = provider.generateAcpSigner();
+
+  const sudtType = provider.newSudtScript(await issuerSigner.getAddress());
+
+  const failedTx = new MintSudtBuilder2(
+    {
+      recipients: [
+        { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+        { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+        { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+      ],
+    },
+    provider,
+    issuerSigner,
+  ).build();
+
+  // cannot createAcp for an address without acp cell
+  await expect(failedTx).rejects.toBeTruthy();
+
+  // issuer -> recipient1: 0
+  //        -> recipient2: 100
+  //        -> recipient3: 100 + 100 (2 cells)
+  await provider.sendTxUntilCommitted(
+    await new MintSudtBuilder2(
+      {
+        recipients: [
+          { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createAcp' },
+
+          { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+
+          // the sudt balance of recipient3 will be split into 2 cells
+          { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+          { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+        ],
+      },
+      provider,
+      issuerSigner,
+    ).build(),
+  );
+  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('0');
+  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('100');
+  expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('200');
+
+  // the sudt balance of recipient3 will be split into 2 cells
+  expect(await provider.collectUdtCells(await recipient3Signer.getAddress(), sudtType, '101')).toHaveLength(2);
+
+  // issuer -> recipient1: 100 (by findAcp)
+  //        -> recipient2: 100 (by findAcp)
+  //        -> recipient3: 100 (by findAcp)
+  await provider.sendTxUntilCommitted(
+    await new MintSudtBuilder2(
+      {
+        recipients: [
+          { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+
+          { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+
+          { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+        ],
+      },
+      provider,
+      issuerSigner,
+    ).build(),
+  );
+
+  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('100');
+  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
+  expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('300');
+
+  // recipient3 -> recipient1 300
+  await provider.sendTxUntilCommitted(
+    await new AcpTransferSudtBuilder(
+      { recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300' },
+      provider,
+      recipient3Signer,
+    ).build(),
+  );
+
+  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('400');
+  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
+  expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('0');
 });
