@@ -3,7 +3,7 @@ import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
 import { MercuryClient, SearchKey } from '@ckit/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
-import { concatMap, expand, filter, firstValueFrom, from, reduce, scan, takeWhile } from 'rxjs';
+import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
 import { asyncSleep } from '../../utils';
 import { MercuryCellProvider } from './IndexerCellProvider';
 
@@ -51,7 +51,7 @@ export class MercuryProvider extends AbstractProvider {
       takeWhile((acc) => acc.amount < BigInt(minimalCapacity), true),
     );
 
-    const acc = await firstValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
+    const acc = await lastValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
 
     if (acc.amount < BigInt(minimalCapacity)) {
       throw new Error(
@@ -80,7 +80,7 @@ export class MercuryProvider extends AbstractProvider {
       reduce((balance, cell) => balance + BigInt(cell.output.capacity), 0n),
     );
 
-    const balance = await firstValueFrom(balance$, { defaultValue: '0x0' });
+    const balance = await lastValueFrom(balance$, { defaultValue: '0x0' });
     return String(balance);
   }
 
@@ -114,10 +114,10 @@ export class MercuryProvider extends AbstractProvider {
         }),
         { amount: 0n, cells: [] } as CellsAccumulator,
       ),
-      takeWhile((acc) => acc.amount < BigInt(minimalAmount), true),
+      takeWhile((acc) => acc.amount < BigInt(minimalAmount), true), // inclusive last to ensure cells are enough
     );
 
-    const acc = await firstValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
+    const acc = await lastValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
 
     if (acc.amount < BigInt(minimalAmount)) {
       throw new Error(`The udt cell is not enough, expected minimal amount: ${minimalAmount}, actual: ${acc.amount}`);
@@ -140,7 +140,7 @@ export class MercuryProvider extends AbstractProvider {
       reduce((acc, resolvedCell) => acc + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))), 0n),
     );
 
-    return firstValueFrom(balance$, { defaultValue: 0n }).then((x) => String(x));
+    return lastValueFrom(balance$, { defaultValue: 0n }).then((x) => String(x));
   }
 
   async waitForTransactionCommitted(
