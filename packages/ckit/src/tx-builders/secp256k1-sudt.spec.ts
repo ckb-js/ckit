@@ -244,7 +244,8 @@ test('mint sudt with a mix of policies', async () => {
         recipients: [
           { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
 
-          { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+          // the sudt balance of recipient2 will be split into 2 cells
+          { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
 
           { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
         ],
@@ -256,6 +257,8 @@ test('mint sudt with a mix of policies', async () => {
 
   expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('100');
   expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
+  // the sudt balance of recipient2 will be split into 2 cells
+  expect(await provider.collectUdtCells(await recipient2Signer.getAddress(), sudtType, '101')).toHaveLength(2);
   expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('300');
 
   // recipient3 sudt
