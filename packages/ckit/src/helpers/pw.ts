@@ -4,6 +4,7 @@ import {
   Script as LumosScript,
   OutPoint as LumosOutPoint,
 } from '@ckb-lumos/base';
+import { ResolvedOutpoint } from '@ckit/base';
 import {
   Amount,
   Cell as PwCell,
@@ -55,13 +56,28 @@ function fromPwCell(x: PwCell): LumosCell {
   };
 }
 
-function toPwCell(x: LumosCell): PwCell {
+function isLumosCell(x: unknown): x is LumosCell {
+  if (typeof x !== 'object' || x == null) return false;
+  return 'cell_output' in x;
+}
+
+function toPwCell(x: LumosCell | ResolvedOutpoint): PwCell {
+  if (isLumosCell(x)) {
+    return new PwCell(
+      new Amount(x.cell_output.capacity, 0),
+      toPwScript(x.cell_output.lock),
+      x.cell_output.type ? toPwScript(x.cell_output.type) : undefined,
+      x.out_point ? new PwOutPoint(x.out_point.tx_hash, x.out_point.index) : undefined,
+      x.data,
+    );
+  }
+
   return new PwCell(
-    new Amount(x.cell_output.capacity, 0),
-    toPwScript(x.cell_output.lock),
-    x.cell_output.type ? toPwScript(x.cell_output.type) : undefined,
+    new Amount(x.output.capacity, 0),
+    toPwScript(x.output.lock),
+    x.output.type ? toPwScript(x.output.type) : undefined,
     x.out_point ? new PwOutPoint(x.out_point.tx_hash, x.out_point.index) : undefined,
-    x.data,
+    x.output_data,
   );
 }
 
