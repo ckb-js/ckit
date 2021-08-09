@@ -9,8 +9,7 @@ import { randomHexString } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/NonAcpPwLockWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { AcpTransferSudtBuilder } from './AcpTransferSudtBuilder';
-import { MintOptions } from './MintSudtBuilder';
-import { MintSudtBuilder2 } from './MintSudtBuilder2';
+import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
 import { TransferCkbBuilder, TransferCkbOptions } from './TransferCkbBuilder';
 
 // TODO remove skip when docker available in ci
@@ -76,7 +75,7 @@ test('test mint and transfer', async () => {
     },
   ];
 
-  const signedMintTx = await new MintSudtBuilder2({ recipients }, provider, issuerSigner).build();
+  const signedMintTx = await new MintSudtBuilder({ recipients }, provider, issuerSigner).build();
   const mintTxHash = await provider.rpc.send_transaction(signedMintTx);
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
@@ -149,7 +148,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
   ];
   debug('mint from %s, to %o', await pwSigner.getAddress(), sudtRecipients);
 
-  const signedMintTx = await new MintSudtBuilder2({ recipients: sudtRecipients }, provider, pwSigner).build();
+  const signedMintTx = await new MintSudtBuilder({ recipients: sudtRecipients }, provider, pwSigner).build();
   debug('ready to send signedMintTx: %o', signedMintTx);
   const mintTxHash = await provider.sendTxUntilCommitted(signedMintTx);
   debug('end mint %s', mintTxHash);
@@ -193,7 +192,7 @@ test('mint sudt with a mix of policies', async () => {
 
   const sudtType = provider.newSudtScript(await issuerSigner.getAddress());
 
-  const failedTx = new MintSudtBuilder2(
+  const failedTx = new MintSudtBuilder(
     {
       recipients: [
         { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
@@ -212,7 +211,7 @@ test('mint sudt with a mix of policies', async () => {
   //        -> recipient2: 100
   //        -> recipient3: 100 + 100 (2 cells)
   await provider.sendTxUntilCommitted(
-    await new MintSudtBuilder2(
+    await new MintSudtBuilder(
       {
         recipients: [
           { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createAcp' },
@@ -239,7 +238,7 @@ test('mint sudt with a mix of policies', async () => {
   //        -> recipient2: 100 (by findAcp)
   //        -> recipient3: 100 (by findAcp)
   await provider.sendTxUntilCommitted(
-    await new MintSudtBuilder2(
+    await new MintSudtBuilder(
       {
         recipients: [
           { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
