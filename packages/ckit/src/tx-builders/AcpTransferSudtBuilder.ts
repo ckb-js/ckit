@@ -19,11 +19,7 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
 
   async build(): Promise<Transaction> {
     const tx = await this.builder.build();
-    const signed = await new PwAdapterSigner(this.signer).sign(tx);
-
-    // the recipients' cell are acp, signature is unnecessary
-    signed.witnesses.splice(-1);
-    signed.witnessArgs.splice(-1);
+    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
 
     return transformers.TransformTransaction(signed) as Transaction;
   }

@@ -117,9 +117,11 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
 
-  const transferCkbRecipients: TransferCkbOptions['recipients'] = [
-    { recipient: await pwSigner.getAddress(), amount: String(1_000_000n * 10n ** 8n), capacityPolicy: 'createAcp' },
-  ];
+  const transferCkbRecipients: TransferCkbOptions['recipients'] = Array(1000).fill({
+    recipient: await pwSigner.getAddress(),
+    amount: String(61n * 10n ** 8n),
+    capacityPolicy: 'createAcp',
+  });
   debug(`start transfer %o`, { from: await genesisSigner.getAddress(), to: transferCkbRecipients });
   const signedTransferCkbTx = await new TransferCkbBuilder(
     { recipients: transferCkbRecipients },
