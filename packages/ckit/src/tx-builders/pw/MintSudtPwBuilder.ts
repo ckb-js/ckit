@@ -22,7 +22,7 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
       .map(
         (item) =>
           new Cell(
-            new Amount((BigInt(item.additionalCapacity || 0) + BigInt(byteLenOfSudt())).toString(), 0),
+            new Amount(String(BigInt(item.additionalCapacity || 0)), 0).add(new Amount(String(byteLenOfSudt()))),
             Pw.toPwScript(this.provider.parseToScript(item.recipient)), // recipient lock
             Pw.toPwScript(udtType), // issued sudt type
             undefined,
