@@ -1,6 +1,6 @@
 import { Address, HexNumber, Hash } from '@ckb-lumos/base';
 import { Modal } from 'antd';
-import { RecipientOptions, helpers, MintSudtBuilder2 } from 'ckit';
+import { RecipientOptions, helpers, MintSudtBuilder } from 'ckit';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useConfigStorage } from './useConfigStorage';
@@ -37,7 +37,7 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       } else {
         recipientsParams.capacityPolicy = 'findAcp';
       }
-      const txBuilder = new MintSudtBuilder2({ recipients: [recipientsParams] }, ckitProvider, selectedWallet.signer);
+      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, selectedWallet.signer);
       const issueTx = await txBuilder.build();
       const txHash = await ckitProvider.sendTransaction(issueTx);
       return { txHash: txHash };
