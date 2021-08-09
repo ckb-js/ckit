@@ -3,20 +3,25 @@ import { BigNumber } from 'bignumber.js';
 export type HumanizeOptions = { decimalPlaces?: number; separator?: boolean };
 
 export class Amount {
+  static from(value: BigNumber.Value | bigint): Amount {
+    if (typeof value === 'bigint') return new Amount(String(value));
+    return new Amount(value);
+  }
+
   /**
    * value without decimals
    * @private
    */
-  private val: BigNumber;
+  private raw: BigNumber;
 
-  protected constructor(value: BigNumber.Value, private decimals = 0) {
-    this.val = new BigNumber(value);
+  protected constructor(raw: BigNumber.Value, private decimals = 0) {
+    this.raw = new BigNumber(raw);
   }
 
   humanize(options?: HumanizeOptions): string {
     const { decimalPlaces = Infinity, separator = true } = options ? options : {};
 
-    const valWithDecimals = this.val.times(10 ** -this.decimals);
+    const valWithDecimals = this.raw.times(10 ** -this.decimals);
     const originDecimalPlaces = valWithDecimals.decimalPlaces();
 
     const rounded = valWithDecimals.decimalPlaces(Math.min(originDecimalPlaces, decimalPlaces), BigNumber.ROUND_FLOOR);
@@ -27,16 +32,16 @@ export class Amount {
 
   setVal(value: BigNumber.Value | ((val: BigNumber) => BigNumber)): this {
     if (typeof value === 'function') {
-      this.val = value(this.val);
+      this.raw = value(this.raw);
       return this;
     }
 
-    this.val = new BigNumber(value);
+    this.raw = new BigNumber(value);
     return this;
   }
 
   toString(base?: number): string {
-    return this.val.toString(base);
+    return this.raw.toString(base);
   }
 
   toHex(): string {

@@ -43,9 +43,11 @@ export function boom(message?: string): never {
   throw new Error(message);
 }
 
-export function asserts(condition: unknown, err?: string | Error | (() => never)): asserts condition {
+export function asserts(condition: unknown, err?: string | Error | (() => never) | (() => Error)): asserts condition {
   if (condition) return;
-  if (typeof err === 'function') err();
+  if (typeof err === 'function') {
+    throw err();
+  }
   if (typeof err === 'string') boom(err);
   if (err instanceof Error) throw err;
 

@@ -35,11 +35,7 @@ export class MintSudtBuilder implements TransactionBuilder {
     const builder = new NonAcpPwMintBuilder(this.options, this.provider, await this.signer.getAddress());
 
     const tx = await builder.build();
-    const signed = await new PwAdapterSigner(this.signer).sign(tx);
-
-    // the recipients' cells are acp, signature is unnecessary
-    signed.witnesses.splice(1, Infinity);
-    signed.witnessArgs.splice(1, Infinity);
+    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
 
     return transformers.TransformTransaction(signed) as RawRawTransaction;
   }
