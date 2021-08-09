@@ -1,6 +1,7 @@
 import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
 import { CkbTypeScript, Signer, TransactionBuilder } from '@ckit/base';
 import { transformers } from '@lay2/pw-core';
+import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
 import { PwAdapterSigner } from './pw/PwSignerAdapter';
 import { TransferSudtPwBuilder } from './pw/TransferSudtPwBuilder';
@@ -18,6 +19,10 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
   }
 
   async build(): Promise<Transaction> {
+    const signerAddress = await this.signer.getAddress();
+    const transferToSelf = this.options.recipient === signerAddress;
+    if (transferToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
+
     const tx = await this.builder.build();
     const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
 

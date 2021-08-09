@@ -1,4 +1,4 @@
-import { HexNumber, Script } from '@ckb-lumos/base';
+import { HexNumber, HexString, Script } from '@ckb-lumos/base';
 
 export class CkitError<Metadata> extends Error {
   constructor(public metadata: Metadata, message?: string) {
@@ -31,6 +31,15 @@ export class NoEnoughUdtError extends CkitError<NoEnoughAmountMetadata> {
     metadata: NoEnoughAmountMetadata,
     message = `Ckb is not enough, expected minimal amount: ${metadata.expected}, actual: ${metadata.actual}`,
   ) {
+    super(metadata, message);
+  }
+}
+
+type RecipientSameWithSenderMetadata = {
+  address: HexString;
+};
+export class RecipientSameWithSenderError extends CkitError<RecipientSameWithSenderMetadata> {
+  constructor(metadata: RecipientSameWithSenderMetadata, message = `The recipient and sender cannot be the same one`) {
     super(metadata, message);
   }
 }
