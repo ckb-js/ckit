@@ -11,7 +11,11 @@ type NoAvailableMetadata = {
   type?: Script;
 };
 
-export class NoAvailableCellError extends CkitError<NoAvailableMetadata> {}
+export class NoAvailableCellError extends CkitError<NoAvailableMetadata> {
+  constructor(metadata: NoAvailableMetadata, message = 'Cannot find available cell') {
+    super(metadata, message);
+  }
+}
 
 type NoEnoughAmountMetadata = { expected: HexNumber; actual: HexNumber; lock: Script };
 export class NoEnoughCkbError extends CkitError<NoEnoughAmountMetadata> {
