@@ -13,10 +13,20 @@ type NoAvailableMetadata = {
 
 export class NoAvailableCellError extends CkitError<NoAvailableMetadata> {}
 
-type NoEnoughAmountMetadata = {
-  expected: HexNumber;
-  actual: HexNumber;
-  lock: Script;
-};
-export class NoEnoughCkbError extends CkitError<NoEnoughAmountMetadata> {}
-export class NoEnoughUdtError extends CkitError<NoEnoughAmountMetadata> {}
+type NoEnoughAmountMetadata = { expected: HexNumber; actual: HexNumber; lock: Script };
+export class NoEnoughCkbError extends CkitError<NoEnoughAmountMetadata> {
+  constructor(
+    metadata: NoEnoughAmountMetadata,
+    message = `Udt is not enough, expected minimal amount: ${metadata.expected}, actual: ${metadata.actual}`,
+  ) {
+    super(metadata, message);
+  }
+}
+export class NoEnoughUdtError extends CkitError<NoEnoughAmountMetadata> {
+  constructor(
+    metadata: NoEnoughAmountMetadata,
+    message = `Ckb is not enough, expected minimal amount: ${metadata.expected}, actual: ${metadata.actual}`,
+  ) {
+    super(metadata, message);
+  }
+}
