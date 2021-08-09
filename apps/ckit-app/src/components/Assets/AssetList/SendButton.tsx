@@ -5,7 +5,9 @@ import React, { useState } from 'react';
 import { AssetMeta, useSendTransferTx } from 'hooks';
 import { AssetAmount } from 'utils';
 
-export const SendButton: React.FC<AssetMeta> = (props) => {
+type AssetMetaProps = Pick<AssetMeta, 'symbol' | 'decimal'> & { script: AssetMeta['script'] };
+
+export const SendButton: React.FC<AssetMetaProps> = (props) => {
   const [visible, setVisible] = useState<boolean>(false);
   return (
     <div>
@@ -20,7 +22,7 @@ export const SendButton: React.FC<AssetMeta> = (props) => {
 interface ModalFormProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
-  assetMeta: AssetMeta;
+  assetMeta: AssetMetaProps;
 }
 
 interface ModalFormValues {
@@ -39,7 +41,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const { mutateAsync: sendTransferTransaction, isLoading: isIssueLoading } = useSendTransferTx();
 
   const initialValues: ModalFormValues = { recipient: '', amount: '' };
-  const title = 'send ' + assetMeta.name;
+  const title = 'Send ' + assetMeta.symbol;
 
   const validate = (_values: ModalFormValues): ModalFormErrors => {
     // TODO add validate logic
@@ -52,14 +54,10 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
         initialValues={initialValues}
         validate={validate}
         onSubmit={(values: ModalFormValues, { setSubmitting }) => {
-          // setTimeout(() => {
-          //   alert(JSON.stringify(values, null, 2));
-          //   setSubmitting(false);
-          // }, 400);
           sendTransferTransaction({
             recipient: values.recipient,
-            amount: AssetAmount.fromHumanize(values.amount, assetMeta.precision).toRawString(),
-            assetMeta: assetMeta,
+            amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
+            script: assetMeta.script,
           }).then(() => setVisible(false));
         }}
       >

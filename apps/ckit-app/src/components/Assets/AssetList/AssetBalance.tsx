@@ -6,8 +6,10 @@ import { CkitProviderContainer, useSigner, WalletContainer } from 'containers';
 import { AssetMeta } from 'hooks';
 import { AssetAmount } from 'utils';
 
-export const AssetBalance: React.FC<AssetMeta> = (props) => {
-  const { script, precision } = props;
+type AssetBalanceProps = Pick<AssetMeta, 'decimal'> & { script: AssetMeta['script'] };
+
+export const AssetBalance: React.FC<AssetBalanceProps> = (props) => {
+  const { script, decimal } = props;
   const ckitProvider = CkitProviderContainer.useContainer();
   const { selectedWallet } = WalletContainer.useContainer();
   const { address } = useSigner(selectedWallet?.signer);
@@ -28,7 +30,7 @@ export const AssetBalance: React.FC<AssetMeta> = (props) => {
     return <Typography.Text type="danger">error</Typography.Text>;
   }
   if (query.data) {
-    return <Typography.Text>{AssetAmount.fromRaw(query.data, precision).toHumanizeString()}</Typography.Text>;
+    return <Typography.Text>{AssetAmount.fromRaw(query.data, decimal).toHumanizeString()}</Typography.Text>;
   }
   return <LoadingOutlined />;
 };

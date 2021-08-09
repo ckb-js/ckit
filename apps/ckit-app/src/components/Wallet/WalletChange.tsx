@@ -1,8 +1,10 @@
-import { Button, Col, Empty, Row } from 'antd';
+import { Button, Col, Empty, Row, Tooltip, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import styled from 'styled-components';
 import { useSigner, WalletContainer } from 'containers/WalletContainer';
 import { useConfigStorage } from 'hooks';
+import { truncateMiddle } from 'utils';
 
 export const WalletChange = observer(() => {
   const { selectedWallet, setModalVisible } = WalletContainer.useContainer();
@@ -16,9 +18,11 @@ export const WalletChange = observer(() => {
       <Row>
         <Col span={8} offset={6}>
           <div style={{ textAlign: 'center' }}>
-            <a href={href} target="_blank" rel="noreferrer">
-              {truncatedAddress}
-            </a>
+            <Tooltip title={<AddressTip copyable>{address}</AddressTip>}>
+              <a href={href} target="_blank" rel="noreferrer">
+                {truncatedAddress}
+              </a>
+            </Tooltip>
           </div>
         </Col>
         <Col span={8} offset={2}>
@@ -33,8 +37,6 @@ export const WalletChange = observer(() => {
   );
 });
 
-function truncateMiddle(str: string, start: number, end = start): string {
-  if (!start || !end || start <= 0 || end <= 0) throw new Error('start or end is invalid');
-  if (str.length <= start + end) return str;
-  return str.slice(0, start) + '...' + str.slice(-end);
-}
+const AddressTip = styled(Typography.Text)`
+  color: #ffffff;
+`;

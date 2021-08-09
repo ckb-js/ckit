@@ -11,7 +11,7 @@ import { hasProp } from 'utils';
 export interface SendTransferTxInput {
   recipient: Address;
   amount: HexNumber;
-  assetMeta: AssetMeta;
+  script: AssetMeta['script'];
 }
 
 export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown, SendTransferTxInput> {
@@ -26,11 +26,11 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
       let txToSend: Transaction;
 
-      if (input.assetMeta.script) {
+      if (input.script) {
         const txBuilder = new AcpTransferSudtBuilder(
           {
             recipient: input.recipient,
-            sudt: input.assetMeta.script,
+            sudt: input.script,
             amount: input.amount,
           },
           ckitProvider,
