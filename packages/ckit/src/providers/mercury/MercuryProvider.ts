@@ -4,6 +4,8 @@ import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
 import { MercuryClient, SearchKey } from '@ckit/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
+import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';
+import { Amount } from '../../helpers';
 import { asyncSleep } from '../../utils';
 import { MercuryCellProvider } from './IndexerCellProvider';
 
@@ -30,8 +32,9 @@ export class MercuryProvider extends AbstractProvider {
   }
 
   override async collectCkbLiveCells(address: Address, minimalCapacity: HexNumber): Promise<ResolvedOutpoint[]> {
+    const lock = this.parseToScript(address);
     const searchKey: SearchKey = {
-      script: this.parseToScript(address),
+      script: lock,
       script_type: 'lock',
       filter: { output_data_len_range: ['0x0', '0x1'] }, // ckb live cells only
     };
@@ -54,9 +57,7 @@ export class MercuryProvider extends AbstractProvider {
     const acc = await lastValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
 
     if (acc.amount < BigInt(minimalCapacity)) {
-      throw new Error(
-        `The live cell is not enough, expected minimal amount: ${minimalCapacity}, actual: ${acc.amount}`,
-      );
+      throw new NoEnoughCkbError({ lock, expected: minimalCapacity, actual: Amount.from(acc.amount).toHex() });
     }
 
     return acc.cells;
@@ -97,11 +98,8 @@ export class MercuryProvider extends AbstractProvider {
   }
 
   async collectUdtCells(address: Address, udt: CkbTypeScript, minimalAmount: HexNumber): Promise<ResolvedOutpoint[]> {
-    const searchKey: SearchKey = {
-      script: this.parseToScript(address),
-      filter: { script: udt },
-      script_type: 'lock',
-    };
+    const lock = this.parseToScript(address);
+    const searchKey: SearchKey = { script: lock, filter: { script: udt }, script_type: 'lock' };
 
     const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
       expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
@@ -120,7 +118,7 @@ export class MercuryProvider extends AbstractProvider {
     const acc = await lastValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
 
     if (acc.amount < BigInt(minimalAmount)) {
-      throw new Error(`The udt cell is not enough, expected minimal amount: ${minimalAmount}, actual: ${acc.amount}`);
+      throw new NoEnoughUdtError({ lock, expected: minimalAmount, actual: Amount.from(acc.amount).toHex() });
     }
 
     return acc.cells;
