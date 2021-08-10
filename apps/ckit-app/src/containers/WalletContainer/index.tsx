@@ -1,4 +1,4 @@
-import { AbstractWallet, ConnectStatus, Signer } from 'ckit';
+import { AbstractWallet, ConnectStatus, Signer } from '@ckit/ckit';
 import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';

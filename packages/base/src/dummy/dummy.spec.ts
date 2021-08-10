@@ -1,5 +1,6 @@
-import { asyncSleep } from '../utils';
-import { DummyWallet, ExtendedDummyWallet } from '.';
+import { DummyWallet, ExtendedDummyWallet } from './DummyWallet';
+
+const asyncSleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 test('test the dummy wallet', async () => {
   const wallet = new DummyWallet();
@@ -25,7 +26,7 @@ test('test the dummy wallet', async () => {
 
   const signer = wallet.getSigner();
   const address = await signer?.getAddress();
-  expect(address != null && typeof address === 'string' && address.length > 0).toBe(true);
+  expect(address && address.length > 0).toBe(true);
 
   wallet.disconnect();
   await asyncSleep(50);
