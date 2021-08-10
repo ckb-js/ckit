@@ -9,7 +9,8 @@ export class Secp256k1Wallet extends AbstractWallet {
   readonly #privateKey: string;
 
   constructor(privateKey: string, private provider: MercuryProvider, private lockConfig: ScriptTmpl) {
-    super({ features: ['issue-sudt'] });
+    super();
+    this.setDescriptor({ features: ['issue-sudt'] });
     this.#privateKey = privateKey;
   }
 

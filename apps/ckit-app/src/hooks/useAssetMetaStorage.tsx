@@ -1,6 +1,5 @@
 import { CkbTypeScript } from '@ckit/base';
 import { useLocalStorage } from '@rehooks/local-storage';
-import { randomHexString } from 'ckit/dist/utils';
 import { useMemo } from 'react';
 
 export interface AssetMeta {
@@ -16,7 +15,11 @@ export function useAssetMetaStorage(): [AssetMeta[], (newValue: AssetMeta[]) => 
       { name: 'ckb', precision: 8 },
       {
         name: 'yyds',
-        script: { code_hash: randomHexString(64), hash_type: 'data', args: randomHexString(64) },
+        script: {
+          code_hash: '0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4',
+          args: '0x537461ee3e5ebd77ad6bd325e1ff152f298b09453a158a51ebaeaea681499e84',
+          hash_type: 'type',
+        },
         precision: 8,
       },
     ],

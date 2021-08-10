@@ -1,14 +1,10 @@
 import { HexString } from '@ckb-lumos/base';
 import { AbstractWallet, Signer } from '@ckit/base';
-import { makeObservable, observable } from 'mobx';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
     super();
-    makeObservable(this, {
-      connectStatus: observable,
-      signer: observable,
-    });
+    this.setDescriptor({ name: 'DummyWallet', features: ['dummy'] });
   }
 
   connect(): void {
@@ -29,5 +25,12 @@ class DummySigner implements Signer {
 
   async signMessage(): Promise<HexString> {
     return '0x';
+  }
+}
+
+export class ExtendedDummyWallet extends DummyWallet {
+  constructor() {
+    super();
+    this.setDescriptor({ name: 'ExtendedDummyWallet', features: this.descriptor.features.concat(['unknown-feature']) });
   }
 }

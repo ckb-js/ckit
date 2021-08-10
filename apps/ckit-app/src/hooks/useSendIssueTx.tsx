@@ -32,7 +32,7 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
         recipientsParams.capacityPolicy = 'createAcp';
         // TODO make the additionalCapacity configurable
         // create acp with additionalAcp
-        recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toString();
+        recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toHex();
         recipientsParams.amount = '0';
       } else {
         recipientsParams.capacityPolicy = 'findAcp';
