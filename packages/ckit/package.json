@@ -1,5 +1,5 @@
 {
-  "name": "ckit",
+  "name": "@ckit/ckit",
   "version": "0.0.0",
   "main": "dist",
   "license": "MIT",
@@ -22,7 +22,6 @@
     "@lay2/pw-core": "^0.4.0-alpha.8",
     "bignumber.js": "^9.0.1",
     "eventemitter3": "^4.0.7",
-    "mobx": "^6.3.2",
     "rxjs": "^7.3.0"
   },
   "devDependencies": {

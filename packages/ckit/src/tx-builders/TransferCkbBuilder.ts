@@ -2,9 +2,10 @@
 import { Address, HexNumber, Transaction as RawRawTransaction, Transaction } from '@ckb-lumos/base';
 import { Signer, TransactionBuilder } from '@ckit/base';
 import { transformers } from '@lay2/pw-core';
+import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
 import { PwAdapterSigner } from './pw/PwSignerAdapter';
-import { ForceSimpleBuilder } from './pw/TransferCkbPwBuilder';
+import { TransferCkbPwBuilder } from './pw/TransferCkbPwBuilder';
 
 type CapacityPolicy =
   // mint only when recipient has ACP cell
@@ -22,16 +23,22 @@ interface RecipientOption {
   /**
    * defaults to findAcp
    */
-  capacityPolicy?: CapacityPolicy;
+  capacityPolicy: CapacityPolicy;
 }
 
 export class TransferCkbBuilder implements TransactionBuilder {
   constructor(private options: TransferCkbOptions, private provider: CkitProvider, private signer: Signer) {}
 
   async build(): Promise<Transaction> {
-    const builder = new ForceSimpleBuilder(this.options, this.provider, this.signer);
+    const signerAddress = await this.signer.getAddress();
+    const transferToSelf = this.options.recipients.some(
+      (item) => item.recipient === signerAddress && item.capacityPolicy === 'findAcp',
+    );
+    if (transferToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
+
+    const builder = new TransferCkbPwBuilder(this.options, this.provider, this.signer);
     const tx = await builder.build();
-    const signed = await new PwAdapterSigner(this.signer).sign(tx);
+    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
 
     return transformers.TransformTransaction(signed) as RawRawTransaction;
   }

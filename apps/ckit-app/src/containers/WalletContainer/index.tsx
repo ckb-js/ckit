@@ -1,4 +1,4 @@
-import { AbstractWallet, ConnectStatus, Signer } from 'ckit';
+import { AbstractWallet, ConnectStatus, Signer } from '@ckit/ckit';
 import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -52,7 +52,7 @@ function useWallet() {
             }
             if (connectStatus === 'connected') {
               setModalVisible(false);
-              const connectedIndex = wallets.findIndex((w) => w.name === wallet.name);
+              const connectedIndex = wallets.findIndex((w) => w.descriptor.name === wallet.descriptor.name);
               if (-1 === connectedIndex) {
                 throw new Error('exception: wallet could not be found');
               } else {
@@ -69,7 +69,7 @@ function useWallet() {
           );
         });
       }),
-    [],
+    [setModalVisible, wallets],
   );
 
   return {
@@ -103,12 +103,5 @@ export function useSigner(signer: Signer | undefined): SignerAddress {
 export const WalletContainer = createContainer(useWallet);
 
 export const displayWalletName = (name: string | undefined): string => {
-  switch (name) {
-    case 'ObservableUnipassWallet':
-      return 'unipass';
-    case 'ObservableNonAcpPwLockWallet':
-      return 'metamask';
-    default:
-      return 'unknown';
-  }
+  return name || 'unknown';
 };

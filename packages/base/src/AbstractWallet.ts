@@ -1,8 +1,6 @@
 import { default as EventEmitter } from 'eventemitter3';
 import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 
-type Options = Partial<WalletDescriptor>;
-
 export abstract class AbstractConnectableWallet implements WalletConnector {
   // do **NOT** change the value manually
   // use {@link getConnectStatus} instead of
@@ -55,25 +53,29 @@ export abstract class AbstractConnectableWallet implements WalletConnector {
   }) as unknown as WalletEventListener;
 }
 
-export abstract class AbstractWallet extends AbstractConnectableWallet implements WalletDescriptor {
-  readonly name: string;
-  readonly description: string;
-  readonly features: WalletFeature[];
+export abstract class AbstractWallet extends AbstractConnectableWallet {
+  descriptor: WalletDescriptor = { name: 'Unknown Wallet', features: [], description: 'an unknown wallet' };
 
-  protected constructor(options: Options = {}) {
+  protected constructor() {
     super();
-    this.name = options.name || this.constructor.name;
-    this.description = options.description || '';
-    this.features = options.features || [];
+  }
+
+  protected setDescriptor(descriptor: Partial<WalletDescriptor>): void {
+    const {
+      name = this.descriptor.name,
+      features = this.descriptor.features,
+      description = this.descriptor.description,
+    } = descriptor;
+    this.descriptor = { name, features, description };
   }
 
   abstract connect(): void;
 
-  override onError(error: Error = new Error(`An unknown error occurred in the ${this.name}`)): void {
+  override onError(error: Error = new Error(`An unknown error occurred in the ${this.descriptor.name}`)): void {
     super.onError(error);
   }
 
   public checkSupported(feature: WalletFeature): boolean {
-    return this.features.includes(feature);
+    return this.descriptor.features.includes(feature);
   }
 }

@@ -71,7 +71,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
     return (
       <div>
         <Space>
-          {displayWalletName(wallet.name)}
+          {displayWalletName(wallet.descriptor.name)}
           <UsbOutlined />
         </Space>
         {error && error.index === index && <Typography.Text type="danger"> {error.error.message}</Typography.Text>}
@@ -82,7 +82,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
     return (
       <div>
         <Space>
-          {displayWalletName(wallet.name)}
+          {displayWalletName(wallet.descriptor.name)}
           <SyncOutlined spin />
         </Space>
       </div>
@@ -91,7 +91,7 @@ export const WalletListItem = observer((props: WalletListItemProps) => {
   return (
     <div>
       <Space>
-        {displayWalletName(wallet.name)}
+        {displayWalletName(wallet.descriptor.name)}
         <CheckCircleTwoTone />
       </Space>
     </div>

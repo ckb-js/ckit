@@ -1,83 +1,79 @@
 import { Signer } from '@ckit/base';
-import { Amount, AmountUnit, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
+import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
+import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
+import { NoAvailableCellError } from '../../errors';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
-import { boom, nonNullable } from '../../utils';
 import { TransferCkbOptions } from '../TransferCkbBuilder';
+import { byteLenOfCkbLiveCell } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
-export class ForceSimpleBuilder extends AbstractPwSenderBuilder {
+export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
   constructor(private options: TransferCkbOptions, provider: CkitProvider, private signer: Signer) {
     super(provider);
   }
 
-  async build(fee: Amount = Amount.ZERO): Promise<Transaction> {
-    const allPolicyCreateAcp = this.options.recipients.every((option) => option.capacityPolicy === 'createAcp');
-    if (!allPolicyCreateAcp) boom('Now only createAcp policy is available');
+  async build(): Promise<Transaction> {
+    const recipientCreatedCells = this.options.recipients
+      .filter((item) => item.capacityPolicy === 'createAcp')
+      .map((item) => new Cell(new Amount(item.amount, 0), Pw.toPwScript(this.provider.parseToScript(item.recipient))));
 
-    const address = nonNullable(this.options.recipients[0]?.recipient);
-    const amount = new Amount(nonNullable(this.options.recipients[0]?.amount), 0);
+    const acpOptions = this.options.recipients.filter((item) => item.capacityPolicy === 'findAcp');
+    const recipientAcpCells$ = from(acpOptions).pipe(
+      mergeMap(async (item) => {
+        const resolveds = await this.provider.collectCkbLiveCells(item.recipient, '0');
 
-    const outputCell = new Cell(amount, Pw.toPwScript(this.provider.parseToScript(address)));
-    const neededAmount = amount.add(fee);
-    let inputSum = new Amount('0');
-    const inputCells: Cell[] = [];
+        const resolved = resolveds[0];
+        if (!resolved) throw new NoAvailableCellError({ lock: this.provider.parseToScript(item.recipient) });
 
-    const cells = await this.provider.collectCkbLiveCells(await this.signer.getAddress(), neededAmount.toHexString());
+        // increase capacity
+        const cell = Pw.toPwCell(resolved);
+        cell.capacity = cell.capacity.add(new Amount(item.amount, 0));
+        return cell;
+      }),
+      toArray(),
+    );
+    const recipientAcpCells = await lastValueFrom(recipientAcpCells$);
 
-    cells.forEach((cell) => {
-      const currentCell = new Cell(
-        new Amount(cell.output.capacity, 0),
-        Pw.toPwScript(cell.output.lock),
-        undefined,
-        Pw.toPwOutPoint(cell.out_point),
-      );
-      inputCells.push(currentCell);
-      inputSum = inputSum.add(currentCell.capacity);
-    });
-
-    if (inputSum.lt(neededAmount)) {
-      throw new Error(
-        `input capacity not enough, need ${neededAmount.toString(AmountUnit.ckb)}, got ${inputSum.toString(
-          AmountUnit.ckb,
-        )}`,
-      );
-    }
-
-    if (inputSum.sub(outputCell.capacity).lt(Builder.MIN_CHANGE)) {
-      const tx = new Transaction(new RawTransaction(inputCells, [outputCell], await this.getCellDeps()), [
-        this.getWitnessPlaceholder(await this.signer.getAddress()),
-      ]);
-      this.fee = Builder.calcFee(tx, this.feeRate);
-      outputCell.capacity = outputCell.capacity.sub(this.fee);
-      return tx;
-    }
-
-    const changeCell = new Cell(
-      inputSum.sub(outputCell.capacity),
-      Pw.toPwScript(this.provider.parseToScript(await this.signer.getAddress())),
+    const createdCapacity = recipientCreatedCells.reduce(
+      (totalCapacity, cell) => totalCapacity.add(cell.capacity),
+      Amount.ZERO,
+    );
+    const injectedAcpCapacity = acpOptions.reduce(
+      (totalCapacity, item) => totalCapacity.add(new Amount(item.amount, 0)),
+      Amount.ZERO,
     );
 
-    const tx = new Transaction(new RawTransaction(inputCells, [outputCell, changeCell], await this.getCellDeps()), [
-      this.getWitnessPlaceholder(await this.signer.getAddress()),
-    ]);
-
-    this.fee = Builder.calcFee(tx, this.feeRate);
-
-    if (changeCell.capacity.gte(Builder.MIN_CHANGE.add(this.fee))) {
-      changeCell.capacity = changeCell.capacity.sub(this.fee);
-      tx.raw.outputs.pop();
-      tx.raw.outputs.push(changeCell);
-      return tx;
+    const senderOutpoints = await this.provider.collectCkbLiveCells(
+      await this.signer.getAddress(),
+      injectedAcpCapacity
+        .add(createdCapacity)
+        // 61 ckb to ensure change cell capacity is enough
+        .add(new Amount(String(byteLenOfCkbLiveCell())))
+        // additional 1 ckb for tx fee, not all 1ckb will be paid,
+        // but the real fee will be calculated based on feeRate
+        .add(new Amount('1'))
+        .toHexString(),
+    );
+    const senderCells = senderOutpoints.map(Pw.toPwCell);
+    if (!senderCells.length || !senderCells[0]) {
+      throw new NoAvailableCellError({ lock: this.provider.parseToScript(await this.signer.getAddress()) });
     }
 
-    // when the change cell cannot offer the transaction fee, the transaction fee will offer by the receiver
-    if (changeCell.capacity.gte(Builder.MIN_CHANGE) && outputCell.capacity.gte(Builder.MIN_CHANGE.add(this.fee))) {
-      outputCell.capacity = outputCell.capacity.sub(this.fee);
-      tx.raw.outputs[0] = outputCell;
-      return tx;
-    }
+    const senderOutput = senderCells[0];
+    const tx = new Transaction(
+      new RawTransaction(
+        [...senderCells, ...recipientAcpCells],
+        [senderOutput, ...recipientAcpCells, ...recipientCreatedCells],
+        // TODO getDeps by all script
+        this.getCellDeps(),
+      ),
+      [this.getWitnessPlaceholder(await this.signer.getAddress())],
+    );
 
-    return this.build(this.fee);
+    const fee = TransferCkbPwBuilder.calcFee(tx);
+    senderOutput.capacity = senderOutput.capacity.sub(createdCapacity).sub(injectedAcpCapacity).sub(fee);
+
+    return tx;
   }
 }

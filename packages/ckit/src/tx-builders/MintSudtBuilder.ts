@@ -1,6 +1,7 @@
 import { Address, HexNumber, Transaction as RawRawTransaction } from '@ckb-lumos/base';
 import { Signer, TransactionBuilder } from '@ckit/base';
 import { transformers } from '@lay2/pw-core';
+import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
 import { NonAcpPwMintBuilder } from './pw/MintSudtPwBuilder';
 import { PwAdapterSigner } from './pw/PwSignerAdapter';
@@ -32,14 +33,16 @@ export class MintSudtBuilder implements TransactionBuilder {
   constructor(private options: MintOptions, private provider: CkitProvider, private signer: Signer) {}
 
   async build(): Promise<RawRawTransaction> {
-    const builder = new NonAcpPwMintBuilder(this.options, this.provider, await this.signer.getAddress());
+    const signerAddress = await this.signer.getAddress();
+    const builder = new NonAcpPwMintBuilder(this.options, this.provider, signerAddress);
+
+    const mintToSelf = this.options.recipients.some(
+      (item) => item.recipient === signerAddress && item.capacityPolicy === 'findAcp',
+    );
+    if (mintToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
 
     const tx = await builder.build();
-    const signed = await new PwAdapterSigner(this.signer).sign(tx);
-
-    // the recipients' cells are acp, signature is unnecessary
-    signed.witnesses.splice(1, Infinity);
-    signed.witnessArgs.splice(1, Infinity);
+    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
 
     return transformers.TransformTransaction(signed) as RawRawTransaction;
   }
