@@ -6,6 +6,9 @@ test-ckit-app:
 test-lib:
 	DEBUG=ckit,ckit-* yarn jest --verbose false
 
+test-lib-coverage:
+	yarn jest --collect-coverage
+
 lint: lint-lib lint-app
 fix-lint: fix-lint-lib fix-lint-app
 
