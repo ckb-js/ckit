@@ -1,6 +1,6 @@
 import { utils } from '@ckb-lumos/base';
 import { CkbTypeScript } from '@ckit/base';
-import { Tooltip, Typography, List, Row, Col } from 'antd';
+import { Tooltip, Typography, Row, Col } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useConfigStorage } from 'hooks';
@@ -15,51 +15,43 @@ interface AssetMetaDisplayProps {
 export const AssetMetaDisplay: React.FC<AssetMetaDisplayProps> = (props) => {
   const { symbol, decimal, script } = props;
   const [localConfig] = useConfigStorage();
-
   const scriptHash = utils.computeScriptHash(script);
-  const data = [
-    { index: 0, key: 'symbol: ', value: symbol },
-    { index: 1, key: 'decimal: ', value: decimal },
-    { index: 2, key: 'script hash: ', value: scriptHash },
-  ];
+
   return (
-    <List
-      size="large"
-      style={{ marginTop: '24px' }}
-      dataSource={data}
-      renderItem={(item) => {
-        if (item.index !== 2) {
-          return (
-            <Row>
-              <Col span={8}>
-                <Typography.Text>{item.key}</Typography.Text>
-              </Col>
-              <Col span={16}>
-                <Typography.Text>{item.value}</Typography.Text>
-              </Col>
-            </Row>
-          );
-        }
-        return (
-          <Row>
-            <Col span={8}>
-              <Typography.Text>{item.key}</Typography.Text>
-            </Col>
-            <Col span={16}>
-              <Tooltip title={<ScriptTip copyable>{JSON.stringify(script)}</ScriptTip>}>
-                <Typography.Link
-                  href={localConfig.nervosExploreSudtUrlPrefix + item.value}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {truncateMiddle(item.value, 10)}
-                </Typography.Link>
-              </Tooltip>
-            </Col>
-          </Row>
-        );
-      }}
-    />
+    <div style={{ marginTop: '24px' }}>
+      <Row>
+        <Col span={7} offset={3}>
+          <Typography.Text>symbol:</Typography.Text>
+        </Col>
+        <Col span={14}>
+          <Typography.Text>{symbol}</Typography.Text>
+        </Col>
+      </Row>
+      <Row style={{ marginTop: '8px' }}>
+        <Col span={7} offset={3}>
+          <Typography.Text>decimal:</Typography.Text>
+        </Col>
+        <Col span={14}>
+          <Typography.Text>{decimal}</Typography.Text>
+        </Col>
+      </Row>
+      <Row style={{ marginTop: '8px' }}>
+        <Col span={7} offset={3}>
+          <Typography.Text>script hash:</Typography.Text>
+        </Col>
+        <Col span={14}>
+          <Tooltip title={<ScriptTip copyable>{JSON.stringify(script)}</ScriptTip>}>
+            <Typography.Link
+              href={localConfig.nervosExploreSudtUrlPrefix + scriptHash}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {truncateMiddle(scriptHash, 8)}
+            </Typography.Link>
+          </Tooltip>
+        </Col>
+      </Row>
+    </div>
   );
 };
 
