@@ -1,5 +1,5 @@
+import { CkitInitOptions, predefined } from '@ckit/ckit';
 import { useLocalStorage } from '@rehooks/local-storage';
-import { CkitInitOptions, predefined } from 'ckit';
 import { useMemo } from 'react';
 
 export interface LocalConfig {

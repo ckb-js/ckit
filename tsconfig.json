@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "ckit": ["packages/ckit/src"],
       "@ckit/*": ["packages/*/src"]
     }
   }

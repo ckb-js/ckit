@@ -1,6 +1,6 @@
 import { Address, HexNumber, Hash } from '@ckb-lumos/base';
+import { RecipientOptions, helpers, MintSudtBuilder } from '@ckit/ckit';
 import { Modal } from 'antd';
-import { RecipientOptions, helpers, MintSudtBuilder } from 'ckit';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useConfigStorage } from './useConfigStorage';

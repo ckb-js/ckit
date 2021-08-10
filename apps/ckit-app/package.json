@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
+    "@ckit/base": "*",
+    "@ckit/ckit": "*",
     "@rehooks/local-storage": "2.4.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -13,7 +15,6 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "antd": "^4.16.7",
-    "ckit": "*",
     "formik": "^2.2.9",
     "mobx": "^6.3.2",
     "mobx-react-lite": "^3.2.0",
