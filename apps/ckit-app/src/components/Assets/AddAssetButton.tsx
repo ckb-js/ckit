@@ -1,21 +1,23 @@
-import { PlusCircleOutlined } from '@ant-design/icons';
 import { Hash, HashType, HexString } from '@ckb-lumos/base';
-import { Button, Col, Modal, Row, Typography } from 'antd';
+import { Button, ButtonProps, Col, Modal, Row, Typography } from 'antd';
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import React, { useState } from 'react';
 import { AssetMeta, useAssetMetaStorage } from 'hooks';
 
-export const AddAssetButton: React.FC = () => {
+interface AddAssetButtonProps extends ButtonProps {
+  initialAssetMeta?: Partial<ModalFormValues>;
+  buttonContent?: string;
+}
+
+export const AddAssetButton: React.FC<AddAssetButtonProps> = (props) => {
+  const { initialAssetMeta, buttonContent, ...buttonProps } = props;
   const [visible, setVisible] = useState<boolean>(false);
   return (
     <div>
-      <Button
-        type="link"
-        size="large"
-        icon={<PlusCircleOutlined style={{ fontSize: '20px' }} />}
-        onClick={() => setVisible(true)}
-      />
-      <ModalForm visible={visible} setVisible={setVisible} />
+      <Button {...buttonProps} onClick={() => setVisible(true)}>
+        {buttonContent ? buttonContent : ''}
+      </Button>
+      <ModalForm visible={visible} setVisible={setVisible} initialAssetMeta={initialAssetMeta} />
     </div>
   );
 };
@@ -23,6 +25,7 @@ export const AddAssetButton: React.FC = () => {
 interface ModalFormProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
+  initialAssetMeta?: Partial<ModalFormValues>;
 }
 
 interface ModalFormValues {
@@ -42,12 +45,17 @@ interface ModalFormErrors {
 }
 
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
-  const { visible, setVisible } = props;
+  const { visible, setVisible, initialAssetMeta } = props;
 
   const [assets, setAssets] = useAssetMetaStorage();
 
-  const initialValues: ModalFormValues = { symbol: '', decimal: 8, codeHash: '', hashType: 'type', args: '' };
-  const title = 'Add asset';
+  const initialValues: ModalFormValues = {
+    symbol: initialAssetMeta?.symbol ? initialAssetMeta.symbol : '',
+    decimal: initialAssetMeta?.decimal ? initialAssetMeta.decimal : 8,
+    codeHash: initialAssetMeta?.codeHash ? initialAssetMeta.codeHash : '',
+    hashType: initialAssetMeta?.hashType ? initialAssetMeta.hashType : 'type',
+    args: initialAssetMeta?.args ? initialAssetMeta.args : '',
+  };
 
   const validate = (_values: ModalFormValues): ModalFormErrors => {
     // TODO add validate logic
@@ -55,7 +63,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   };
 
   return (
-    <Modal title={title} closable width={312} visible={visible} onCancel={() => setVisible(false)} footer={null}>
+    <Modal title="Add asset" closable width={312} visible={visible} onCancel={() => setVisible(false)} footer={null}>
       <Formik
         initialValues={initialValues}
         validate={validate}

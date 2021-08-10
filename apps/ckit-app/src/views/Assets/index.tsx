@@ -1,3 +1,4 @@
+import { PlusCircleOutlined } from '@ant-design/icons';
 import { Col, Empty, Row, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -17,7 +18,11 @@ export const AssetsView: React.FC = observer(() => {
               <Typography.Title level={3}> Assets </Typography.Title>
             </Col>
             <Col span={12}>
-              <div style={{ float: 'right' }}>{signerAddress && <AddAssetButton />}</div>
+              <div style={{ float: 'right' }}>
+                {signerAddress && (
+                  <AddAssetButton type="link" size="large" icon={<PlusCircleOutlined style={{ fontSize: '24px' }} />} />
+                )}
+              </div>
             </Col>
           </Row>
         </div>
