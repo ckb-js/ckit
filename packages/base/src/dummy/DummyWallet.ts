@@ -1,5 +1,5 @@
 import { HexString } from '@ckb-lumos/base';
-import { AbstractWallet, Signer } from '@ckit/base';
+import { AbstractWallet, Signer } from '../';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
