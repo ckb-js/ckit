@@ -13,7 +13,7 @@ import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
 import { TransferCkbBuilder, TransferCkbOptions } from './TransferCkbBuilder';
 
 // TODO remove skip when docker available in ci
-test('test mint and transfer', async () => {
+test('test mint and transfer sudt with secp256k1', async () => {
   jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
@@ -86,20 +86,20 @@ test('test mint and transfer', async () => {
 
   // TODO uncomment when transfer is available
   // recipient1 -> recipient0
-  // const signedTransferTx = await new AcpTransferSudtBuilder(
-  //   { amount: '1', recipient: recipientAddr0, sudt: testUdt },
-  //   provider,
-  //   new Secp256k1Signer(recipientPrivKey1, provider, {
-  //     code_hash: ANYONE_CAN_PAY.CODE_HASH,
-  //     hash_type: ANYONE_CAN_PAY.HASH_TYPE,
-  //   }),
-  // ).build();
-  //
-  // const transferTxHash = await provider.sendTransaction(signedTransferTx);
-  // const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
-  //
-  // expect(transferTx != null).toBe(true);
-  // expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('1');
+  const signedTransferTx = await new AcpTransferSudtBuilder(
+    { amount: '1', recipient: recipientAddr0, sudt: testUdt },
+    provider,
+    new Secp256k1Signer(recipientPrivKey1, provider, {
+      code_hash: ANYONE_CAN_PAY.CODE_HASH,
+      hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+    }),
+  ).build();
+
+  const transferTxHash = await provider.sendTransaction(signedTransferTx);
+  const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
+
+  expect(transferTx != null).toBe(true);
+  expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('1');
 });
 
 test('test non-acp-pw lock mint and transfer', async () => {
