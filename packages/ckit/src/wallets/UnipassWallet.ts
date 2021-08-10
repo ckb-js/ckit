@@ -18,7 +18,12 @@ export class UnipassWallet extends AbstractWallet {
   unipassConnector: Unipass;
 
   constructor(private uri = 'https://unipass.me') {
-    super({ features: ['acp'] });
+    super();
+    this.setDescriptor({
+      name: 'UnipassWallet',
+      description: 'Interacting with CKB via an Email',
+      features: ['acp'],
+    });
     this.unipassConnector = new Unipass();
   }
 
