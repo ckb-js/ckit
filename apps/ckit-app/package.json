@@ -28,9 +28,10 @@
     "web-vitals": "^1.0.1"
   },
   "devDependencies": {
-    "@craco/craco": "^6.2.0",
+    "@craco/craco": "^6.1.1",
+    "@jackwilsdon/craco-use-babelrc": "^1.0.0",
     "babel-plugin-styled-components": "^1.13.2",
-    "craco-less": "^1.18.0"
+    "craco-less": "^1.17.1"
   },
   "scripts": {
     "start": "craco start",
