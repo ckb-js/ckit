@@ -1,5 +1,5 @@
 import { Address, HexNumber, Hash, Transaction } from '@ckb-lumos/base';
-import { RecipientOptions, AcpTransferSudtBuilder, TransferCkbBuilder } from '@ckit/ckit';
+import { AcpTransferSudtBuilder, TransferCkbBuilder } from '@ckit/ckit';
 import { Modal } from 'antd';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
@@ -38,13 +38,8 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
         );
         txToSend = await txBuilder.build();
       } else {
-        const recipientsParams: RecipientOptions = {
-          recipient: input.recipient,
-          amount: input.amount,
-          capacityPolicy: 'createAcp',
-        };
         const txBuilder = new TransferCkbBuilder(
-          { recipients: [recipientsParams] },
+          { recipients: [{ recipient: input.recipient, amount: input.amount, capacityPolicy: 'createAcp' }] },
           ckitProvider,
           selectedWallet.signer,
         );

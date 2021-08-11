@@ -11,7 +11,7 @@ export const CkitProviderContainer = createContainer<CkitProvider | undefined>((
       const provider = new CkitProvider(localConfig.mecuryRPC, localConfig.ckbRPC);
       void provider.init({ ...localConfig.ckitConfig }).then(() => setCkitProvider(provider));
     }
-  }, []);
+  }, [ckitProvider, localConfig]);
 
   return ckitProvider;
 });
