@@ -30,8 +30,6 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       };
       if (input.operationKind === 'invite') {
         recipientsParams.capacityPolicy = 'createAcp';
-        // TODO make the additionalCapacity configurable
-        // create acp with additionalAcp
         recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toHex();
         recipientsParams.amount = '0';
       } else {

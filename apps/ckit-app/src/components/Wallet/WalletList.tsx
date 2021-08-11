@@ -27,7 +27,7 @@ export const WalletList = observer(() => {
   return (
     <Modal
       closable
-      title={'choose wallets'}
+      title={'Choose wallets'}
       width={312}
       visible={visible}
       onCancel={() => setModalVisible(false)}

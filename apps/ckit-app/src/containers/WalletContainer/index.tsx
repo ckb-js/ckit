@@ -1,4 +1,4 @@
-import { AbstractWallet, ConnectStatus, Signer } from '@ckit/ckit';
+import { AbstractWallet, ConnectStatus } from '@ckit/ckit';
 import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -18,6 +18,7 @@ function useWallet() {
 
   const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet() as AbstractWallet]);
   const [currentWalletIndex, setCurrentWalletIndex] = useState<CurrentWalletIndex>(null);
+  const [signerAddress, setSignerAddress] = useState<string>();
   const [error, setError] = useState<WalletConnectError | null>(null);
   const [visible, setVisible] = useState(false);
 
@@ -72,32 +73,27 @@ function useWallet() {
     [setModalVisible, wallets],
   );
 
+  useEffect(
+    () =>
+      autorun(() => {
+        setSignerAddress(undefined);
+        if (!selectedWallet?.signer) return;
+        void selectedWallet.signer.getAddress().then(setSignerAddress);
+      }),
+    [selectedWallet],
+  );
+
   return {
     currentWalletIndex,
     setCurrentWalletIndex,
     wallets,
     selectedWallet,
+    signerAddress,
     error,
     setError,
     visible,
     setModalVisible,
   };
-}
-
-interface SignerAddress {
-  address: string | undefined;
-}
-
-export function useSigner(signer: Signer | undefined): SignerAddress {
-  const [address, setAddress] = useState<string>();
-
-  useEffect(() => {
-    setAddress(undefined);
-    if (!signer) return;
-    void signer.getAddress().then(setAddress);
-  }, [signer]);
-
-  return { address };
 }
 
 export const WalletContainer = createContainer(useWallet);
