@@ -178,7 +178,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
 
   const udtCells1 = await provider.collectUdtCells(await recipient1Signer.getAddress(), testUdt, '1');
   const additionalCapacity1 = Number(udtCells1[0]?.output?.capacity) - 142 * 10 ** 8;
-  expect(CkbAmount.fromShannon(additionalCapacity1).equals(CkbAmount.fromCkb(1))).toBe(true);
+  expect(CkbAmount.fromShannon(additionalCapacity1).eq(CkbAmount.fromCkb(1))).toBe(true);
 });
 
 test('mint sudt with a mix of policies', async () => {
