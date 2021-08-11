@@ -1,5 +1,5 @@
 import { TestProvider } from '../__tests__/TestProvider';
-import { InternalNonAcpPwLockSigner } from './NonAcpPwLockWallet';
+import { InternalNonAcpPwLockSigner } from './PwWallet';
 
 test('internal signer', () => {
   const provider = new TestProvider();

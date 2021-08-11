@@ -17,6 +17,7 @@ export abstract class AbstractPwSenderBuilder extends Builder {
       Pw.toPwCellDep(this.provider.getCellDep('SUDT')),
       Pw.toPwCellDep(this.provider.getCellDep('ANYONE_CAN_PAY')),
       Pw.toPwCellDep(this.provider.getCellDep('PW_NON_ANYONE_CAN_PAY')),
+      Pw.toPwCellDep(this.provider.getCellDep('PW_ANYONE_CAN_PAY')),
       Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
       // TODO uncomment me when ran in Aggron or Mainnet
       // ...getCellDeps(),

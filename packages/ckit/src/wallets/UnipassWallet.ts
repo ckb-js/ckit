@@ -17,7 +17,7 @@ export class UnipassSigner implements Signer {
 export class UnipassWallet extends AbstractWallet {
   unipassConnector: Unipass;
 
-  constructor(private uri = 'https://unipass.me') {
+  constructor(private _uri = 'https://unipass.me') {
     super();
     this.setDescriptor({
       name: 'UnipassWallet',
@@ -27,11 +27,9 @@ export class UnipassWallet extends AbstractWallet {
     this.unipassConnector = new Unipass();
   }
 
-  connect(): void {
-    this.onConnectStatusChanged('connecting');
-    void this.unipassConnector.init().then(() => {
-      this.onConnectStatusChanged('connected');
-      this.onSignerChanged(new UnipassSigner(this.unipassConnector));
+  protected tryConnect(): Promise<Signer> {
+    return this.unipassConnector.init().then(() => {
+      return new UnipassSigner(this.unipassConnector);
     });
   }
 }
