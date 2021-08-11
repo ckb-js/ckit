@@ -7,14 +7,10 @@ export class DummyWallet extends AbstractWallet {
     this.setDescriptor({ name: 'DummyWallet', features: ['dummy'] });
   }
 
-  connect(): void {
-    if (this.connectStatus !== 'disconnected') return;
-    this.onConnectStatusChanged('connecting');
-    setTimeout(() => {
-      if (this.connectStatus !== 'connecting') return;
-      this.onConnectStatusChanged('connected');
-      this.onSignerChanged(new DummySigner());
-    }, 500);
+  protected tryConnect(): Promise<Signer> {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(new DummySigner()), 500);
+    });
   }
 }
 

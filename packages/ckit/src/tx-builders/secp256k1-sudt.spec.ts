@@ -6,7 +6,7 @@ import { key } from '@ckb-lumos/hd';
 import { TestProvider } from '../__tests__/TestProvider';
 import { CkbAmount } from '../helpers';
 import { randomHexString } from '../utils';
-import { InternalNonAcpPwLockSigner } from '../wallets/NonAcpPwLockWallet';
+import { InternalNonAcpPwLockSigner } from '../wallets/PwWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { AcpTransferSudtBuilder } from './AcpTransferSudtBuilder';
 import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';

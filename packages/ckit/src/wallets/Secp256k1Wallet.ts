@@ -1,7 +1,7 @@
 import { HexString, Script } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
 import { AbstractWallet, Signer } from '@ckit/base';
-import { MercuryProvider } from '../providers/mercury/MercuryProvider';
+import { MercuryProvider } from '../providers';
 
 type ScriptTmpl = Pick<Script, 'hash_type' | 'code_hash'>;
 
@@ -14,9 +14,8 @@ export class Secp256k1Wallet extends AbstractWallet {
     this.#privateKey = privateKey;
   }
 
-  connect(): void {
-    this.onConnectStatusChanged('connected');
-    this.onSignerChanged(new Secp256k1Signer(this.#privateKey, this.provider, this.lockConfig));
+  protected async tryConnect(): Promise<Signer> {
+    return new Secp256k1Signer(this.#privateKey, this.provider, this.lockConfig);
   }
 }
 

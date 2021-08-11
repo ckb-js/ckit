@@ -1,10 +1,10 @@
-import { CkitProvider, NonAcpPwLockWallet } from '@ckit/ckit';
+import { CkitProvider, AcpPwLockWallet } from '@ckit/ckit';
 import { makeObservable, observable } from 'mobx';
 
-export class ObservableNonAcpPwLockWallet extends NonAcpPwLockWallet {
+export class ObservableAcpPwLockWallet extends AcpPwLockWallet {
   constructor(ckitProvider: CkitProvider) {
     super(ckitProvider);
-    this.setDescriptor({ name: 'MetaMask(Non-ACP)' });
+    this.setDescriptor({ name: 'MetaMask(ACP)' });
     makeObservable(this, {
       connectStatus: observable,
       signer: observable,

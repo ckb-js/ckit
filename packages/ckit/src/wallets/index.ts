@@ -1,2 +1,2 @@
-export { NonAcpPwLockSigner, NonAcpPwLockWallet } from './NonAcpPwLockWallet';
+export { AcpPwLockWallet, NonAcpPwLockWallet } from './PwWallet';
 export * from './UnipassWallet';
