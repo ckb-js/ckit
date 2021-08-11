@@ -13,7 +13,7 @@ export const AssetBalance: React.FC<AssetBalanceProps> = (props) => {
   const ckitProvider = CkitProviderContainer.useContainer();
   const { signerAddress } = WalletContainer.useContainer();
   const query = useQuery(
-    ['queryBalance', script, signerAddress],
+    ['queryBalance', { script: script, address: signerAddress }],
     () => {
       if (!ckitProvider || !signerAddress) throw new Error('exception: signer should exist');
       if (script) {
