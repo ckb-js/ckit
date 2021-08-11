@@ -2,7 +2,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import React from 'react';
 import { useQuery } from 'react-query';
-import { CkitProviderContainer, useSigner, WalletContainer } from 'containers';
+import { CkitProviderContainer, WalletContainer } from 'containers';
 import { AssetMeta } from 'hooks';
 import { AssetAmount } from 'utils';
 
@@ -11,19 +11,18 @@ type AssetBalanceProps = Pick<AssetMeta, 'decimal'> & { script: AssetMeta['scrip
 export const AssetBalance: React.FC<AssetBalanceProps> = (props) => {
   const { script, decimal } = props;
   const ckitProvider = CkitProviderContainer.useContainer();
-  const { selectedWallet } = WalletContainer.useContainer();
-  const { address } = useSigner(selectedWallet?.signer);
+  const { signerAddress } = WalletContainer.useContainer();
   const query = useQuery(
-    ['queryBalance', script, address],
+    ['queryBalance', script, signerAddress],
     () => {
-      if (!ckitProvider || !address) throw new Error('exception: signer should exist');
+      if (!ckitProvider || !signerAddress) throw new Error('exception: signer should exist');
       if (script) {
-        return ckitProvider.getUdtBalance(address, script);
+        return ckitProvider.getUdtBalance(signerAddress, script);
       }
-      return ckitProvider.getCkbLiveCellsBalance(address);
+      return ckitProvider.getCkbLiveCellsBalance(signerAddress);
     },
     {
-      enabled: !!address,
+      enabled: !!signerAddress,
     },
   );
   if (query.isError) {

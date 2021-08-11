@@ -4,11 +4,10 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { AddAssetButton, AssetList } from 'components/Assets';
 import { StyledCardWrapper } from 'components/Styled';
-import { useSigner, WalletContainer } from 'containers/WalletContainer';
+import { WalletContainer } from 'containers/WalletContainer';
 
 export const AssetsView: React.FC = observer(() => {
-  const { selectedWallet } = WalletContainer.useContainer();
-  const { address: signerAddress } = useSigner(selectedWallet?.signer);
+  const { signerAddress } = WalletContainer.useContainer();
   return (
     <div>
       <StyledCardWrapper>

@@ -1,20 +1,38 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
+import { CkbTypeScript } from '@ckit/base';
 import { Button, Col, Modal, Row, Typography } from 'antd';
 import { ErrorMessage, Field, Form, Formik } from 'formik';
-import React, { useState } from 'react';
-import { AssetMeta, useSendTransferTx } from 'hooks';
+import React, { useMemo, useState } from 'react';
+import { CkitProviderContainer, WalletContainer } from 'containers';
+import { AssetMeta, useSendIssueTx, useSendTransferTx } from 'hooks';
 import { AssetAmount } from 'utils';
 
 type AssetMetaProps = Pick<AssetMeta, 'symbol' | 'decimal'> & { script: AssetMeta['script'] };
 
 export const SendButton: React.FC<AssetMetaProps> = (props) => {
   const [visible, setVisible] = useState<boolean>(false);
+  const provider = CkitProviderContainer.useContainer();
+  const { signerAddress } = WalletContainer.useContainer();
+
+  const issuableSudtScript = useMemo<CkbTypeScript>(() => {
+    if (!provider) throw new Error('excepiton: provider undefined');
+    if (!signerAddress) throw new Error('excepiton: signerAddress undefined');
+    return provider.newSudtScript(signerAddress);
+  }, [provider, signerAddress]);
+
+  const isMint =
+    props.script?.code_hash === issuableSudtScript.code_hash &&
+    props.script.hash_type === issuableSudtScript.hash_type &&
+    props.script.args === issuableSudtScript.args;
+
+  const buttonContent = isMint ? 'mint' : 'send';
+
   return (
     <div>
       <Button type="link" onClick={() => setVisible(true)}>
-        send
+        {buttonContent}
       </Button>
-      <ModalForm visible={visible} setVisible={setVisible} assetMeta={props} />
+      <ModalForm visible={visible} setVisible={setVisible} assetMeta={props} isMint={isMint} />
     </div>
   );
 };
@@ -23,6 +41,7 @@ interface ModalFormProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
   assetMeta: AssetMetaProps;
+  isMint: boolean;
 }
 
 interface ModalFormValues {
@@ -36,12 +55,29 @@ interface ModalFormErrors {
 }
 
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
-  const { visible, setVisible, assetMeta } = props;
+  const { visible, setVisible, assetMeta, isMint } = props;
 
-  const { mutateAsync: sendTransferTransaction, isLoading: isIssueLoading } = useSendTransferTx();
+  const { mutateAsync: sendTransferTransaction, isLoading: isTransferLoading } = useSendTransferTx();
+  const { mutateAsync: sendIssueTransaction, isLoading: isIssueLoading } = useSendIssueTx();
 
   const initialValues: ModalFormValues = { recipient: '', amount: '' };
-  const title = 'Send ' + assetMeta.symbol;
+  const title = (isMint ? 'Mint ' : 'Send ') + assetMeta.symbol;
+  const onSubmit = isMint
+    ? (values: ModalFormValues) => {
+        sendTransferTransaction({
+          recipient: values.recipient,
+          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
+          script: assetMeta.script,
+        }).then(() => setVisible(false));
+      }
+    : (values: ModalFormValues) => {
+        sendIssueTransaction({
+          recipient: values.recipient,
+          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
+          operationKind: 'issue',
+        }).then(() => setVisible(false));
+      };
+  const loading = isMint ? isIssueLoading : isTransferLoading;
 
   const validate = (_values: ModalFormValues): ModalFormErrors => {
     // TODO add validate logic
@@ -50,17 +86,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
 
   return (
     <Modal title={title} closable width={312} visible={visible} onCancel={() => setVisible(false)} footer={null}>
-      <Formik
-        initialValues={initialValues}
-        validate={validate}
-        onSubmit={(values: ModalFormValues, { setSubmitting }) => {
-          sendTransferTransaction({
-            recipient: values.recipient,
-            amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
-            script: assetMeta.script,
-          }).then(() => setVisible(false));
-        }}
-      >
+      <Formik initialValues={initialValues} validate={validate} onSubmit={onSubmit}>
         {(formik) => (
           <Form>
             <div>
@@ -98,7 +124,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
             </div>
 
             <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Button loading={isIssueLoading} onClick={formik.submitForm}>
+              <Button loading={loading} onClick={formik.submitForm}>
                 Submit
               </Button>
             </div>
