@@ -7,11 +7,9 @@ export const CkitProviderContainer = createContainer<CkitProvider | undefined>((
   const [ckitProvider, setCkitProvider] = useState<CkitProvider>();
   const [localConfig] = useConfigStorage();
   useEffect(() => {
-    if (!ckitProvider) {
-      const provider = new CkitProvider(localConfig.mecuryRPC, localConfig.ckbRPC);
-      void provider.init({ ...localConfig.ckitConfig }).then(() => setCkitProvider(provider));
-    }
-  }, [ckitProvider, localConfig]);
+    const provider = new CkitProvider(localConfig.mecuryRPC, localConfig.ckbRPC);
+    void provider.init({ ...localConfig.ckitConfig }).then(() => setCkitProvider(provider));
+  }, [localConfig]);
 
   return ckitProvider;
 });

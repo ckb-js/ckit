@@ -1,6 +1,6 @@
 import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { AbstractWallet, Signer } from '@ckit/base';
+import { AbstractWallet, Signer, WalletFeature } from '@ckit/base';
 import { Keccak256Hasher, Platform } from '@lay2/pw-core';
 import { publicKeyCreate } from 'secp256k1';
 import { CkitProvider } from '../providers';
@@ -24,6 +24,7 @@ abstract class AbstractPwWallet extends AbstractWallet {
   protected constructor(protected ckitProvider: CkitProvider) {
     super();
     this.setDescriptor({
+      features: this.describeFeatures(),
       description: 'Interacting with CKB via MetaMask',
       name: 'NonAcpPwLockWallet',
     });
@@ -47,7 +48,8 @@ abstract class AbstractPwWallet extends AbstractWallet {
     return window.ethereum.enable().then(() => this.produceSigner());
   }
 
-  abstract produceSigner(): Signer;
+  protected abstract produceSigner(): Signer;
+  protected abstract describeFeatures(): WalletFeature[];
 }
 
 abstract class AbstractPwSigner implements Signer {
@@ -86,6 +88,10 @@ export class AcpPwLockWallet extends AbstractPwWallet {
       }
     })(this.ckitProvider);
   }
+
+  protected describeFeatures(): WalletFeature[] {
+    return ['acp'];
+  }
 }
 
 export class NonAcpPwLockWallet extends AbstractPwWallet {
@@ -101,6 +107,10 @@ export class NonAcpPwLockWallet extends AbstractPwWallet {
         });
       }
     })(this.ckitProvider);
+  }
+
+  protected describeFeatures(): WalletFeature[] {
+    return ['issue-sudt'];
   }
 }
 

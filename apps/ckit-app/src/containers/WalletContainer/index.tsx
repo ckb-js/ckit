@@ -4,7 +4,7 @@ import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createContainer } from 'unstated-next';
 import { CkitProviderContainer } from '../CkitProviderContainer';
-import { ObservableNonAcpPwLockWallet, ObservableUnipassWallet } from 'wallets';
+import { ObservableAcpPwLockWallet, ObservableNonAcpPwLockWallet, ObservableUnipassWallet } from 'wallets';
 
 export type CurrentWalletIndex = number | null;
 
@@ -16,7 +16,7 @@ export interface WalletConnectError {
 function useWallet() {
   const ckitProvider = CkitProviderContainer.useContainer();
 
-  const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet() as AbstractWallet]);
+  const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet()]);
   const [currentWalletIndex, setCurrentWalletIndex] = useState<CurrentWalletIndex>(null);
   const [signerAddress, setSignerAddress] = useState<string>();
   const [error, setError] = useState<WalletConnectError | null>(null);
@@ -34,8 +34,12 @@ function useWallet() {
 
   useEffect(() => {
     if (!ckitProvider) return;
-    runInAction(() => wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider)));
-  }, [ckitProvider, wallets]);
+    // when the provider has changed, wallets should be construct with the new provider
+    runInAction(() => {
+      wallets.splice(1);
+      wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider), new ObservableAcpPwLockWallet(ckitProvider));
+    });
+  }, [ckitProvider]);
 
   useEffect(
     () =>
