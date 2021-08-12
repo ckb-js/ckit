@@ -4,9 +4,8 @@ import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createContainer } from 'unstated-next';
 import { CkitProviderContainer } from '../CkitProviderContainer';
+import { useWalletIndexStorage } from 'hooks';
 import { ObservableAcpPwLockWallet, ObservableNonAcpPwLockWallet, ObservableUnipassWallet } from 'wallets';
-
-export type CurrentWalletIndex = number | null;
 
 export interface WalletConnectError {
   error: Error;
@@ -15,9 +14,9 @@ export interface WalletConnectError {
 
 function useWallet() {
   const ckitProvider = CkitProviderContainer.useContainer();
+  const [currentWalletIndex, setCurrentWalletIndex] = useWalletIndexStorage();
 
   const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet()]);
-  const [currentWalletIndex, setCurrentWalletIndex] = useState<CurrentWalletIndex>(null);
   const [signerAddress, setSignerAddress] = useState<string>();
   const [error, setError] = useState<WalletConnectError | null>(null);
   const [visible, setVisible] = useState(false);
@@ -27,10 +26,9 @@ function useWallet() {
     setError(null);
   }, []);
 
-  const selectedWallet = useMemo(
-    () => (currentWalletIndex === null ? undefined : wallets[currentWalletIndex]),
-    [currentWalletIndex, wallets],
-  );
+  const selectedWallet =
+    currentWalletIndex === null || currentWalletIndex >= wallets.length ? undefined : wallets[currentWalletIndex];
+  console.log('s', selectedWallet);
 
   useEffect(() => {
     if (!ckitProvider) return;
@@ -40,6 +38,8 @@ function useWallet() {
       wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider), new ObservableAcpPwLockWallet(ckitProvider));
     });
   }, [ckitProvider]);
+
+  console.log('ss');
 
   useEffect(
     () =>
@@ -77,19 +77,20 @@ function useWallet() {
     [setModalVisible, wallets],
   );
 
-  useEffect(
-    () =>
-      autorun(() => {
-        setSignerAddress(undefined);
-        if (!selectedWallet?.signer) return;
-        void selectedWallet.signer.getAddress().then(setSignerAddress);
-      }),
-    [selectedWallet],
-  );
+  console.log('sss');
+
+  useEffect(() => {
+    console.log('triggered');
+    autorun(() => {
+      console.log('b', selectedWallet);
+      setSignerAddress(undefined);
+      if (!selectedWallet?.signer) return;
+      void selectedWallet.signer.getAddress().then(setSignerAddress);
+      console.log('a', selectedWallet);
+    });
+  }, [selectedWallet]);
 
   return {
-    currentWalletIndex,
-    setCurrentWalletIndex,
     wallets,
     selectedWallet,
     signerAddress,
