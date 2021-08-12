@@ -8,7 +8,7 @@ export const WalletConnectFC: React.FC = () => {
 
   if (selectedWallet) {
     return (
-      <Button size="small" type="primary" disabled>
+      <Button size="small" onClick={() => setModalVisible(true)}>
         connected to {selectedWallet.descriptor.name}
       </Button>
     );

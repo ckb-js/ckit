@@ -36,6 +36,7 @@ function useWallet() {
     runInAction(() => {
       wallets.splice(1);
       wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider), new ObservableAcpPwLockWallet(ckitProvider));
+      if (currentWalletIndex) wallets[currentWalletIndex].connect();
     });
   }, [ckitProvider]);
 
@@ -84,11 +85,13 @@ function useWallet() {
     autorun(() => {
       console.log('b', selectedWallet);
       setSignerAddress(undefined);
-      if (!selectedWallet?.signer) return;
-      void selectedWallet.signer.getAddress().then(setSignerAddress);
+      if (currentWalletIndex === null || currentWalletIndex >= wallets.length) return;
+      const currentWallet = wallets[currentWalletIndex].signer;
+      if (!currentWallet) return;
+      void currentWallet.getAddress().then(setSignerAddress);
       console.log('a', selectedWallet);
     });
-  }, [selectedWallet]);
+  }, [currentWalletIndex]);
 
   return {
     wallets,

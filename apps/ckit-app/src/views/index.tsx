@@ -8,17 +8,17 @@ import { WalletContainer } from 'containers';
 import { useWalletIndexStorage } from 'hooks';
 
 export const AppView: React.FC = () => {
-  const [currentWalletIndex] = useWalletIndexStorage();
-  const { wallets } = WalletContainer.useContainer();
-
-  useEffect(
-    () =>
-      autorun(() => {
-        if (!currentWalletIndex || currentWalletIndex >= wallets.length) return;
-        wallets[currentWalletIndex].connect();
-      }),
-    [],
-  );
+  // const [currentWalletIndex] = useWalletIndexStorage();
+  // const { wallets } = WalletContainer.useContainer();
+  //
+  // useEffect(
+  //   () =>
+  //     autorun(() => {
+  //       if (!currentWalletIndex || currentWalletIndex >= wallets.length) return;
+  //       wallets[currentWalletIndex].connect();
+  //     }),
+  //   [],
+  // );
 
   return (
     <BodyWrapper>
