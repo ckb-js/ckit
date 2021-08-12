@@ -1,5 +1,5 @@
+import { invariant } from '@ckit/utils';
 import { default as EventEmitter } from 'eventemitter3';
-import invariant from 'tiny-invariant';
 import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 
 export abstract class AbstractWallet implements WalletConnector {

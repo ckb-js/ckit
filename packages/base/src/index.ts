@@ -87,4 +87,3 @@ export interface Provider {
 export { ScriptManager } from './ScriptManager';
 export { AbstractProvider, ProviderConfig, InitOptions } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
-export { createDebugger, debug } from './logger';
