@@ -2,25 +2,35 @@ import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
 import { AbstractWallet, Signer, WalletFeature } from '@ckit/base';
 import { Keccak256Hasher, Platform } from '@lay2/pw-core';
+import detectEthereumProvider from '@metamask/detect-provider';
 import { publicKeyCreate } from 'secp256k1';
 import { CkitProvider } from '../providers';
 import { hexToBytes } from '../utils';
 
-declare global {
-  interface EthereumProvider {
-    selectedAddress: string;
-    isMetaMask?: boolean;
-    enable: () => Promise<string[]>;
-    on: (event: 'accountsChanged', listener: (addresses: string[]) => void) => void;
-    request: (payload: { method: 'personal_sign'; params: [string /*from*/, string /*message*/] }) => Promise<string>;
-  }
+interface EthereumProvider {
+  selectedAddress: string;
+  isMetaMask?: boolean;
+  enable: () => Promise<string[]>;
+  addListener: (event: 'accountsChanged', listener: (addresses: string[]) => void) => void;
+  removeEventListener: (event: 'accountsChanged', listener: (addresses: string[]) => void) => void;
+  request: (payload: { method: 'personal_sign'; params: [string /*from*/, string /*message*/] }) => Promise<string>;
+}
 
-  interface Window {
-    ethereum: EthereumProvider;
-  }
+function detect(): Promise<EthereumProvider> {
+  return detectEthereumProvider().then(() => window.ethereum as EthereumProvider);
 }
 
 abstract class AbstractPwWallet extends AbstractWallet {
+  private readonly listener = (addresses: string[]) => {
+    if (!Array.isArray(addresses)) return;
+    if (addresses.length === 0) {
+      this.emitConnectStatusChanged('disconnected');
+      return;
+    }
+
+    this.emitChangedSigner(this.produceSigner());
+  };
+
   protected constructor(protected ckitProvider: CkitProvider) {
     super();
     this.setDescriptor({
@@ -28,24 +38,18 @@ abstract class AbstractPwWallet extends AbstractWallet {
       description: 'Interacting with CKB via MetaMask',
       name: 'NonAcpPwLockWallet',
     });
-
-    this.ckitProvider = ckitProvider;
-
-    if (!window.ethereum) throw new Error('MetaMask is required');
-
-    window.ethereum.on('accountsChanged', (addresses) => {
-      if (!Array.isArray(addresses)) return;
-      if (addresses.length === 0) {
-        this.emitConnectStatusChanged('disconnected');
-        return;
-      }
-
-      this.emitChangedSigner(this.produceSigner());
-    });
   }
 
-  protected tryConnect(): Promise<Signer> {
-    return window.ethereum.enable().then(() => this.produceSigner());
+  disconnect() {
+    void detect()
+      .then((ethProvider) => ethProvider.removeEventListener('accountsChanged', this.listener))
+      .then(() => super.disconnect());
+  }
+
+  protected async tryConnect(): Promise<Signer> {
+    const ethProvider = await detect();
+    ethProvider.addListener('accountsChanged', this.listener);
+    return ethProvider.enable().then(() => this.produceSigner());
   }
 
   protected abstract produceSigner(): Signer;
@@ -55,22 +59,16 @@ abstract class AbstractPwWallet extends AbstractWallet {
 abstract class AbstractPwSigner implements Signer {
   constructor(protected ckitProvider: CkitProvider) {}
 
-  signMessage(message: HexString): Promise<HexString> {
-    return new Promise((resolve, reject) => {
-      const from = window.ethereum.selectedAddress;
+  async signMessage(message: HexString): Promise<HexString> {
+    const ethereumProvider = await detect();
+    const from = ethereumProvider.selectedAddress;
+    const result = await ethereumProvider.request({ method: 'personal_sign', params: [from, message] });
 
-      const handleResult = (result: string): string => {
-        let v = Number.parseInt(result.slice(-2), 16);
-        if (v >= 27) v -= 27;
-        result = '0x' + (1).toString(16).padStart(2, '0') + result.slice(2, -2) + v.toString(16).padStart(2, '0');
-        return result;
-      };
-
-      void window.ethereum.request({ method: 'personal_sign', params: [from, message] }).then((result) => {
-        resolve(handleResult(result));
-      }, reject);
-    });
+    let v = Number.parseInt(result.slice(-2), 16);
+    if (v >= 27) v -= 27;
+    return '0x' + (1).toString(16).padStart(2, '0') + result.slice(2, -2) + v.toString(16).padStart(2, '0');
   }
+
   abstract getAddress(): Promise<string>;
 }
 
@@ -82,7 +80,7 @@ export class AcpPwLockWallet extends AbstractPwWallet {
 
         return this.ckitProvider.parseToAddress({
           hash_type: config.HASH_TYPE,
-          args: window.ethereum.selectedAddress,
+          args: (await detect()).selectedAddress,
           code_hash: config.CODE_HASH,
         });
       }
@@ -99,10 +97,9 @@ export class NonAcpPwLockWallet extends AbstractPwWallet {
     return new (class extends AbstractPwSigner {
       async getAddress(): Promise<string> {
         const config = this.ckitProvider.getScriptConfig('PW_NON_ANYONE_CAN_PAY');
-
         return this.ckitProvider.parseToAddress({
           hash_type: config.HASH_TYPE,
-          args: window.ethereum.selectedAddress,
+          args: (await detect()).selectedAddress,
           code_hash: config.CODE_HASH,
         });
       }
