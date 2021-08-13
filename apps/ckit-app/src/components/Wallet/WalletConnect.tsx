@@ -4,12 +4,12 @@ import React from 'react';
 import { WalletContainer } from 'containers/WalletContainer';
 
 export const WalletConnectFC: React.FC = () => {
-  const { selectedWallet, setModalVisible } = WalletContainer.useContainer();
+  const { currentWallet, setModalVisible } = WalletContainer.useContainer();
 
-  if (selectedWallet) {
+  if (currentWallet) {
     return (
       <Button size="small" onClick={() => setModalVisible(true)}>
-        connected to {selectedWallet.descriptor.name}
+        connected to {currentWallet.descriptor.name}
       </Button>
     );
   }

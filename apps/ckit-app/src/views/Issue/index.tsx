@@ -6,8 +6,8 @@ import { StyledCardWrapper } from 'components/Styled';
 import { WalletContainer } from 'containers/WalletContainer';
 
 export const IssueView: React.FC = observer(() => {
-  const { selectedWallet, signerAddress } = WalletContainer.useContainer();
-  const isSupportIssue = selectedWallet?.checkSupported('issue-sudt');
+  const { currentWallet, signerAddress } = WalletContainer.useContainer();
+  const isSupportIssue = currentWallet?.checkSupported('issue-sudt');
 
   return (
     <div>

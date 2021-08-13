@@ -1,10 +1,10 @@
 import { AbstractWallet, ConnectStatus } from '@ckit/ckit';
 import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
 import { CkitProviderContainer } from '../CkitProviderContainer';
-import { useWalletIndexStorage } from 'hooks';
+import { useCurrentWalletStorage } from 'hooks';
 import { ObservableAcpPwLockWallet, ObservableNonAcpPwLockWallet, ObservableUnipassWallet } from 'wallets';
 
 export interface WalletConnectError {
@@ -14,8 +14,9 @@ export interface WalletConnectError {
 
 function useWallet() {
   const ckitProvider = CkitProviderContainer.useContainer();
-  const [currentWalletIndex, setCurrentWalletIndex] = useWalletIndexStorage();
+  const [currentWalletName, setCurrentWalletName] = useCurrentWalletStorage();
 
+  // TODO refactor to Wallets class
   const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet()]);
   const [signerAddress, setSignerAddress] = useState<string>();
   const [error, setError] = useState<WalletConnectError | null>(null);
@@ -26,21 +27,15 @@ function useWallet() {
     setError(null);
   }, []);
 
-  const selectedWallet =
-    currentWalletIndex === null || currentWalletIndex >= wallets.length ? undefined : wallets[currentWalletIndex];
-  console.log('s', selectedWallet);
-
   useEffect(() => {
     if (!ckitProvider) return;
     // when the provider has changed, wallets should be construct with the new provider
     runInAction(() => {
       wallets.splice(1);
       wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider), new ObservableAcpPwLockWallet(ckitProvider));
-      if (currentWalletIndex) wallets[currentWalletIndex].connect();
+      wallets.find((value) => value.descriptor.name === currentWalletName)?.connect();
     });
   }, [ckitProvider]);
-
-  console.log('ss');
 
   useEffect(
     () =>
@@ -49,20 +44,20 @@ function useWallet() {
         wallets.forEach((wallet, index) => {
           const onConnectStatusChanged = (connectStatus: ConnectStatus) => {
             if (connectStatus === 'disconnected') {
-              const connectedIndex = wallets.findIndex((w) => w.connectStatus === 'connected');
-              if (-1 === connectedIndex) {
-                setCurrentWalletIndex(null);
+              const remainConnectedWallet = wallets.find((w) => w.connectStatus === 'connected');
+              if (!remainConnectedWallet) {
+                setCurrentWalletName(null);
               } else {
-                setCurrentWalletIndex(connectedIndex);
+                setCurrentWalletName(remainConnectedWallet.descriptor.name);
               }
             }
             if (connectStatus === 'connected') {
               setModalVisible(false);
-              const connectedIndex = wallets.findIndex((w) => w.descriptor.name === wallet.descriptor.name);
-              if (-1 === connectedIndex) {
+              const connectedWallet = wallets.find((w) => w.descriptor.name === wallet.descriptor.name);
+              if (!connectedWallet) {
                 throw new Error('exception: wallet could not be found');
               } else {
-                setCurrentWalletIndex(connectedIndex);
+                setCurrentWalletName(connectedWallet.descriptor.name);
               }
             }
           };
@@ -78,24 +73,19 @@ function useWallet() {
     [setModalVisible, wallets],
   );
 
-  console.log('sss');
+  const currentWallet = wallets.find((value) => value.descriptor.name === currentWalletName);
 
   useEffect(() => {
-    console.log('triggered');
     autorun(() => {
-      console.log('b', selectedWallet);
       setSignerAddress(undefined);
-      if (currentWalletIndex === null || currentWalletIndex >= wallets.length) return;
-      const currentWallet = wallets[currentWalletIndex].signer;
-      if (!currentWallet) return;
-      void currentWallet.getAddress().then(setSignerAddress);
-      console.log('a', selectedWallet);
+      const wallet = wallets.find((value) => value.descriptor.name === currentWalletName);
+      void wallet?.signer?.getAddress().then(setSignerAddress);
     });
-  }, [currentWalletIndex]);
+  }, [currentWalletName]);
 
   return {
     wallets,
-    selectedWallet,
+    currentWallet,
     signerAddress,
     error,
     setError,

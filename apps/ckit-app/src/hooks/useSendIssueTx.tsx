@@ -14,14 +14,14 @@ export interface SendIssueTxInput {
 }
 
 export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, SendIssueTxInput> {
-  const { selectedWallet } = WalletContainer.useContainer();
+  const { currentWallet } = WalletContainer.useContainer();
   const ckitProvider = CkitProviderContainer.useContainer();
   const [localConfig] = useConfigStorage();
 
   return useMutation(
     ['sendIssueTx'],
     async (input: SendIssueTxInput) => {
-      if (!selectedWallet?.signer) throw new Error('exception: signer undifined');
+      if (!currentWallet?.signer) throw new Error('exception: signer undifined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
 
       const recipientsParams: RecipientOptions = {
@@ -35,7 +35,7 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       } else {
         recipientsParams.capacityPolicy = 'findAcp';
       }
-      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, selectedWallet.signer);
+      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, currentWallet.signer);
       const issueTx = await txBuilder.build();
       const txHash = await ckitProvider.sendTransaction(issueTx);
       return { txHash: txHash };
