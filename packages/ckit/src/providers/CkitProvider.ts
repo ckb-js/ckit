@@ -1,7 +1,8 @@
 import { Address, CellDep, Script, utils } from '@ckb-lumos/base';
 import { ScriptConfig } from '@ckb-lumos/config-manager';
-import { ProviderConfig, InitOptions } from '@ckit/base';
+import { ProviderConfig, InitOptions, ScriptConfigManager } from '@ckit/base';
 import { MercuryProvider } from './mercury/MercuryProvider';
+import { getScriptConfig } from './index';
 
 export interface CkitConfig extends ProviderConfig {
   SCRIPTS: {
@@ -20,11 +21,22 @@ export type CkitInitOptions = InitOptions<CkitConfig>;
 export type CkitConfigKeys = keyof CkitConfig['SCRIPTS'];
 
 export class CkitProvider extends MercuryProvider {
+  private _scriptManager: ScriptConfigManager | undefined;
+
   override get config(): CkitConfig {
     return super.config as CkitConfig;
   }
 
+  get scriptManager(): ScriptConfigManager {
+    if (!this._scriptManager) throw new Error('Cannot find the scriptManager, maybe provider is not initialied');
+    return this._scriptManager;
+  }
+
+  //TODO replace config with scriptConfigManager
   override init(config: CkitInitOptions): Promise<void> {
+    const scriptConfig = getScriptConfig(config.SCRIPTS);
+    this._scriptManager = new ScriptConfigManager();
+    this._scriptManager.register(scriptConfig);
     return super.init(config);
   }
 

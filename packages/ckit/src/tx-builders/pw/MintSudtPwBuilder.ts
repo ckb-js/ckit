@@ -73,15 +73,23 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
     );
 
     const issuerCells = issuerOutpoints.map(Pw.toPwCell);
-
+    const issuerLockScript = this.provider.parseToScript(this.issuerAddress);
+    const foundRecipientLockScript = foundRecipientCells.map((c) => {
+      return Pw.fromPwScript(c.lock);
+    });
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const issuerOutput = issuerCells[0]!.clone();
     issuerOutput.capacity = issuerCells.reduce((sum, inputCell) => sum.add(inputCell.capacity), Amount.ZERO);
 
+    const cellDeps = this.provider.scriptManager.getScriptsDeps([
+      issuerLockScript,
+      ...foundRecipientLockScript,
+      udtType,
+    ]);
     const rawTx = new RawTransaction(
       [...issuerCells, ...foundRecipientCells],
       [issuerOutput, ...createdRecipientCells, ...foundRecipientCells],
-      this.getCellDeps(),
+      cellDeps,
     );
     const tx = new Transaction(rawTx, [this.getWitnessPlaceholder(this.issuerAddress)]);
     const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));

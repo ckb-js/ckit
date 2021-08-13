@@ -34,6 +34,7 @@ export class TestProvider extends CkitProvider {
 
   override async init(): Promise<void> {
     const config = await this.deployDeps();
+
     await super.init(config);
   }
 
@@ -63,6 +64,7 @@ export class TestProvider extends CkitProvider {
 
     debug('scripts are deploying via %s', this.assemberPrivateKey);
     const scripts = await deployCkbScripts(appRootPath.resolve('/deps/build'), this, this.#_assemberPrivateKey);
+
     const config: CkitConfig = {
       PREFIX: 'ckt',
       SCRIPTS: scripts,

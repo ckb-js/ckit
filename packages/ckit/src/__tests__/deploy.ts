@@ -168,5 +168,7 @@ export async function deployCkbScripts(
   const pwAcpBin = fs.readFileSync(PATH_PW_ACP_DEP);
   const pwNonAcpBin = fs.readFileSync(PATH_PW_NON_ACP_DEP);
 
-  return deployScripts(provider, [sudtBin, acpBin, pwAcpBin, pwNonAcpBin], ckbPrivateKey);
+  const scripts = await deployScripts(provider, [sudtBin, acpBin, pwAcpBin, pwNonAcpBin], ckbPrivateKey);
+
+  return scripts;
 }

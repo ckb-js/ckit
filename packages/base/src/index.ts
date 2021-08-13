@@ -84,6 +84,7 @@ export interface Provider {
   parseToAddress(script: Script): string;
 }
 
+export { ScriptConfigManager, CkitScriptConfig } from './ScriptConfigManager';
 export { ScriptManager } from './ScriptManager';
 export { AbstractProvider, ProviderConfig, InitOptions } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
