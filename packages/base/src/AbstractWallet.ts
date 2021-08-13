@@ -1,3 +1,4 @@
+import { invariant } from '@ckit/utils';
 import { default as EventEmitter } from 'eventemitter3';
 import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 
@@ -22,6 +23,11 @@ export abstract class AbstractWallet implements WalletConnector {
   }) as unknown as WalletEventListener;
 
   connect(): void {
+    const isDisconnected = this.connectStatus === 'disconnected';
+    invariant(isDisconnected, `[${this.descriptor.name}]: Do not reconnect the wallet`);
+
+    if (!isDisconnected) return;
+
     this.emitConnectStatusChanged('connecting');
     void this.tryConnect().then(
       (signer) => {

@@ -1,8 +1,9 @@
 import fs from 'fs';
 import { Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
-import { createDebugger, debug, Signer } from '@ckit/base';
+import { Signer } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
+import { createDebugger, debug } from '@ckit/utils';
 import appRootPath from 'app-root-path';
 import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
 import { nonNullable, randomHexString } from '../utils';

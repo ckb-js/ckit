@@ -19,6 +19,8 @@ test('test the dummy wallet', async () => {
   wallet.on('signerChanged', onSignerChanged);
 
   wallet.connect();
+  // cannot reconnect
+  expect(() => wallet.connect()).toThrow(/reconnect/);
 
   await asyncSleep(600);
   expect(onConnectStatusChanged).toHaveBeenCalledWith('connecting');
