@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import styled from 'styled-components';
 import { displayWalletName, WalletContainer } from 'containers/WalletContainer';
-import { useCurrentWalletStorage } from 'hooks';
 
 const ModalBorderWrapper = styled.div`
   .ant-list-item {
@@ -23,8 +22,7 @@ const ModalBorderWrapper = styled.div`
 `;
 
 export const WalletList = observer(() => {
-  const { wallets, visible, setError, setModalVisible } = WalletContainer.useContainer();
-  const [, setCurrentWallet] = useCurrentWalletStorage();
+  const { wallets, setCurrentWalletName, visible, setError, setModalVisible } = WalletContainer.useContainer();
 
   return (
     <Modal
@@ -47,7 +45,7 @@ export const WalletList = observer(() => {
                   item.connect();
                 }
                 if (item.connectStatus === 'connected') {
-                  setCurrentWallet(item.descriptor.name);
+                  setCurrentWalletName(item.descriptor.name);
                   setModalVisible(false);
                 }
               }}

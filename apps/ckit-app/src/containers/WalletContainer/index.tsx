@@ -1,10 +1,10 @@
 import { AbstractWallet, ConnectStatus } from '@ckit/ckit';
+import { useLocalStorage } from '@rehooks/local-storage';
 import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
 import { CkitProviderContainer } from '../CkitProviderContainer';
-import { useCurrentWalletStorage } from 'hooks';
 import { ObservableAcpPwLockWallet, ObservableNonAcpPwLockWallet, ObservableUnipassWallet } from 'wallets';
 
 export interface WalletConnectError {
@@ -14,7 +14,7 @@ export interface WalletConnectError {
 
 function useWallet() {
   const ckitProvider = CkitProviderContainer.useContainer();
-  const [currentWalletName, setCurrentWalletName] = useCurrentWalletStorage();
+  const [currentWalletName, setCurrentWalletName] = useLocalStorage<string | null>('currentWalletName');
 
   // TODO refactor to Wallets class
   const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet()]);
@@ -86,6 +86,7 @@ function useWallet() {
   return {
     wallets,
     currentWallet,
+    setCurrentWalletName,
     signerAddress,
     error,
     setError,
