@@ -15,14 +15,14 @@ export interface SendTransferTxInput {
 }
 
 export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown, SendTransferTxInput> {
-  const { selectedWallet } = WalletContainer.useContainer();
+  const { currentWallet } = WalletContainer.useContainer();
   const ckitProvider = CkitProviderContainer.useContainer();
   const [localConfig] = useConfigStorage();
 
   return useMutation(
     ['sendTransferTx'],
     async (input: SendTransferTxInput) => {
-      if (!selectedWallet?.signer) throw new Error('exception: signed undifined');
+      if (!currentWallet?.signer) throw new Error('exception: signed undifined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
       let txToSend: Transaction;
 
@@ -34,14 +34,14 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
             amount: input.amount,
           },
           ckitProvider,
-          selectedWallet.signer,
+          currentWallet.signer,
         );
         txToSend = await txBuilder.build();
       } else {
         const txBuilder = new TransferCkbBuilder(
           { recipients: [{ recipient: input.recipient, amount: input.amount, capacityPolicy: 'createAcp' }] },
           ckitProvider,
-          selectedWallet.signer,
+          currentWallet.signer,
         );
         txToSend = await txBuilder.build();
       }

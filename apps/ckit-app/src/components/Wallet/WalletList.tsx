@@ -22,7 +22,7 @@ const ModalBorderWrapper = styled.div`
 `;
 
 export const WalletList = observer(() => {
-  const { wallets, visible, setCurrentWalletIndex, setError, setModalVisible } = WalletContainer.useContainer();
+  const { wallets, setCurrentWalletName, visible, setError, setModalVisible } = WalletContainer.useContainer();
 
   return (
     <Modal
@@ -45,7 +45,7 @@ export const WalletList = observer(() => {
                   item.connect();
                 }
                 if (item.connectStatus === 'connected') {
-                  setCurrentWalletIndex(index);
+                  setCurrentWalletName(item.descriptor.name);
                   setModalVisible(false);
                 }
               }}
