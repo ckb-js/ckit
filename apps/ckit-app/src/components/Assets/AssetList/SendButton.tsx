@@ -2,7 +2,7 @@ import { Address, HexNumber } from '@ckb-lumos/base';
 import { CkbTypeScript } from '@ckit/base';
 import { Button, Col, Modal, Row, Typography } from 'antd';
 import { ErrorMessage, Field, Form, Formik } from 'formik';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { AssetMeta, useSendIssueTx, useSendTransferTx } from 'hooks';
 import { AssetAmount } from 'utils';
@@ -62,21 +62,24 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
 
   const initialValues: ModalFormValues = { recipient: '', amount: '' };
   const title = (isMint ? 'Mint ' : 'Send ') + assetMeta.symbol;
-  const onSubmit = isMint
-    ? (values: ModalFormValues) => {
+  const onSubmit = useCallback(
+    (values: ModalFormValues) => {
+      if (isMint) {
+        sendIssueTransaction({
+          recipient: values.recipient,
+          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
+          operationKind: 'issue',
+        }).then(() => setVisible(false));
+      } else {
         sendTransferTransaction({
           recipient: values.recipient,
           amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
           script: assetMeta.script,
         }).then(() => setVisible(false));
       }
-    : (values: ModalFormValues) => {
-        sendIssueTransaction({
-          recipient: values.recipient,
-          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
-          operationKind: 'issue',
-        }).then(() => setVisible(false));
-      };
+    },
+    [isMint, sendIssueTransaction, sendTransferTransaction, assetMeta, setVisible],
+  );
   const loading = isMint ? isIssueLoading : isTransferLoading;
 
   const validate = (_values: ModalFormValues): ModalFormErrors => {
