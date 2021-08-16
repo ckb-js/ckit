@@ -83,7 +83,7 @@ export class UnipassRedirectAdapter {
     return redirect(loginUrl);
   }
 
-  public redirectToSign(message: string): Promise<never> {
+  private redirectToSign(message: string): Promise<never> {
     const pubkey = this.getLoginDataFromCache()?.pubkey;
 
     if (!pubkey) throw new Error('UniPass should login before sign');
@@ -120,7 +120,9 @@ export class UnipassRedirectAdapter {
 
   private getSignatureFromUrl(): string | undefined {
     const signature = getRetFromSearchParams<UnipassSigData>();
-    return signature?.sig;
+    if (!signature) return;
+    // FIXME comment meaning for the 0x01
+    return '0x01' + signature.sig.replace('0x', '');
   }
 
   private generateUnipassNewUrl(host: string, action: string, params: Record<string, string>) {
