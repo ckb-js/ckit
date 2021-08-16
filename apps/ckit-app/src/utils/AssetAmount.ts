@@ -22,6 +22,10 @@ export class AssetAmount {
     return this.rawAmount.toString();
   }
 
+  toHexString(): string {
+    return '0x' + this.rawAmount.toString(16);
+  }
+
   toHumanizeString(): string {
     const humanizeAmount = this.rawAmount.times(10 ** -this.decimals);
     const originDecimalPlaces = humanizeAmount.decimalPlaces();
