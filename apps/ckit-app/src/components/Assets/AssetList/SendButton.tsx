@@ -64,19 +64,19 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const title = (isMint ? 'Mint ' : 'Send ') + assetMeta.symbol;
   const onSubmit = isMint
     ? (values: ModalFormValues) => {
-        sendIssueTransaction({
-          recipient: values.recipient,
-          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toHexString(),
-          operationKind: 'issue',
-        }).then(() => setVisible(false));
-      }
+      sendIssueTransaction({
+        recipient: values.recipient,
+        amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toHexString(),
+        operationKind: 'issue',
+      }).then(() => setVisible(false));
+    }
     : (values: ModalFormValues) => {
-        sendTransferTransaction({
-          recipient: values.recipient,
-          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toHexString(),
-          script: assetMeta.script,
-        }).then(() => setVisible(false));
-      };
+      sendTransferTransaction({
+        recipient: values.recipient,
+        amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toHexString(),
+        script: assetMeta.script,
+      }).then(() => setVisible(false));
+    };
   const loading = isMint ? isIssueLoading : isTransferLoading;
 
   const validate = (_values: ModalFormValues): ModalFormErrors => {
