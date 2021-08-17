@@ -1,10 +1,10 @@
 // just for testing case, do not use it
-import { Address, HexNumber, Transaction as RawRawTransaction, Transaction } from '@ckb-lumos/base';
-import { Signer, TransactionBuilder } from '@ckit/base';
-import { transformers } from '@lay2/pw-core';
+import { Address, HexNumber } from '@ckb-lumos/base';
+import { EntrySigner } from '@ckit/base';
+import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
-import { PwAdapterSigner } from './pw/PwSignerAdapter';
+import { AbstractTransactionBuilder } from './AbstractTransactionBuilder';
 import { TransferCkbPwBuilder } from './pw/TransferCkbPwBuilder';
 
 type CapacityPolicy =
@@ -26,8 +26,10 @@ interface RecipientOption {
   capacityPolicy: CapacityPolicy;
 }
 
-export class TransferCkbBuilder implements TransactionBuilder {
-  constructor(private options: TransferCkbOptions, private provider: CkitProvider, private signer: Signer) {}
+export class TransferCkbBuilder extends AbstractTransactionBuilder {
+  constructor(private options: TransferCkbOptions, private provider: CkitProvider, private signer: EntrySigner) {
+    super();
+  }
 
   async build(): Promise<Transaction> {
     const signerAddress = await this.signer.getAddress();
@@ -37,9 +39,6 @@ export class TransferCkbBuilder implements TransactionBuilder {
     if (transferToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
 
     const builder = new TransferCkbPwBuilder(this.options, this.provider, this.signer);
-    const tx = await builder.build();
-    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
-
-    return transformers.TransformTransaction(signed) as RawRawTransaction;
+    return builder.build();
   }
 }

@@ -1,11 +1,12 @@
 import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { AbstractWallet, Signer, WalletFeature } from '@ckit/base';
+import { AbstractWallet, EntrySigner, WalletFeature } from '@ckit/base';
 import { Keccak256Hasher, Platform } from '@lay2/pw-core';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { publicKeyCreate } from 'secp256k1';
 import { CkitProvider } from '../providers';
 import { hexToBytes } from '../utils';
+import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 
 interface EthereumProvider {
   selectedAddress: string;
@@ -46,18 +47,20 @@ abstract class AbstractPwWallet extends AbstractWallet {
       .then(() => super.disconnect());
   }
 
-  protected async tryConnect(): Promise<Signer> {
+  protected async tryConnect(): Promise<EntrySigner> {
     const ethProvider = await detect();
     ethProvider.addListener('accountsChanged', this.listener);
     return ethProvider.enable().then(() => this.produceSigner());
   }
 
-  protected abstract produceSigner(): Signer;
+  protected abstract produceSigner(): EntrySigner;
   protected abstract describeFeatures(): WalletFeature[];
 }
 
-abstract class AbstractPwSigner implements Signer {
-  constructor(protected ckitProvider: CkitProvider) {}
+abstract class AbstractPwSigner extends AbstractSingleEntrySigner {
+  constructor(protected ckitProvider: CkitProvider) {
+    super({ provider: ckitProvider });
+  }
 
   async signMessage(message: HexString): Promise<HexString> {
     const ethereumProvider = await detect();
@@ -66,14 +69,14 @@ abstract class AbstractPwSigner implements Signer {
 
     let v = Number.parseInt(result.slice(-2), 16);
     if (v >= 27) v -= 27;
-    return '0x' + (1).toString(16).padStart(2, '0') + result.slice(2, -2) + v.toString(16).padStart(2, '0');
+    return '0x' + Platform.eth.toString(16).padStart(2, '0') + result.slice(2, -2) + v.toString(16).padStart(2, '0');
   }
 
   abstract getAddress(): Promise<string>;
 }
 
 export class AcpPwLockWallet extends AbstractPwWallet {
-  produceSigner(): Signer {
+  produceSigner(): EntrySigner {
     return new (class extends AbstractPwSigner {
       async getAddress(): Promise<string> {
         const config = this.ckitProvider.getScriptConfig('PW_ANYONE_CAN_PAY');
@@ -93,7 +96,7 @@ export class AcpPwLockWallet extends AbstractPwWallet {
 }
 
 export class NonAcpPwLockWallet extends AbstractPwWallet {
-  produceSigner(): Signer {
+  produceSigner(): EntrySigner {
     return new (class extends AbstractPwSigner {
       async getAddress(): Promise<string> {
         const config = this.ckitProvider.getScriptConfig('PW_NON_ANYONE_CAN_PAY');
@@ -120,9 +123,10 @@ export function hashMessage(message: HexString): string {
     .serializeJson();
 }
 
-export class InternalNonAcpPwLockSigner implements Signer {
+export class InternalNonAcpPwLockSigner extends AbstractSingleEntrySigner {
   readonly #privateKey: HexString;
   constructor(privateKey: HexString, private ckitProvider: CkitProvider) {
+    super({ provider: ckitProvider });
     this.#privateKey = privateKey;
   }
 

@@ -1,4 +1,4 @@
-import { Signer } from '@ckit/base';
+import { EntrySigner } from '@ckit/base';
 import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { NoAvailableCellError } from '../../errors';
@@ -9,7 +9,7 @@ import { byteLenOfCkbLiveCell } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
 export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
-  constructor(private options: TransferCkbOptions, provider: CkitProvider, private signer: Signer) {
+  constructor(private options: TransferCkbOptions, provider: CkitProvider, private signer: EntrySigner) {
     super(provider);
   }
 

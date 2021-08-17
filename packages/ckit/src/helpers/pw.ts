@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   Cell as LumosCell,
   CellDep as LumosCellDep,
@@ -98,3 +99,5 @@ export const Pw = {
   fromPwScript,
   toPwOutPoint,
 };
+
+export { serialize, deserialize } from './pw.serde';

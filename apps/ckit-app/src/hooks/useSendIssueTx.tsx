@@ -37,7 +37,7 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       }
       const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, currentWallet.signer);
       const issueTx = await txBuilder.build();
-      const txHash = await ckitProvider.sendTransaction(issueTx);
+      const txHash = await ckitProvider.sendTransaction(await currentWallet.signer.seal(issueTx));
       return { txHash: txHash };
     },
     {
