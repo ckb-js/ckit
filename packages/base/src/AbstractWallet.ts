@@ -1,6 +1,6 @@
 import { invariant } from '@ckit/utils';
 import { default as EventEmitter } from 'eventemitter3';
-import { ConnectStatus, Signer, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
+import { ConnectStatus, EntrySigner, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 
 export abstract class AbstractWallet implements WalletConnector {
   descriptor: WalletDescriptor = { name: 'Unknown Wallet', features: [], description: 'an unknown wallet' };
@@ -10,7 +10,7 @@ export abstract class AbstractWallet implements WalletConnector {
   connectStatus: ConnectStatus = 'disconnected';
   // do **NOT** change the value manually
   // use {@link getSigner} instead of
-  signer: Signer | undefined;
+  signer: EntrySigner | undefined;
 
   private readonly emitter: EventEmitter;
 
@@ -54,7 +54,7 @@ export abstract class AbstractWallet implements WalletConnector {
     return this.connectStatus;
   }
 
-  getSigner(): Signer | undefined {
+  getSigner(): EntrySigner | undefined {
     return this.signer;
   }
 
@@ -63,7 +63,7 @@ export abstract class AbstractWallet implements WalletConnector {
     this.emitter.emit('connectStatusChanged', status);
   }
 
-  protected emitChangedSigner(signer: Signer): void {
+  protected emitChangedSigner(signer: EntrySigner): void {
     this.signer = signer;
     this.emitter.emit('signerChanged', signer);
   }
@@ -81,5 +81,5 @@ export abstract class AbstractWallet implements WalletConnector {
     this.descriptor = { name, features, description };
   }
 
-  protected abstract tryConnect(): Promise<Signer>;
+  protected abstract tryConnect(): Promise<EntrySigner>;
 }

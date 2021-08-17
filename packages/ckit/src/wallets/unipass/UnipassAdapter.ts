@@ -13,9 +13,19 @@ interface UnipassLoginData {
   recovery: boolean;
 }
 
+function isUnipassLoginData(x: unknown): x is UnipassLoginData {
+  if (typeof x !== 'object' || x === null) return false;
+  return 'email' in x && 'pubkey' in x && 'recovery' in x;
+}
+
 interface UnipassSigData {
   sig: string;
   pubkey: string;
+}
+
+function isUnipassSigData(x: unknown): x is UnipassSigData {
+  if (typeof x !== 'object' || x === null) return false;
+  return 'sig' in x && 'pubkey' in x;
 }
 
 interface AdapterConfig {
@@ -27,13 +37,14 @@ export function pubkeyToLockArgs(pubkey: string): string {
   return utils.ckbHash(hexToBytes(pubkey).buffer).serializeJson().slice(0, 42);
 }
 
-export function getRetFromSearchParams<T = unknown>(): T | undefined {
+export function getRetFromSearchParams<T>(check: (obj: unknown) => obj is T, replace = false): T | undefined {
   const searchParams = new URLSearchParams(location.search.slice(1));
   const json = searchParams.get('unipass_ret');
 
   if (!json) return undefined;
 
   const res = JSON.parse(json) as UnipassRet<T>;
+  if (!check(res.data)) return undefined;
 
   if (res.code !== 200) throw new Error(res.info || 'Unknown error when connecting to UniPass');
   searchParams.delete('unipass_ret');
@@ -43,7 +54,7 @@ export function getRetFromSearchParams<T = unknown>(): T | undefined {
   const qs = searchParams.toString();
   const newUrl = `${protocol}//${host}${pathname}${qs ? `?${qs}` : ''}`;
 
-  window.history.replaceState({ path: newUrl }, '', newUrl);
+  if (replace) window.history.replaceState({ path: newUrl }, '', newUrl);
   return res.data;
 }
 
@@ -62,8 +73,15 @@ export class UnipassRedirectAdapter {
     };
   }
 
-  public checkIsLogged(): boolean {
-    return !!(this.getLoginDataFromCache() ?? this.getLoginDataFromUrl());
+  /**
+   * check is logged, if `unipass_ret` is found, it will clear the clear the `unipass_ret` and save the unipass login data to cache
+   */
+  public saveLoginInfo(): void {
+    this.getLoginDataFromUrl() && this.getLoginDataFromCache();
+  }
+
+  public hasSigData(): boolean {
+    return !!getRetFromSearchParams(isUnipassSigData);
   }
 
   /**
@@ -110,7 +128,7 @@ export class UnipassRedirectAdapter {
   }
 
   private getLoginDataFromUrl(): UnipassLoginData | undefined {
-    const loginData = getRetFromSearchParams<UnipassLoginData>();
+    const loginData = getRetFromSearchParams(isUnipassLoginData, true);
 
     if (!loginData) return;
 
@@ -119,7 +137,7 @@ export class UnipassRedirectAdapter {
   }
 
   private getSignatureFromUrl(): string | undefined {
-    const signature = getRetFromSearchParams<UnipassSigData>();
+    const signature = getRetFromSearchParams(isUnipassSigData, true);
     if (!signature) return;
     // FIXME comment meaning for the 0x01
     return '0x01' + signature.sig.replace('0x', '');

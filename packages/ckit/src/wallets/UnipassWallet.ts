@@ -1,35 +1,50 @@
-import { HexString } from '@ckb-lumos/base';
-import { Signer, AbstractWallet } from '@ckit/base';
-import { default as Unipass } from './unipass/UnipassProvider';
-
-export class UnipassSigner implements Signer {
-  constructor(private unipass: Unipass) {}
-
-  getAddress(): Promise<string> {
-    return Promise.resolve(this.unipass.address.toCKBAddress());
-  }
-
-  signMessage(message: HexString): Promise<HexString> {
-    return this.unipass.sign(message);
-  }
-}
+import { HexString, Transaction } from '@ckb-lumos/base';
+import { AbstractWallet } from '@ckit/base';
+import { CkitProvider } from '../providers';
+import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
+import { UnipassRedirectAdapter } from './unipass/UnipassAdapter';
 
 export class UnipassWallet extends AbstractWallet {
-  unipassConnector: Unipass;
+  static UnipassRedirectAdapter: typeof UnipassRedirectAdapter = UnipassRedirectAdapter;
 
-  constructor(private _uri = 'https://unipass.me') {
+  private adapter: UnipassRedirectAdapter;
+
+  constructor(private provider: CkitProvider) {
     super();
     this.setDescriptor({
       name: 'UnipassWallet',
       description: 'Interacting with CKB via an Email',
       features: ['acp'],
     });
-    this.unipassConnector = new Unipass();
+
+    // TODO check the network and choose a right UniPass host
+    this.adapter = new UnipassRedirectAdapter({ host: 'https://unipass.xyz', loginDataCacheKey: '__unipass__' });
   }
 
-  protected tryConnect(): Promise<Signer> {
-    return this.unipassConnector.init().then(() => {
-      return new UnipassSigner(this.unipassConnector);
-    });
+  protected async tryConnect(): Promise<AbstractSingleEntrySigner> {
+    const unipassLockArgs = await this.adapter.getLockArgs();
+    const provider = this.provider;
+
+    const getAddress = () => {
+      return Promise.resolve(provider.parseToAddress(provider.newScript('UNIPASS', unipassLockArgs)));
+    };
+
+    const signMessage = (message: HexString): Promise<HexString> => {
+      return Promise.resolve(this.adapter.sign(message));
+    };
+
+    return new (class extends AbstractSingleEntrySigner {
+      getAddress(): Promise<string> {
+        return getAddress();
+      }
+
+      signMessage(message: HexString): Promise<HexString> {
+        return signMessage(message);
+      }
+
+      override seal(tx: unknown): Promise<Transaction> {
+        return super.seal(tx);
+      }
+    })({ provider: this.provider });
   }
 }

@@ -1,9 +1,9 @@
-import { Address, HexNumber, Transaction } from '@ckb-lumos/base';
-import { CkbTypeScript, Signer, TransactionBuilder } from '@ckit/base';
-import { transformers } from '@lay2/pw-core';
+import { Address, HexNumber } from '@ckb-lumos/base';
+import { CkbTypeScript, EntrySigner } from '@ckit/base';
+import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
-import { PwAdapterSigner } from './pw/PwSignerAdapter';
+import { AbstractTransactionBuilder } from './AbstractTransactionBuilder';
 import { TransferSudtPwBuilder } from './pw/TransferSudtPwBuilder';
 
 interface TransferOptions {
@@ -12,9 +12,11 @@ interface TransferOptions {
   readonly amount: HexNumber;
 }
 
-export class AcpTransferSudtBuilder implements TransactionBuilder {
+export class AcpTransferSudtBuilder extends AbstractTransactionBuilder {
   private builder: TransferSudtPwBuilder;
-  constructor(private options: TransferOptions, private provider: CkitProvider, private signer: Signer) {
+
+  constructor(private options: TransferOptions, private provider: CkitProvider, private signer: EntrySigner) {
+    super();
     this.builder = new TransferSudtPwBuilder(options, provider, signer);
   }
 
@@ -23,9 +25,6 @@ export class AcpTransferSudtBuilder implements TransactionBuilder {
     const transferToSelf = this.options.recipient === signerAddress;
     if (transferToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
 
-    const tx = await this.builder.build();
-    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
-
-    return transformers.TransformTransaction(signed) as Transaction;
+    return this.builder.build();
   }
 }

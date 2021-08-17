@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
-import { Signer } from '@ckit/base';
+import { EntrySigner } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
 import { createDebugger, debug } from '@ckit/utils';
 import appRootPath from 'app-root-path';
@@ -42,7 +42,7 @@ export class TestProvider extends CkitProvider {
     return this.#_assemberPrivateKey;
   }
 
-  getGenesisSigner(index: number): Signer {
+  getGenesisSigner(index: number): EntrySigner {
     return new Secp256k1Signer(nonNullable(this.testPrivateKeys[index]), this, this.newScript('SECP256K1_BLAKE160'));
   }
 
@@ -86,7 +86,7 @@ export class TestProvider extends CkitProvider {
     return txHash;
   }
 
-  generateAcpSigner(key: CkitConfigKeys = 'ANYONE_CAN_PAY'): Signer {
+  generateAcpSigner(key: CkitConfigKeys = 'ANYONE_CAN_PAY'): EntrySigner {
     return new Secp256k1Signer(randomHexString(64), this, this.newScript(key));
   }
 }

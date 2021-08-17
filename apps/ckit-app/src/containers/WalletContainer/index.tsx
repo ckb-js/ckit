@@ -17,7 +17,7 @@ function useWallet() {
   const [currentWalletName, setCurrentWalletName] = useLocalStorage<string | null>('currentWalletName');
 
   // TODO refactor to Wallets class
-  const wallets = useLocalObservable<AbstractWallet[]>(() => [new ObservableUnipassWallet()]);
+  const wallets = useLocalObservable<AbstractWallet[]>(() => []);
   const [signerAddress, setSignerAddress] = useState<string>();
   const [error, setError] = useState<WalletConnectError | null>(null);
   const [visible, setVisible] = useState(false);
@@ -31,8 +31,12 @@ function useWallet() {
     if (!ckitProvider) return;
     // when the provider has changed, wallets should be construct with the new provider
     runInAction(() => {
-      wallets.splice(1);
-      wallets.push(new ObservableNonAcpPwLockWallet(ckitProvider), new ObservableAcpPwLockWallet(ckitProvider));
+      wallets.splice(0);
+      wallets.push(
+        new ObservableUnipassWallet(ckitProvider),
+        new ObservableNonAcpPwLockWallet(ckitProvider),
+        new ObservableAcpPwLockWallet(ckitProvider),
+      );
       wallets.find((value) => value.descriptor.name === currentWalletName)?.connect();
     });
   }, [ckitProvider]);
