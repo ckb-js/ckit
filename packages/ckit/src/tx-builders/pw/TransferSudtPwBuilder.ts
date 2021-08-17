@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { CkbTypeScript, Signer } from '@ckit/base';
+import { CkbTypeScript, EntrySigner } from '@ckit/base';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
@@ -13,7 +13,7 @@ interface TransferOptions {
 }
 
 export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
-  constructor(private options: TransferOptions, provider: CkitProvider, private signer: Signer) {
+  constructor(private options: TransferOptions, provider: CkitProvider, private signer: EntrySigner) {
     super(provider);
   }
 

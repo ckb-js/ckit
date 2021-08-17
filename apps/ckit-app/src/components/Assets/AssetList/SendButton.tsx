@@ -64,17 +64,17 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const title = (isMint ? 'Mint ' : 'Send ') + assetMeta.symbol;
   const onSubmit = isMint
     ? (values: ModalFormValues) => {
-        sendTransferTransaction({
+        sendIssueTransaction({
           recipient: values.recipient,
-          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
-          script: assetMeta.script,
+          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toHexString(),
+          operationKind: 'issue',
         }).then(() => setVisible(false));
       }
     : (values: ModalFormValues) => {
-        sendIssueTransaction({
+        sendTransferTransaction({
           recipient: values.recipient,
-          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
-          operationKind: 'issue',
+          amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toHexString(),
+          script: assetMeta.script,
         }).then(() => setVisible(false));
       };
   const loading = isMint ? isIssueLoading : isTransferLoading;

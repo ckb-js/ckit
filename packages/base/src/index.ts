@@ -16,7 +16,7 @@ export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
 export interface WalletEventListener {
   (event: 'connectStatusChanged', listener: (status: ConnectStatus) => void): void;
-  (event: 'signerChanged', listener: (signer: Signer) => void): void;
+  (event: 'signerChanged', listener: (signer: EntrySigner) => void): void;
   (event: 'error', listener: (error?: unknown) => void): void;
 }
 
@@ -35,9 +35,9 @@ export interface WalletConnector {
   on: WalletEventListener;
 }
 
-export interface Signer {
+export interface EntrySigner<TX = unknown> {
   getAddress(): Promise<string>;
-  signMessage(message: HexString): Promise<HexString>;
+  seal(obj: TX): Promise<Transaction>;
 }
 
 export interface TransactionBuilder {

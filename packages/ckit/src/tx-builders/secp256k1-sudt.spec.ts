@@ -75,8 +75,8 @@ test('test mint and transfer sudt with secp256k1', async () => {
     },
   ];
 
-  const signedMintTx = await new MintSudtBuilder({ recipients }, provider, issuerSigner).build();
-  const mintTxHash = await provider.rpc.send_transaction(signedMintTx);
+  const unsigned = await new MintSudtBuilder({ recipients }, provider, issuerSigner).build();
+  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
   expect(mintTx != null).toBe(true);
@@ -84,18 +84,18 @@ test('test mint and transfer sudt with secp256k1', async () => {
   expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('0');
   expect(await provider.getUdtBalance(recipientAddr1, testUdt)).toBe(recipients[1]?.amount);
 
-  // TODO uncomment when transfer is available
   // recipient1 -> recipient0
-  const signedTransferTx = await new AcpTransferSudtBuilder(
+  const signer = new Secp256k1Signer(recipientPrivKey1, provider, {
+    code_hash: ANYONE_CAN_PAY.CODE_HASH,
+    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+  });
+  const unsignedTransferTx = await new AcpTransferSudtBuilder(
     { amount: '1', recipient: recipientAddr0, sudt: testUdt },
     provider,
-    new Secp256k1Signer(recipientPrivKey1, provider, {
-      code_hash: ANYONE_CAN_PAY.CODE_HASH,
-      hash_type: ANYONE_CAN_PAY.HASH_TYPE,
-    }),
+    signer,
   ).build();
 
-  const transferTxHash = await provider.sendTransaction(signedTransferTx);
+  const transferTxHash = await provider.sendTransaction(await signer.seal(unsignedTransferTx));
   const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
 
   expect(transferTx != null).toBe(true);
@@ -123,12 +123,13 @@ test('test non-acp-pw lock mint and transfer', async () => {
     capacityPolicy: 'createAcp',
   });
   debug(`start transfer %o`, { from: await genesisSigner.getAddress(), to: transferCkbRecipients });
-  const signedTransferCkbTx = await new TransferCkbBuilder(
+  const unsignedTransferCkbTx = await new TransferCkbBuilder(
     { recipients: transferCkbRecipients },
     provider,
     genesisSigner,
   ).build();
-  const transferCkbTxHash = await provider.sendTxUntilCommitted(signedTransferCkbTx);
+  const signed = await genesisSigner.seal(unsignedTransferCkbTx);
+  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed);
   debug(`end transfer ckb, %s`, transferCkbTxHash);
 
   debug('start mint');
@@ -150,9 +151,9 @@ test('test non-acp-pw lock mint and transfer', async () => {
   ];
   debug('mint from %s, to %o', await pwSigner.getAddress(), sudtRecipients);
 
-  const signedMintTx = await new MintSudtBuilder({ recipients: sudtRecipients }, provider, pwSigner).build();
-  debug('ready to send signedMintTx: %o', signedMintTx);
-  const mintTxHash = await provider.sendTxUntilCommitted(signedMintTx);
+  const unsignedMintTx = await new MintSudtBuilder({ recipients: sudtRecipients }, provider, pwSigner).build();
+  debug('ready to send unsignedMintTx: %o', unsignedMintTx);
+  const mintTxHash = await provider.sendTxUntilCommitted(await pwSigner.seal(unsignedMintTx));
   debug('end mint %s', mintTxHash);
 
   const testUdt = provider.newSudtScript(await pwSigner.getAddress());
@@ -163,13 +164,13 @@ test('test non-acp-pw lock mint and transfer', async () => {
     amount: '1',
   });
   // recipient2 -> recipient1 with 1 udt
-  const signedTransferUdtTx = await new AcpTransferSudtBuilder(
+  const unsignedTransferUdtTx = await new AcpTransferSudtBuilder(
     { amount: '1', recipient: await recipient1Signer.getAddress(), sudt: testUdt },
     provider,
     recipient2Signer,
   ).build();
 
-  const transferSudtTxHash = await provider.sendTxUntilCommitted(signedTransferUdtTx);
+  const transferSudtTxHash = await provider.sendTxUntilCommitted(await recipient2Signer.seal(unsignedTransferUdtTx));
   debug('end transfer sudt: %s', transferSudtTxHash);
 
   expect(transferSudtTxHash != null).toBe(true);
@@ -213,21 +214,23 @@ test('mint sudt with a mix of policies', async () => {
   //        -> recipient2: 100
   //        -> recipient3: 100 + 100 (2 cells)
   await provider.sendTxUntilCommitted(
-    await new MintSudtBuilder(
-      {
-        recipients: [
-          { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createAcp' },
+    await issuerSigner.seal(
+      await new MintSudtBuilder(
+        {
+          recipients: [
+            { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createAcp' },
 
-          { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
 
-          // the sudt balance of recipient3 will be split into 2 cells
-          { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
-          { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
-        ],
-      },
-      provider,
-      issuerSigner,
-    ).build(),
+            // the sudt balance of recipient3 will be split into 2 cells
+            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+          ],
+        },
+        provider,
+        issuerSigner,
+      ).build(),
+    ),
   );
   expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('0');
   expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('100');
@@ -240,20 +243,22 @@ test('mint sudt with a mix of policies', async () => {
   //        -> recipient2: 100 (by findAcp)
   //        -> recipient3: 100 (by findAcp)
   await provider.sendTxUntilCommitted(
-    await new MintSudtBuilder(
-      {
-        recipients: [
-          { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+    await issuerSigner.seal(
+      await new MintSudtBuilder(
+        {
+          recipients: [
+            { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
 
-          // the sudt balance of recipient2 will be split into 2 cells
-          { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+            // the sudt balance of recipient2 will be split into 2 cells
+            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
 
-          { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
-        ],
-      },
-      provider,
-      issuerSigner,
-    ).build(),
+            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+          ],
+        },
+        provider,
+        issuerSigner,
+      ).build(),
+    ),
   );
 
   expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('100');
@@ -266,11 +271,13 @@ test('mint sudt with a mix of policies', async () => {
   //                  --merge-->  recipient3 sudt(142 x 2)   --transfer--> recipient1
   // recipient3 sudt
   await provider.sendTxUntilCommitted(
-    await new AcpTransferSudtBuilder(
-      { recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300' },
-      provider,
-      recipient3Signer,
-    ).build(),
+    await recipient3Signer.seal(
+      await new AcpTransferSudtBuilder(
+        { recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300' },
+        provider,
+        recipient3Signer,
+      ).build(),
+    ),
   );
 
   expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('400');
@@ -287,4 +294,33 @@ test('mint sudt with a mix of policies', async () => {
     twoSudtCellsCapacity - recipient3CellsCapacity < 1n * 10n ** 6n &&
       twoSudtCellsCapacity - recipient3CellsCapacity > 0,
   ).toBe(true);
+});
+
+test('test serialize and deserialized', async () => {
+  const provider = new TestProvider();
+
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(1);
+  const builder = new TransferCkbBuilder(
+    {
+      recipients: [
+        {
+          recipient: await provider.generateAcpSigner().getAddress(),
+          amount: '6100000000',
+          capacityPolicy: 'createAcp',
+        },
+      ],
+    },
+    provider,
+    genesisSigner,
+  );
+
+  const unsigned = await builder.build();
+  const serialized = builder.serialize(unsigned);
+  const deserialized = TransferCkbBuilder.serde.deserialize(serialized);
+
+  const txHash = await provider.sendTransaction(await genesisSigner.seal(deserialized));
+
+  expect(txHash).toBeTruthy();
 });

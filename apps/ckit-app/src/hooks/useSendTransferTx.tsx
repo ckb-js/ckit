@@ -24,7 +24,7 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
     async (input: SendTransferTxInput) => {
       if (!currentWallet?.signer) throw new Error('exception: signed undifined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
-      let txToSend: Transaction;
+      let txToSend: unknown;
 
       if (input.script) {
         const txBuilder = new AcpTransferSudtBuilder(
@@ -45,7 +45,7 @@ export function useSendTransferTx(): UseMutationResult<{ txHash: Hash }, unknown
         );
         txToSend = await txBuilder.build();
       }
-      const txHash = await ckitProvider.sendTransaction(txToSend);
+      const txHash = await ckitProvider.sendTransaction(await currentWallet.signer.seal(txToSend));
       return { txHash: txHash };
     },
     {

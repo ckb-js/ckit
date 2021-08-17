@@ -13,3 +13,11 @@ export const CkitProviderContainer = createContainer<CkitProvider | undefined>((
 
   return ckitProvider;
 });
+
+export function useProvider(): CkitProvider {
+  const provider = CkitProviderContainer.useContainer();
+
+  if (!provider) throw new Error('Cannot find provider, make suer useProvider in CkitProviderContainer');
+
+  return provider;
+}

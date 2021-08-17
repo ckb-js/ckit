@@ -1,10 +1,10 @@
-import { Address, HexNumber, Transaction as RawRawTransaction } from '@ckb-lumos/base';
-import { Signer, TransactionBuilder } from '@ckit/base';
-import { transformers } from '@lay2/pw-core';
+import { Address, HexNumber } from '@ckb-lumos/base';
+import { EntrySigner } from '@ckit/base';
+import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
+import { AbstractTransactionBuilder } from './AbstractTransactionBuilder';
 import { NonAcpPwMintBuilder } from './pw/MintSudtPwBuilder';
-import { PwAdapterSigner } from './pw/PwSignerAdapter';
 
 type CapacityPolicy =
   // mint only when recipient has ACP cell
@@ -29,21 +29,23 @@ export interface MintOptions {
   recipients: RecipientOptions[];
 }
 
-export class MintSudtBuilder implements TransactionBuilder {
-  constructor(private options: MintOptions, private provider: CkitProvider, private signer: Signer) {}
+export class MintSudtBuilder extends AbstractTransactionBuilder {
+  constructor(private options: MintOptions, private provider: CkitProvider, private signer: EntrySigner) {
+    super();
+  }
 
-  async build(): Promise<RawRawTransaction> {
+  private async buildPwTransaction() {
     const signerAddress = await this.signer.getAddress();
     const builder = new NonAcpPwMintBuilder(this.options, this.provider, signerAddress);
-
+    return await builder.build();
+  }
+  async build(): Promise<Transaction> {
+    const signerAddress = await this.signer.getAddress();
     const mintToSelf = this.options.recipients.some(
       (item) => item.recipient === signerAddress && item.capacityPolicy === 'findAcp',
     );
     if (mintToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
 
-    const tx = await builder.build();
-    const signed = await new PwAdapterSigner(this.signer, this.provider).sign(tx);
-
-    return transformers.TransformTransaction(signed) as RawRawTransaction;
+    return this.buildPwTransaction();
   }
 }

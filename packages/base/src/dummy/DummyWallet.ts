@@ -1,5 +1,5 @@
-import { HexString } from '@ckb-lumos/base';
-import { AbstractWallet, Signer } from '../';
+import { Transaction } from '@ckb-lumos/base';
+import { AbstractWallet, EntrySigner } from '../';
 
 export class DummyWallet extends AbstractWallet {
   constructor() {
@@ -7,20 +7,20 @@ export class DummyWallet extends AbstractWallet {
     this.setDescriptor({ name: 'DummyWallet', features: ['dummy'] });
   }
 
-  protected tryConnect(): Promise<Signer> {
+  protected tryConnect(): Promise<EntrySigner> {
     return new Promise((resolve) => {
       setTimeout(() => resolve(new DummySigner()), 500);
     });
   }
 }
 
-class DummySigner implements Signer {
+class DummySigner implements EntrySigner {
   async getAddress(): Promise<string> {
     return 'ckt1qj2fmdr6437352sdjgf5fhzurh00mgussyap3qw4dgy894ucurtzj0zrsk22amhe0evutcsup8ydmshf47t9xhsnl9c';
   }
 
-  async signMessage(): Promise<HexString> {
-    return '0x';
+  async seal(_x: unknown): Promise<Transaction> {
+    throw new Error('unimplemented');
   }
 }
 
