@@ -6,13 +6,17 @@ import { useSendTransaction } from 'hooks/useSendTransaction';
 
 export const OnIncomplete: React.FC = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const { currentWallet } = WalletContainer.useContainer();
+  const { currentWallet, wallets, setCurrentWalletName } = WalletContainer.useContainer();
   const { mutateAsync: sendTransaction } = useSendTransaction();
 
   useEffect(() => {
     void (async () => {
       const adapter = new UnipassWallet.UnipassRedirectAdapter({ host: 'https://unipass.xyz' }); // TODO  use the config
-      adapter.saveLoginInfo();
+
+      if (adapter.hasLoginInfo()) {
+        setCurrentWalletName('UniPass');
+        adapter.saveLoginInfo();
+      }
 
       // if (adapter.hasSigData()) {
       //   const savedTx = AbstractTransactionBuilder.serde.deserialize(JSON.parse(localStorage.getItem('...')));

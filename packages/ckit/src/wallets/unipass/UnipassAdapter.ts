@@ -74,10 +74,14 @@ export class UnipassRedirectAdapter {
   }
 
   /**
-   * check is logged, if `unipass_ret` is found, it will clear the clear the `unipass_ret` and save the unipass login data to cache
+   * check is logged, if `unipass_ret` is found, it will clear the `unipass_ret` and save the unipass login data to cache
    */
   public saveLoginInfo(): void {
     this.getLoginDataFromUrl() && this.getLoginDataFromCache();
+  }
+
+  public hasLoginInfo(): boolean {
+    return !!getRetFromSearchParams(isUnipassLoginData);
   }
 
   public hasSigData(): boolean {
