@@ -60,7 +60,8 @@ export function getRetFromSearchParams<T>(check: (obj: unknown) => obj is T, rep
 
 export async function redirect(href: string): Promise<never> {
   window.location.href = href;
-  return new Promise((resolve) => setTimeout(resolve, Infinity));
+  // wait 60s to avoid error before redirect
+  return new Promise((resolve) => setTimeout(resolve, 60 * 1000));
 }
 
 export class UnipassRedirectAdapter {
@@ -97,7 +98,7 @@ export class UnipassRedirectAdapter {
   }
 
   private redirectToLogin(): Promise<never> {
-    const loginUrl = this.generateUnipassNewUrl(this.config.host, 'login', { success_url: window.location.origin });
+    const loginUrl = this.generateUnipassNewUrl(this.config.host, 'login', { success_url: window.location.href });
     return redirect(loginUrl);
   }
 
@@ -107,7 +108,7 @@ export class UnipassRedirectAdapter {
     if (!pubkey) throw new Error('UniPass should login before sign');
 
     const signUrl = this.generateUnipassNewUrl(this.config.host, 'sign', {
-      success_url: window.location.origin,
+      success_url: window.location.href,
       pubkey,
       message,
     });

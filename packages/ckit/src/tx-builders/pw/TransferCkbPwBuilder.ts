@@ -60,7 +60,10 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
       throw new NoAvailableCellError({ lock: this.provider.parseToScript(await this.signer.getAddress()) });
     }
 
+    // accumulate all sender capacity into one cell
     const senderOutput = senderCells[0];
+    senderOutput.capacity = senderCells.reduce((acc, cell) => acc.add(cell.capacity), new Amount('0', 0));
+
     const tx = new Transaction(
       new RawTransaction(
         [...senderCells, ...recipientAcpCells],
