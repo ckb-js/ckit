@@ -1,4 +1,5 @@
-import { Hash, Transaction } from '@ckb-lumos/base';
+import { Hash } from '@ckb-lumos/base';
+import { Transaction } from '@lay2/pw-core';
 import { Modal } from 'antd';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';

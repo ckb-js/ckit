@@ -1,12 +1,15 @@
 import { UnipassWallet, AbstractTransactionBuilder } from '@ckit/ckit';
+import { Transaction } from '@lay2/pw-core';
 import { Spin } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { WalletContainer } from 'containers';
 import { useSendTransaction } from 'hooks/useSendTransaction';
+import { useUnipassTxStorage } from 'hooks/useUnipassTxStorage';
 
 export const OnIncomplete: React.FC = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const { currentWallet, wallets, setCurrentWalletName } = WalletContainer.useContainer();
+  const { isInitialized, setCurrentWalletName } = WalletContainer.useContainer();
+  const [unipassTx] = useUnipassTxStorage();
   const { mutateAsync: sendTransaction } = useSendTransaction();
 
   useEffect(() => {
@@ -18,15 +21,16 @@ export const OnIncomplete: React.FC = ({ children }) => {
         adapter.saveLoginInfo();
       }
 
-      // if (adapter.hasSigData()) {
-      //   const savedTx = AbstractTransactionBuilder.serde.deserialize(JSON.parse(localStorage.getItem('...')));
-      //   const sealed = await currentWallet?.signer?.seal(savedTx);
-      //   await sendTransaction(sealed);
-      // }
+      if (adapter.hasSigData()) {
+        if (!isInitialized) return;
+        if (!unipassTx) throw new Error('Could not find transaction to send');
+        const savedTx = AbstractTransactionBuilder.serde.deserialize(unipassTx);
+        await sendTransaction(savedTx as Transaction);
+      }
 
       setIsLoaded(true);
     })();
-  }, []);
+  }, [isInitialized]);
 
   if (!isLoaded) return <Spin />;
   return <>{children}</>;
