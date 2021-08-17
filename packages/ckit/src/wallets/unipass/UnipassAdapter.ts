@@ -60,7 +60,8 @@ export function getRetFromSearchParams<T>(check: (obj: unknown) => obj is T, rep
 
 export async function redirect(href: string): Promise<never> {
   window.location.href = href;
-  return new Promise((resolve) => setTimeout(resolve, Infinity));
+  // wait 60s to avoid error before redirect
+  return new Promise((resolve) => setTimeout(resolve, 60 * 1000));
 }
 
 export class UnipassRedirectAdapter {
