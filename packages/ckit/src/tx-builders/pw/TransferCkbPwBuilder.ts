@@ -62,7 +62,7 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
 
     // accumulate all sender capacity into one cell
     const senderOutput = senderCells[0];
-    senderOutput.capacity = senderCells.reduce((acc, c2) => acc.add(c2.capacity), senderOutput.capacity);
+    senderOutput.capacity = senderCells.reduce((acc, cell) => acc.add(cell.capacity), new Amount('0', 0));
 
     const tx = new Transaction(
       new RawTransaction(
