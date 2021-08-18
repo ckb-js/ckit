@@ -13,7 +13,7 @@ export function useSendTransaction(): UseMutationResult<{ txHash: Hash }, unknow
   const ckitProvider = CkitProviderContainer.useContainer();
   const { currentWallet } = WalletContainer.useContainer();
   const [localConfig] = useConfigStorage();
-  const { cacheTx } = useUnipass();
+  const { cacheTx, clearTx } = useUnipass();
 
   return useMutation(
     async (tx: Transaction) => {
@@ -24,6 +24,9 @@ export function useSendTransaction(): UseMutationResult<{ txHash: Hash }, unknow
         cacheTx(JSON.stringify(serializedTx));
       }
       const txHash = await ckitProvider.sendTransaction(await currentWallet.signer.seal(tx));
+      if (currentWallet.descriptor.name === 'UniPass') {
+        clearTx();
+      }
       return { txHash: txHash };
     },
     {

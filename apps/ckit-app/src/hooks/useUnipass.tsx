@@ -6,6 +6,7 @@ interface UnipassContext {
   cacheLogin: () => void;
   shouldSendTx: boolean;
   cacheTx: (tx: string | null) => void;
+  clearTx: () => void;
   cachedTx: string | null;
 }
 
@@ -17,6 +18,7 @@ export function useUnipass(): UnipassContext {
     cacheLogin: () => adapter.saveLoginInfo(),
     shouldSendTx: adapter.hasSigData(),
     cacheTx,
+    clearTx: () => cacheTx(null),
     cachedTx,
   };
 }
