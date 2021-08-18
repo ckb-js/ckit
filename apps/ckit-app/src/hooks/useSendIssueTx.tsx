@@ -1,11 +1,7 @@
-import { Address, HexNumber, Hash } from '@ckb-lumos/base';
-import { RecipientOptions, helpers, MintSudtBuilder } from '@ckit/ckit';
-import { Modal } from 'antd';
-import React from 'react';
+import { Address, HexNumber } from '@ckb-lumos/base';
+import { RecipientOptions, helpers, MintSudtBuilder, CkitProvider, EntrySigner } from '@ckit/ckit';
 import { useMutation, UseMutationResult } from 'react-query';
-import { useConfigStorage } from './useConfigStorage';
-import { CkitProviderContainer, WalletContainer } from 'containers';
-import { hasProp } from 'utils';
+import { useSendTransaction } from './useSendTransaction';
 
 export interface SendIssueTxInput {
   recipient: Address;
@@ -13,17 +9,11 @@ export interface SendIssueTxInput {
   operationKind: 'invite' | 'issue';
 }
 
-export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, SendIssueTxInput> {
-  const { currentWallet } = WalletContainer.useContainer();
-  const ckitProvider = CkitProviderContainer.useContainer();
-  const [localConfig] = useConfigStorage();
+export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueTxInput> {
+  const { mutateAsync: sendTransaction } = useSendTransaction();
 
-  return useMutation(
-    ['sendIssueTx'],
-    async (input: SendIssueTxInput) => {
-      if (!currentWallet?.signer) throw new Error('exception: signer undifined');
-      if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
-
+  return useMutation(['sendIssueTx'], async (input: SendIssueTxInput) => {
+    const buildTx = async (provider: CkitProvider, signer: EntrySigner) => {
       const recipientsParams: RecipientOptions = {
         recipient: input.recipient,
         amount: input.amount,
@@ -35,34 +25,10 @@ export function useSendIssueTx(): UseMutationResult<{ txHash: Hash }, unknown, S
       } else {
         recipientsParams.capacityPolicy = 'findAcp';
       }
-      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, ckitProvider, currentWallet.signer);
-      const issueTx = await txBuilder.build();
-      const txHash = await ckitProvider.sendTransaction(await currentWallet.signer.seal(issueTx));
-      return { txHash: txHash };
-    },
-    {
-      onSuccess({ txHash }) {
-        const href = localConfig.nervosExploreTxUrlPrefix + txHash;
-        Modal.success({
-          title: 'Tx sent',
-          content: (
-            <p>
-              The transaction was sent, check it in&nbsp;
-              <a href={href} target="_blank" rel="noreferrer">
-                explorer
-              </a>
-              <details>
-                <summary>transaction id</summary>
-                {txHash}
-              </details>
-            </p>
-          ),
-        });
-      },
-      onError(error) {
-        const errorMsg: string = hasProp(error, 'message') ? String(error.message) : 'Unknown error';
-        Modal.error({ title: 'Tx failed', content: errorMsg, width: 360 });
-      },
-    },
-  );
+      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, provider, signer);
+      return txBuilder.build();
+    };
+
+    await sendTransaction(buildTx);
+  });
 }

@@ -21,6 +21,7 @@ function useWallet() {
   const [signerAddress, setSignerAddress] = useState<string>();
   const [error, setError] = useState<WalletConnectError | null>(null);
   const [visible, setVisible] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const setModalVisible = useCallback((visible: boolean) => {
     setVisible(visible);
@@ -83,11 +84,15 @@ function useWallet() {
     autorun(() => {
       setSignerAddress(undefined);
       const wallet = wallets.find((value) => value.descriptor.name === currentWalletName);
-      void wallet?.signer?.getAddress().then(setSignerAddress);
+      void wallet?.signer?.getAddress().then((address) => {
+        setSignerAddress(address);
+        setIsInitialized(true);
+      });
     });
   }, [currentWalletName]);
 
   return {
+    isInitialized,
     wallets,
     currentWallet,
     setCurrentWalletName,
