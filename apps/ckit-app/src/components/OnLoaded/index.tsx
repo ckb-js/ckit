@@ -23,7 +23,7 @@ export const OnIncomplete: React.FC = ({ children }) => {
         if (!isInitialized) return;
         if (!cachedTx) throw new Error('Could not find transaction to send');
         const txToSend = AbstractTransactionBuilder.serde.deserialize(cachedTx);
-        await sendTransaction(txToSend as Transaction);
+        await sendTransaction(async () => txToSend as Transaction).catch(() => setIsLoaded(true));
       }
 
       setIsLoaded(true);
