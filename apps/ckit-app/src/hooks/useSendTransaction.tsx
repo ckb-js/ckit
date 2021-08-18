@@ -1,9 +1,11 @@
 import { Hash } from '@ckb-lumos/base';
+import { AbstractTransactionBuilder } from '@ckit/ckit';
 import { Transaction } from '@lay2/pw-core';
 import { Modal } from 'antd';
 import React from 'react';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useConfigStorage } from './useConfigStorage';
+import { useUnipass } from './useUnipass';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { hasProp } from 'utils';
 
@@ -11,11 +13,16 @@ export function useSendTransaction(): UseMutationResult<{ txHash: Hash }, unknow
   const ckitProvider = CkitProviderContainer.useContainer();
   const { currentWallet } = WalletContainer.useContainer();
   const [localConfig] = useConfigStorage();
+  const { cacheTx } = useUnipass();
 
   return useMutation(
     async (tx: Transaction) => {
       if (!currentWallet?.signer) throw new Error('exception: signer undefined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undefined');
+      if (currentWallet.descriptor.name === 'UniPass') {
+        const serializedTx = AbstractTransactionBuilder.serde.serialize(tx);
+        cacheTx(JSON.stringify(serializedTx));
+      }
       const txHash = await ckitProvider.sendTransaction(await currentWallet.signer.seal(tx));
       return { txHash: txHash };
     },

@@ -1,10 +1,9 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { AcpTransferSudtBuilder, TransferCkbBuilder, AbstractTransactionBuilder } from '@ckit/ckit';
+import { AcpTransferSudtBuilder, TransferCkbBuilder } from '@ckit/ckit';
 import { Transaction } from '@lay2/pw-core';
 import { useMutation, UseMutationResult } from 'react-query';
 import { AssetMeta } from './useAssetMetaStorage';
 import { useSendTransaction } from './useSendTransaction';
-import { useUnipass } from './useUnipass';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 
 export interface SendTransferTxInput {
@@ -16,7 +15,6 @@ export interface SendTransferTxInput {
 export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTransferTxInput> {
   const { currentWallet } = WalletContainer.useContainer();
   const ckitProvider = CkitProviderContainer.useContainer();
-  const { cacheTx } = useUnipass();
   const { mutateAsync: sendTransaction } = useSendTransaction();
 
   return useMutation(['sendTransferTx'], async (input: SendTransferTxInput) => {
@@ -42,10 +40,6 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
         currentWallet.signer,
       );
       txToSend = await txBuilder.build();
-    }
-    if (currentWallet.descriptor.name === 'UniPass') {
-      const serializedTx = AbstractTransactionBuilder.serde.serialize(txToSend);
-      cacheTx(JSON.stringify(serializedTx));
     }
     await sendTransaction(txToSend);
   });
