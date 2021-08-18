@@ -9,21 +9,24 @@ import { useUnipass } from './useUnipass';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { hasProp } from 'utils';
 
-export function useSendTransaction(): UseMutationResult<
-  { txHash: Hash },
-  unknown,
-  (provider: CkitProvider, signer: EntrySigner) => Promise<Transaction>
-> {
+type sendTransactionOptions = {
+  transaction?: Transaction;
+  buildTransaction?: (provider: CkitProvider, signer: EntrySigner) => Promise<Transaction>;
+};
+
+export function useSendTransaction(): UseMutationResult<{ txHash: Hash }, unknown, sendTransactionOptions> {
   const ckitProvider = CkitProviderContainer.useContainer();
   const { currentWallet } = WalletContainer.useContainer();
   const [localConfig] = useConfigStorage();
   const { cacheTx, clearTx } = useUnipass();
 
   return useMutation(
-    async (buildTx: (provider: CkitProvider, signer: EntrySigner) => Promise<Transaction>) => {
+    async (options: sendTransactionOptions) => {
       if (!currentWallet?.signer) throw new Error('exception: signer undefined');
       if (!ckitProvider) throw new Error('exception: ckitProvider undefined');
-      const tx = await buildTx(ckitProvider, currentWallet.signer);
+      if (!options.transaction && !options.buildTransaction)
+        throw new Error('invalid call: transaction or buildTransaction should be passed');
+      const tx = options.transaction ?? (await options.buildTransaction?.(ckitProvider, currentWallet.signer));
       if (currentWallet.descriptor.name === 'UniPass') {
         const serializedTx = AbstractTransactionBuilder.serde.serialize(tx);
         cacheTx(JSON.stringify(serializedTx));
