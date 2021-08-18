@@ -4,7 +4,7 @@ import { Transaction } from '@lay2/pw-core';
 import { useMutation, UseMutationResult } from 'react-query';
 import { AssetMeta } from './useAssetMetaStorage';
 import { useSendTransaction } from './useSendTransaction';
-import { useUnipassTxStorage } from './useUnipassTxStorage';
+import { useUnipass } from './useUnipass';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 
 export interface SendTransferTxInput {
@@ -16,7 +16,7 @@ export interface SendTransferTxInput {
 export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTransferTxInput> {
   const { currentWallet } = WalletContainer.useContainer();
   const ckitProvider = CkitProviderContainer.useContainer();
-  const [, setUnipassTx] = useUnipassTxStorage();
+  const { cacheTx } = useUnipass();
   const { mutateAsync: sendTransaction } = useSendTransaction();
 
   return useMutation(['sendTransferTx'], async (input: SendTransferTxInput) => {
@@ -45,7 +45,7 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
     }
     if (currentWallet.descriptor.name === 'UniPass') {
       const serializedTx = AbstractTransactionBuilder.serde.serialize(txToSend);
-      setUnipassTx(JSON.stringify(serializedTx));
+      cacheTx(JSON.stringify(serializedTx));
     }
     await sendTransaction(txToSend);
   });

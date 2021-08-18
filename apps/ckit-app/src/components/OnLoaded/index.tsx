@@ -1,31 +1,29 @@
-import { UnipassWallet, AbstractTransactionBuilder } from '@ckit/ckit';
+import { AbstractTransactionBuilder } from '@ckit/ckit';
 import { Transaction } from '@lay2/pw-core';
 import { Spin } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { WalletContainer } from 'containers';
 import { useSendTransaction } from 'hooks/useSendTransaction';
-import { useUnipassTxStorage } from 'hooks/useUnipassTxStorage';
+import { useUnipass } from 'hooks/useUnipass';
 
 export const OnIncomplete: React.FC = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const { isInitialized, setCurrentWalletName } = WalletContainer.useContainer();
-  const [unipassTx] = useUnipassTxStorage();
   const { mutateAsync: sendTransaction } = useSendTransaction();
+  const { shouldLogin, cacheLogin, shouldSendTx, cachedTx } = useUnipass();
 
   useEffect(() => {
     void (async () => {
-      const adapter = new UnipassWallet.UnipassRedirectAdapter({ host: 'https://unipass.xyz' }); // TODO  use the config
-
-      if (adapter.hasLoginInfo()) {
+      if (shouldLogin) {
         setCurrentWalletName('UniPass');
-        adapter.saveLoginInfo();
+        cacheLogin();
       }
 
-      if (adapter.hasSigData()) {
+      if (shouldSendTx) {
         if (!isInitialized) return;
-        if (!unipassTx) throw new Error('Could not find transaction to send');
-        const savedTx = AbstractTransactionBuilder.serde.deserialize(unipassTx);
-        await sendTransaction(savedTx as Transaction);
+        if (!cachedTx) throw new Error('Could not find transaction to send');
+        const txToSend = AbstractTransactionBuilder.serde.deserialize(cachedTx);
+        await sendTransaction(txToSend as Transaction);
       }
 
       setIsLoaded(true);
