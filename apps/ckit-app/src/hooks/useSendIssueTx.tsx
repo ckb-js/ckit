@@ -29,6 +29,6 @@ export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueT
       return txBuilder.build();
     };
 
-    await sendTransaction({ buildTransaction: buildTx });
+    await sendTransaction(buildTx);
   });
 }

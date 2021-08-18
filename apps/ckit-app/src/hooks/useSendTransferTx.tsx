@@ -36,6 +36,6 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
       }
     };
 
-    await sendTransaction({ buildTransaction: buildTx });
+    await sendTransaction(buildTx);
   });
 }
