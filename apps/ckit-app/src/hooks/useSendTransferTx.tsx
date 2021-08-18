@@ -20,8 +20,8 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
   const { mutateAsync: sendTransaction } = useSendTransaction();
 
   return useMutation(['sendTransferTx'], async (input: SendTransferTxInput) => {
-    if (!currentWallet?.signer) throw new Error('exception: signed undifined');
-    if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
+    if (!currentWallet?.signer) throw new Error('exception: signer undefined');
+    if (!ckitProvider) throw new Error('exception: ckitProvider undefined');
     let txToSend: Transaction;
 
     if (input.script) {

@@ -14,8 +14,8 @@ export function useSendTransaction(): UseMutationResult<{ txHash: Hash }, unknow
 
   return useMutation(
     async (tx: Transaction) => {
-      if (!currentWallet?.signer) throw new Error('exception: signed undifined');
-      if (!ckitProvider) throw new Error('exception: ckitProvider undifined');
+      if (!currentWallet?.signer) throw new Error('exception: signer undefined');
+      if (!ckitProvider) throw new Error('exception: ckitProvider undefined');
       const txHash = await ckitProvider.sendTransaction(await currentWallet.signer.seal(tx));
       return { txHash: txHash };
     },
