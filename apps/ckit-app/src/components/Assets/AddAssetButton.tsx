@@ -170,7 +170,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
             </div>
 
             <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Button onClick={formik.submitForm}>Submit</Button>
+              <Button onClick={formik.submitForm}>submit</Button>
             </div>
           </Form>
         )}

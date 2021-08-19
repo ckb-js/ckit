@@ -1,10 +1,10 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
 import { CkbTypeScript } from '@ckit/base';
-import { Button, Col, Modal, Row, Typography } from 'antd';
-import { ErrorMessage, Field, Form, Formik } from 'formik';
+import { Button, Col, Input, Modal, Row, Typography } from 'antd';
+import { useFormik } from 'formik';
 import React, { useCallback, useMemo, useState } from 'react';
 import { CkitProviderContainer, WalletContainer } from 'containers';
-import { AssetMeta, useSendIssueTx, useSendTransferTx } from 'hooks';
+import { AssetMeta, useFormValidate, useSendIssueTx, useSendTransferTx } from 'hooks';
 import { AssetAmount } from 'utils';
 
 type AssetMetaProps = Pick<AssetMeta, 'symbol' | 'decimal'> & { script: AssetMeta['script'] };
@@ -50,13 +50,14 @@ interface ModalFormValues {
 }
 
 interface ModalFormErrors {
-  recipient?: Address;
-  amount?: HexNumber;
+  recipient?: string;
+  amount?: string;
 }
 
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const { visible, setVisible, assetMeta, isMint } = props;
 
+  const { validateCkbAddress, validateIssueAddress, validateTransferAddress, validateAmount } = useFormValidate();
   const { mutateAsync: sendTransferTransaction, isLoading: isTransferLoading } = useSendTransferTx();
   const { mutateAsync: sendIssueTransaction, isLoading: isIssueLoading } = useSendIssueTx();
 
@@ -82,58 +83,79 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   );
   const loading = isMint ? isIssueLoading : isTransferLoading;
 
-  const validate = (_values: ModalFormValues): ModalFormErrors => {
-    // TODO add validate logic
-    return {};
+  const validate = async (values: ModalFormValues): Promise<ModalFormErrors> => {
+    const errors: ModalFormErrors = {};
+    if (isMint) {
+      // issue sudt
+      if (!assetMeta.script) throw new Error('exception: issued sudt should have script');
+      errors.recipient = await validateIssueAddress(values.recipient, assetMeta.script);
+    } else {
+      if (assetMeta.script) {
+        // transfer sudt
+        errors.recipient = await validateTransferAddress(values.recipient, assetMeta.script);
+      } else {
+        // transfer ckb
+        errors.recipient = await validateCkbAddress(values.recipient);
+      }
+    }
+    errors.amount = validateAmount(values.amount, assetMeta.decimal);
+    return errors;
   };
 
+  const formik = useFormik({
+    initialValues,
+    validate,
+    onSubmit,
+  });
+
+  const onCancel = useCallback(() => {
+    formik.resetForm();
+    setVisible(false);
+  }, [formik, setVisible]);
+
   return (
-    <Modal title={title} closable width={312} visible={visible} onCancel={() => setVisible(false)} footer={null}>
-      <Formik initialValues={initialValues} validate={validate} onSubmit={onSubmit}>
-        {(formik) => (
-          <Form>
-            <div>
-              <Row>
-                <Col span={6}>
-                  <label htmlFor="recipient">recipient:</label>
-                </Col>
-                <Col span={16}>
-                  <Field name="recipient" type="text" placeholder="ckb address" />
-                </Col>
-              </Row>
-              <ErrorMessage
-                name="recipient"
-                children={(errorMessage) => {
-                  return <Typography.Text type="danger">{errorMessage}</Typography.Text>;
-                }}
-              />
-            </div>
+    <Modal title={title} closable width={312} visible={visible} onCancel={onCancel} footer={null}>
+      <div>
+        <Row justify="center" align="middle">
+          <Col span={7}>
+            <label htmlFor="recipient">recipient</label>
+          </Col>
+          <Col span={16}>
+            <Input id="recipient" placeholder="ckb address" {...formik.getFieldProps('recipient')} />
+          </Col>
+        </Row>
+        <Row>
+          <Col offset={8}>
+            {formik.touched.recipient && formik.errors.recipient && (
+              <Typography.Text type="danger">{formik.errors.recipient}</Typography.Text>
+            )}
+          </Col>
+        </Row>
+      </div>
 
-            <div style={{ marginTop: '24px' }}>
-              <Row>
-                <Col span={6}>
-                  <label htmlFor="amount">amount:</label>
-                </Col>
-                <Col span={16}>
-                  <Field name="amount" type="text" />
-                </Col>
-              </Row>
-              <ErrorMessage
-                name="amount"
-                children={(errorMessage) => {
-                  return <Typography.Text type="danger">{errorMessage}</Typography.Text>;
-                }}
-              />
-            </div>
+      <div style={{ marginTop: '24px' }}>
+        <Row justify="center" align="middle">
+          <Col span={7}>
+            <label htmlFor="amount">amount:</label>
+          </Col>
+          <Col span={16}>
+            <Input id="amount" {...formik.getFieldProps('amount')} />
+          </Col>
+        </Row>
+        <Row>
+          <Col offset={8}>
+            {formik.touched.amount && formik.errors.amount && (
+              <Typography.Text type="danger">{formik.errors.amount}</Typography.Text>
+            )}
+          </Col>
+        </Row>
+      </div>
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Button loading={loading} onClick={formik.submitForm}>
-                Submit
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Formik>
+      <div style={{ marginTop: '30px', textAlign: 'center' }}>
+        <Button loading={loading} onClick={formik.submitForm}>
+          submit
+        </Button>
+      </div>
     </Modal>
   );
 };

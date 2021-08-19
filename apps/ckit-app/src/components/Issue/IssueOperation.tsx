@@ -1,9 +1,9 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { Button, Col, Modal, Row, Typography } from 'antd';
-import { Formik, Field, Form, ErrorMessage } from 'formik';
+import { Button, Col, Input, Modal, Row, Typography } from 'antd';
+import { useFormik } from 'formik';
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
-import { AssetMeta, useSendIssueTx } from 'hooks';
+import React, { useCallback, useState } from 'react';
+import { AssetMeta, useFormValidate, useSendIssueTx } from 'hooks';
 import { AssetAmount } from 'utils';
 
 type OperationKind = 'invite' | 'issue';
@@ -36,13 +36,7 @@ export const IssueOperation = observer((props: IssueOperationProps) => {
           <Button onClick={onClickIssue}>issue</Button>
         </Col>
       </Row>
-      <ModalForm
-        visible={visible}
-        setVisible={setVisible}
-        operationKind={operationKind}
-        assetDecimal={assetMeta.decimal}
-        assetSymbol={assetMeta.symbol}
-      />
+      <ModalForm visible={visible} setVisible={setVisible} operationKind={operationKind} assetMeta={assetMeta} />
     </div>
   );
 });
@@ -51,93 +45,128 @@ interface ModalFormProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
   operationKind: OperationKind;
-  assetSymbol: string;
-  assetDecimal: number;
+  assetMeta: AssetMeta;
 }
 
 interface ModalFormValues {
-  recipient: Address;
+  inviteRecipient: Address;
+  issueRecipient: Address;
   amount: HexNumber;
 }
 
 interface ModalFormErrors {
-  recipient?: Address;
-  amount?: HexNumber;
+  inviteRecipient?: string;
+  issueRecipient?: string;
+  amount?: string;
 }
 
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
-  const { visible, setVisible, operationKind, assetDecimal, assetSymbol } = props;
+  const { visible, setVisible, operationKind, assetMeta } = props;
 
+  const { validateInviteAddress, validateIssueAddress, validateAmount } = useFormValidate();
   const { mutateAsync: sendIssueTransaction, isLoading: isIssueLoading } = useSendIssueTx();
 
-  const initialValues: ModalFormValues = { recipient: '', amount: '' };
-  const title = operationKind === 'invite' ? 'Invite user' : 'Issue ' + assetSymbol;
+  const initialValues: ModalFormValues = { inviteRecipient: '', issueRecipient: '', amount: '' };
+  const title = operationKind === 'invite' ? 'Invite user' : 'Issue ' + assetMeta.symbol;
   const recipientFieldDisplayName = operationKind === 'invite' ? 'user:' : 'recipient:';
 
-  const validate = (values: ModalFormValues): ModalFormErrors => {
-    // TODO add validate logic
-    return {};
+  const validate = async (values: ModalFormValues): Promise<ModalFormErrors> => {
+    if (!assetMeta.script) throw new Error('exception: issued sudt should have script');
+    const errors: ModalFormErrors = {};
+    if (operationKind === 'invite') {
+      errors.inviteRecipient = await validateInviteAddress(values.inviteRecipient, assetMeta.script);
+    }
+    if (operationKind === 'issue') {
+      errors.issueRecipient = await validateIssueAddress(values.issueRecipient, assetMeta.script);
+      errors.amount = validateAmount(values.amount, assetMeta.decimal);
+    }
+    return errors;
   };
 
+  const formik = useFormik({
+    initialValues,
+    validate,
+    onSubmit: (values: ModalFormValues) => {
+      sendIssueTransaction({
+        recipient: values.inviteRecipient,
+        amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
+        operationKind: operationKind,
+      }).then(() => setVisible(false));
+    },
+  });
+
+  const onCancel = useCallback(() => {
+    formik.resetForm();
+    setVisible(false);
+  }, [formik, setVisible]);
+
   return (
-    <Modal title={title} closable width={312} visible={visible} onCancel={() => setVisible(false)} footer={null}>
-      <Formik
-        initialValues={initialValues}
-        validate={validate}
-        onSubmit={(values: ModalFormValues) => {
-          sendIssueTransaction({
-            recipient: values.recipient,
-            amount: AssetAmount.fromHumanize(values.amount, assetDecimal).toRawString(),
-            operationKind: operationKind,
-          }).then(() => setVisible(false));
-        }}
-      >
-        {(formik) => (
-          <Form>
-            <div>
-              <Row>
-                <Col span={6}>
-                  <label htmlFor="recipient">{recipientFieldDisplayName}</label>
-                </Col>
-                <Col span={16}>
-                  <Field name="recipient" type="text" placeholder="ckb address" />
-                </Col>
-              </Row>
-              <ErrorMessage
-                name="recipient"
-                children={(errorMessage) => {
-                  return <Typography.Text type="danger">{errorMessage}</Typography.Text>;
-                }}
-              />
-            </div>
+    <Modal title={title} closable width={312} visible={visible} onCancel={onCancel} footer={null}>
+      {operationKind === 'invite' && (
+        <div>
+          <Row justify="center" align="middle">
+            <Col span={4}>
+              <label htmlFor="inviteRecipient">{recipientFieldDisplayName}</label>
+            </Col>
+            <Col span={16}>
+              <Input id="inviteRecipient" placeholder="ckb address" {...formik.getFieldProps('inviteRecipient')} />
+            </Col>
+          </Row>
+          <Row>
+            <Col offset={6}>
+              {formik.touched.inviteRecipient && formik.errors.inviteRecipient && (
+                <Typography.Text type="danger">{formik.errors.inviteRecipient}</Typography.Text>
+              )}
+            </Col>
+          </Row>
+        </div>
+      )}
 
-            {operationKind === 'issue' && (
-              <div style={{ marginTop: '24px' }}>
-                <Row>
-                  <Col span={6}>
-                    <label htmlFor="amount">amount:</label>
-                  </Col>
-                  <Col span={16}>
-                    <Field name="amount" type="text" />
-                  </Col>
-                </Row>
-                <ErrorMessage
-                  name="amount"
-                  children={(errorMessage) => {
-                    return <Typography.Text type="danger">{errorMessage}</Typography.Text>;
-                  }}
-                />
-              </div>
-            )}
+      {operationKind === 'issue' && (
+        <div>
+          <div>
+            <Row justify="center" align="middle">
+              <Col span={7}>
+                <label htmlFor="issueRecipient">{recipientFieldDisplayName}</label>
+              </Col>
+              <Col span={16}>
+                <Input id="issueRecipient" placeholder="ckb address" {...formik.getFieldProps('issueRecipient')} />
+              </Col>
+            </Row>
+            <Row>
+              <Col offset={8}>
+                {formik.touched.issueRecipient && formik.errors.issueRecipient && (
+                  <Typography.Text type="danger">{formik.errors.issueRecipient}</Typography.Text>
+                )}
+              </Col>
+            </Row>
+          </div>
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Button loading={isIssueLoading} onClick={formik.submitForm}>
-                Submit
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Formik>
+          <div style={{ marginTop: '24px' }}>
+            <Row justify="center" align="middle">
+              <Col span={7}>
+                <label htmlFor="amount">amount:</label>
+              </Col>
+              <Col span={16}>
+                <Input id="amount" {...formik.getFieldProps('amount')} />
+              </Col>
+            </Row>
+            <Row>
+              <Col offset={8}>
+                {formik.touched.amount && formik.errors.amount && (
+                  <Typography.Text type="danger">{formik.errors.amount}</Typography.Text>
+                )}
+              </Col>
+            </Row>
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop: '30px', textAlign: 'center' }}>
+        <Button loading={isIssueLoading} onClick={formik.submitForm}>
+          submit
+        </Button>
+      </div>
     </Modal>
   );
 };
