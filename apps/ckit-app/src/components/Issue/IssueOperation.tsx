@@ -74,11 +74,14 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
     if (!assetMeta.script) throw new Error('exception: issued sudt should have script');
     const errors: ModalFormErrors = {};
     if (operationKind === 'invite') {
-      errors.inviteRecipient = await validateInviteAddress(values.inviteRecipient, assetMeta.script);
+      const error = await validateInviteAddress(values.inviteRecipient, assetMeta.script);
+      if (error) errors.inviteRecipient = error;
     }
     if (operationKind === 'issue') {
-      errors.issueRecipient = await validateIssueAddress(values.issueRecipient, assetMeta.script);
-      errors.amount = validateAmount(values.amount, assetMeta.decimal);
+      const recipientError = await validateIssueAddress(values.issueRecipient, assetMeta.script);
+      if (recipientError) errors.issueRecipient = recipientError;
+      const amountError = validateAmount(values.amount, assetMeta.decimal);
+      if (amountError) errors.amount = amountError;
     }
     return errors;
   };
