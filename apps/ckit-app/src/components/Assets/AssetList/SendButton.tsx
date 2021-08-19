@@ -3,6 +3,7 @@ import { CkbTypeScript } from '@ckit/base';
 import { Button, Col, Input, Modal, Row, Typography } from 'antd';
 import { useFormik } from 'formik';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { CkitProviderContainer, WalletContainer } from 'containers';
 import { AssetMeta, useFormValidate, useSendIssueTx, useSendTransferTx } from 'hooks';
 import { AssetAmount } from 'utils';
@@ -10,6 +11,7 @@ import { AssetAmount } from 'utils';
 type AssetMetaProps = Pick<AssetMeta, 'symbol' | 'decimal'> & { script: AssetMeta['script'] };
 
 export const SendButton: React.FC<AssetMetaProps> = (props) => {
+  const { script, decimal } = props;
   const [visible, setVisible] = useState<boolean>(false);
   const provider = CkitProviderContainer.useContainer();
   const { signerAddress } = WalletContainer.useContainer();
@@ -27,9 +29,26 @@ export const SendButton: React.FC<AssetMetaProps> = (props) => {
 
   const buttonContent = isMint ? 'mint' : 'send';
 
+  const query = useQuery(
+    ['queryBalance', { script: script, address: signerAddress }],
+    () => {
+      if (!provider || !signerAddress) throw new Error('exception: signer should exist');
+      if (script) {
+        return provider.getUdtBalance(signerAddress, script);
+      }
+      return provider.getCkbLiveCellsBalance(signerAddress);
+    },
+    {
+      enabled: !!signerAddress,
+    },
+  );
+
+  const disabled =
+    query.isLoading || query.isError || !query.data || AssetAmount.fromRaw(query.data, decimal).rawAmount.eq(0);
+
   return (
     <div>
-      <Button type="link" onClick={() => setVisible(true)}>
+      <Button type="link" disabled={disabled} onClick={() => setVisible(true)}>
         {buttonContent}
       </Button>
       <ModalForm visible={visible} setVisible={setVisible} assetMeta={props} isMint={isMint} />
