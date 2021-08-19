@@ -44,7 +44,8 @@ export const SendButton: React.FC<AssetMetaProps> = (props) => {
   );
 
   const disabled =
-    query.isLoading || query.isError || !query.data || AssetAmount.fromRaw(query.data, decimal).rawAmount.eq(0);
+    !isMint &&
+    (query.isLoading || query.isError || !query.data || AssetAmount.fromRaw(query.data, decimal).rawAmount.eq(0));
 
   return (
     <div>
