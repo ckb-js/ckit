@@ -105,6 +105,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
 
   const validate = async (values: ModalFormValues): Promise<ModalFormErrors> => {
     const errors: ModalFormErrors = {};
+
     if (isMint) {
       // issue sudt
       if (!assetMeta.script) throw new Error('exception: issued sudt should have script');
@@ -121,8 +122,12 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
         if (recipientError) errors.recipient = recipientError;
       }
     }
+    if (!values.recipient) errors.recipient = 'recipient required';
+
     const amountError = validateAmount(values.amount, assetMeta.decimal);
     if (amountError) errors.amount = amountError;
+    if (!values.amount) errors.amount = 'amount required';
+
     return errors;
   };
 

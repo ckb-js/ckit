@@ -73,16 +73,31 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const validate = async (values: ModalFormValues): Promise<ModalFormErrors> => {
     if (!assetMeta.script) throw new Error('exception: issued sudt should have script');
     const errors: ModalFormErrors = {};
+
     if (operationKind === 'invite') {
-      const error = await validateInviteAddress(values.inviteRecipient, assetMeta.script);
-      if (error) errors.inviteRecipient = error;
+      if (!values.inviteRecipient) {
+        errors.inviteRecipient = 'recipient required';
+      } else {
+        const error = await validateInviteAddress(values.inviteRecipient, assetMeta.script);
+        if (error) errors.inviteRecipient = error;
+      }
     }
+
     if (operationKind === 'issue') {
-      const recipientError = await validateIssueAddress(values.issueRecipient, assetMeta.script);
-      if (recipientError) errors.issueRecipient = recipientError;
-      const amountError = validateAmount(values.amount, assetMeta.decimal);
-      if (amountError) errors.amount = amountError;
+      if (!values.issueRecipient) {
+        errors.issueRecipient = 'recipient required';
+      } else {
+        const recipientError = await validateIssueAddress(values.issueRecipient, assetMeta.script);
+        if (recipientError) errors.issueRecipient = recipientError;
+      }
+      if (!values.amount) {
+        errors.amount = 'amount required';
+      } else {
+        const amountError = validateAmount(values.amount, assetMeta.decimal);
+        if (amountError) errors.amount = amountError;
+      }
     }
+
     return errors;
   };
 

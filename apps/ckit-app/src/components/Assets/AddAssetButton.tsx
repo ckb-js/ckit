@@ -66,11 +66,19 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
     if (values.decimal <= 0) {
       errors.decimal = 'decimal should be greater than 0';
     }
-    if (!isValidHexString(values.codeHash)) {
-      errors.codeHash = 'invalid hex string';
+    if (!values.codeHash) {
+      errors.codeHash = 'code hash required';
+    } else {
+      if (!isValidHexString(values.codeHash)) {
+        errors.codeHash = 'code hash invalid hex string';
+      }
     }
-    if (!isValidHexString(values.args)) {
-      errors.args = 'invalid hex string';
+    if (!values.args) {
+      errors.args = 'args required';
+    } else {
+      if (!isValidHexString(values.args)) {
+        errors.args = 'args invalid hex string';
+      }
     }
     return errors;
   };
@@ -201,7 +209,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
         </Row>
       </div>
 
-      <div style={{ marginTop: '30px', textAlign: 'center' }}>
+      <div style={{ marginTop: '36px', textAlign: 'center' }}>
         <Button onClick={formik.submitForm}>submit</Button>
       </div>
     </Modal>

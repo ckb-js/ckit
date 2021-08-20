@@ -51,7 +51,7 @@ export function useFormValidate(): ValidationHelper {
       const error = validateACPAddress(value);
       if (error) return error;
       const sudtCells = await provider.collectUdtCells(value, sudtScript, '0');
-      if (sudtCells.length > 0) return 'already invited';
+      if (sudtCells.length > 0) return 'user already invited';
     },
     [provider, validateACPAddress],
   );
@@ -78,7 +78,7 @@ export function useFormValidate(): ValidationHelper {
 
   const validateAmount = useCallback((amount: string, decimal: number) => {
     const assetAmount = AssetAmount.fromHumanize(amount, decimal);
-    if (assetAmount.rawAmount.isNaN()) return 'amount should be number';
+    if (assetAmount.rawAmount.isNaN()) return 'invalid number';
     if (assetAmount.rawAmount.lt(1)) return 'at least issue one token';
   }, []);
 
