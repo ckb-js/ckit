@@ -11,6 +11,7 @@ export interface CkitConfig extends ProviderConfig {
     UNIPASS: ScriptConfig;
     PW_NON_ANYONE_CAN_PAY: ScriptConfig;
     PW_ANYONE_CAN_PAY: ScriptConfig;
+    RC_LOCK: ScriptConfig;
 
     // type
     SUDT: ScriptConfig;
