@@ -6,7 +6,7 @@ import { SendButton } from './SendButton';
 import { AssetMeta, useAssetMetaStorage } from 'hooks';
 
 export const AssetList: React.FC = () => {
-  const [assetMeta] = useAssetMetaStorage();
+  const { assetsMeta } = useAssetMetaStorage();
   const columns: ColumnsType<AssetMeta> = [
     {
       render: (value, record) => <div>{record.symbol}</div>,
@@ -21,7 +21,7 @@ export const AssetList: React.FC = () => {
 
   return (
     <div>
-      <Table size="small" showHeader={false} columns={columns} dataSource={assetMeta} pagination={{ pageSize: 5 }} />
+      <Table size="small" showHeader={false} columns={columns} dataSource={assetsMeta} pagination={{ pageSize: 5 }} />
     </div>
   );
 };

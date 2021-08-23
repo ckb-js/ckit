@@ -13,7 +13,7 @@ interface IssueAreaProps {
 export const IssueArea: React.FC<IssueAreaProps> = (props) => {
   const { issuerAddress } = props;
   const provider = CkitProviderContainer.useContainer();
-  const [assets] = useAssetMetaStorage();
+  const { assetsMeta } = useAssetMetaStorage();
 
   const udtScript = useMemo<CkbTypeScript>(() => {
     if (!provider) throw new Error('excepiton: provider undefined');
@@ -21,13 +21,13 @@ export const IssueArea: React.FC<IssueAreaProps> = (props) => {
   }, [provider, issuerAddress]);
 
   const assetMeta = useMemo<AssetMeta | undefined>(() => {
-    return assets.find(
+    return assetsMeta.find(
       (value) =>
         value.script?.hash_type === udtScript.hash_type &&
         value.script.code_hash === udtScript.code_hash &&
         value.script.args === udtScript.args,
     );
-  }, [udtScript, assets]);
+  }, [udtScript, assetsMeta]);
 
   const symbol = assetMeta ? assetMeta.symbol : '?';
   const decimal = assetMeta ? assetMeta.decimal.toString() : '?';
