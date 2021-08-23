@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { predefined } from '@ckb-lumos/config-manager';
-import { CkitConfig } from '../providers/CkitProvider';
+import { CkitConfig } from '../providers';
 
 // function toScriptConfig(obj: typeof CHAIN_SPECS.Aggron.pwLock): ScriptConfig {
 //   return {
@@ -39,6 +39,16 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
     TX_HASH: '0x03dd2a5594ed2d79196b396c83534e050ba0ad07fa5c1cd61a7094f9fb60a592',
     DEP_TYPE: 'code',
     CODE_HASH: '0x124a60cd799e1fbca664196de46b3f7f0ecb7138133dcaea4893c51df5b02be6',
+    HASH_TYPE: 'type',
+  },
+
+  // TODO deploy the rc lock to test chain
+  //  the config here is fake
+  RC_LOCK: {
+    INDEX: '0x0',
+    TX_HASH: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    DEP_TYPE: 'code',
+    CODE_HASH: '0x0000000000000000000000000000000000000000000000000000000000000000',
     HASH_TYPE: 'type',
   },
 };
