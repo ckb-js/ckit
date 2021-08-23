@@ -30,24 +30,30 @@
     "@craco/craco": "^6.1.1",
     "@jackwilsdon/craco-use-babelrc": "^1.0.0",
     "babel-plugin-styled-components": "^1.13.2",
-    "craco-less": "^1.17.1"
+    "craco-less": "^1.17.1",
+    "gh-pages": "^3.2.3"
   },
   "scripts": {
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
-    "lint": "eslint src/**/*.{ts,tsx}"
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "predeploy": "yarn build",
+    "deploy": "gh-pages -d build -f"
   },
   "browserslist": {
     "production": [
       ">0.2%",
       "not dead",
-      "not op_mini all"
+      "not op_mini all",
+      "not IE >0",
+      "not android >0"
     ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "homepage": "https://homura.github.io/ckit/"
 }
