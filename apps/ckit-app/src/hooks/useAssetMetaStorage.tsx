@@ -1,6 +1,6 @@
 import { CkbTypeScript } from '@ckit/base';
 import { useLocalStorage } from '@rehooks/local-storage';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 export interface AssetMeta {
   symbol: string;
@@ -8,7 +8,14 @@ export interface AssetMeta {
   script?: CkbTypeScript;
 }
 
-export function useAssetMetaStorage(): [AssetMeta[], (newValue: AssetMeta[]) => void, () => void] {
+export function useAssetMetaStorage(): { assetsMeta: AssetMeta[]; addAssetMeta: (newValue: AssetMeta) => void } {
   const initialAssetMeta = useMemo<AssetMeta[]>(() => [{ symbol: 'ckb', decimal: 8 }], []);
-  return useLocalStorage<AssetMeta[]>('assetMeta', initialAssetMeta);
+  const [assetsMeta, setAssetsMeta] = useLocalStorage<AssetMeta[]>('assetMeta', initialAssetMeta);
+  const addAssetMeta = useCallback(
+    (newValue: AssetMeta) => {
+      setAssetsMeta(assetsMeta.concat(newValue));
+    },
+    [assetsMeta, setAssetsMeta],
+  );
+  return { assetsMeta, addAssetMeta };
 }

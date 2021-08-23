@@ -48,7 +48,7 @@ interface ModalFormErrors {
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const { visible, setVisible, initialAssetMeta } = props;
 
-  const [assets, setAssets] = useAssetMetaStorage();
+  const { addAssetMeta } = useAssetMetaStorage();
 
   const initialValues: ModalFormValues = {
     symbol: initialAssetMeta?.symbol ? initialAssetMeta.symbol : '',
@@ -96,7 +96,7 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
           args: values.args,
         },
       };
-      setAssets(assets.concat(newAssetMeta));
+      addAssetMeta(newAssetMeta);
       setSubmitting(false);
       setVisible(false);
     },

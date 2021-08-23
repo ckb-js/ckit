@@ -9,7 +9,7 @@ export const AccountView: React.FC = () => {
       <div style={{ marginBottom: '24px' }}>
         <Row>
           <Col span={12}>
-            <Typography.Title level={3}> Accounts </Typography.Title>
+            <Typography.Title level={3}> Account </Typography.Title>
           </Col>
           <Col span={12}>
             <div style={{ float: 'right', paddingTop: '5px' }}>

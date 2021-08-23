@@ -25,6 +25,7 @@ export function useFormValidate(): ValidationHelper {
     [provider],
   );
 
+  // TODO refactor with ScriptManager
   const isLockscriptACP = useCallback(
     (script: Script) => {
       const scripts = provider.config.SCRIPTS;
