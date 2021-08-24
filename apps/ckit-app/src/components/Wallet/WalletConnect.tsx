@@ -1,7 +1,8 @@
-import { Button } from 'antd';
+import { CheckCircleTwoTone } from '@ant-design/icons';
+import { Button, Space } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { WalletContainer } from 'containers/WalletContainer';
+import { displayWalletName, WalletContainer } from 'containers/WalletContainer';
 
 export const WalletConnectFC: React.FC = () => {
   const { currentWallet, setModalVisible } = WalletContainer.useContainer();
@@ -9,7 +10,10 @@ export const WalletConnectFC: React.FC = () => {
   if (currentWallet) {
     return (
       <Button size="small" onClick={() => setModalVisible(true)}>
-        connected to {currentWallet.descriptor.name}
+        <Space>
+          {displayWalletName(currentWallet.descriptor.name)}
+          <CheckCircleTwoTone />
+        </Space>
       </Button>
     );
   }

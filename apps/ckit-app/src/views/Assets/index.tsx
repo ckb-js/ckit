@@ -14,7 +14,7 @@ export const AssetsView: React.FC = observer(() => {
         <div style={{ marginBottom: '12px' }}>
           <Row>
             <Col span={12}>
-              <Typography.Title level={3}> Assets </Typography.Title>
+              <Typography.Title level={3}> Asset </Typography.Title>
             </Col>
             <Col span={12}>
               <div style={{ float: 'right' }}>

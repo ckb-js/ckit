@@ -9,3 +9,9 @@ export function truncateMiddle(str: string, start: number, end = start): string 
   if (str.length <= start + end) return str;
   return str.slice(0, start) + '...' + str.slice(-end);
 }
+
+const HEX_REGEX = /^0[xX][0-9a-fA-F]*$/;
+
+export function isValidHexString(value: string): boolean {
+  return HEX_REGEX.test(value);
+}
