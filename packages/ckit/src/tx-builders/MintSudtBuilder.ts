@@ -9,14 +9,16 @@ import { NonAcpPwMintBuilder } from './pw/MintSudtPwBuilder';
 type CapacityPolicy =
   // mint only when recipient has ACP cell
   | 'findAcp'
-  // mint and create an ACP cell for recipient
+  // mint and create a cell for recipient
+  // TODO rename to createCell
   | 'createAcp';
 
 export type RecipientOptions = {
   recipient: Address;
   amount: HexNumber;
   /**
-   * additional transfer CKBytes
+   * additional transfer CKBytes.
+   * If the policy is `createCell`, the capacity required by the cell itself will NOT be counted in the
    */
   additionalCapacity?: HexNumber;
   /**

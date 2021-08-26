@@ -2,3 +2,4 @@ export { AbstractTransactionBuilder, SerializedTx, DeserializedTx } from './Abst
 export * from './AcpTransferSudtBuilder';
 export * from './TransferCkbBuilder';
 export * from './MintSudtBuilder';
+export * from './rc';
