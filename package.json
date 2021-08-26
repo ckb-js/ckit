@@ -41,5 +41,8 @@
     "test": "make test",
     "lint": "make lint",
     "clean": "make clean"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
