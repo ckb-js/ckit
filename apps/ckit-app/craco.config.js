@@ -3,7 +3,7 @@ const CracoLessPlugin = require('craco-less');
 function getProductionSetting() {
   if (process.env.NODE_ENV !== 'production') return {};
   return {
-    presets: [['@babel/preset-env', { useBuiltIns: 'entry' }]],
+    presets: ['@babel/preset-env'],
   };
 }
 

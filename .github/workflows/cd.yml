@@ -1,0 +1,32 @@
+name: deploy to github pages
+
+on:
+  push:
+    branches:
+      - develop
+env:
+  DEBUG: ckit-*
+  CI: false
+
+jobs:
+  gh-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: support testnet
+        run: |
+          sed -i 's+// import { getCellDeps+import { getCellDeps+g' packages/ckit/src/tx-builders/pw/AbstractPwSenderBuilder.ts
+          sed -i 's+// ...getCellDeps()+...getCellDeps()+g' packages/ckit/src/tx-builders/pw/AbstractPwSenderBuilder.ts
+
+      - name: build
+        run: |
+          yarn install --frozen-lockfile --force
+          yarn build:lib
+
+      - name: deploy
+        run: |
+          git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          cd apps/ckit-app && yarn deploy -- -u "github-actions-bot <support+actions@github.com>"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
