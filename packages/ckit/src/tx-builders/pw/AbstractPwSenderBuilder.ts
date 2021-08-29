@@ -2,6 +2,7 @@ import { Address, Script } from '@ckb-lumos/base';
 import { Builder, CellDep, WitnessArgs } from '@lay2/pw-core';
 import { Pw } from '../../helpers/pw';
 import { CkitConfigKeys, CkitProvider } from '../../providers';
+// import { SerializeRcLockWitnessLock } from '../../types/src/generated/rc_lock';
 import { boom } from '../../utils';
 // TODO uncomment me when ran in Aggron or Mainnet
 // import { getCellDeps } from '../unipass/config';
@@ -19,6 +20,7 @@ export abstract class AbstractPwSenderBuilder extends Builder {
       Pw.toPwCellDep(this.provider.getCellDep('PW_NON_ANYONE_CAN_PAY')),
       Pw.toPwCellDep(this.provider.getCellDep('PW_ANYONE_CAN_PAY')),
       Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
+      Pw.toPwCellDep(this.provider.getCellDep('RC_LOCK')),
       // TODO uncomment me when ran in Aggron or Mainnet
       // ...getCellDeps(),
     ];
@@ -64,6 +66,23 @@ export abstract class AbstractPwSenderBuilder extends Builder {
         output_type: '',
       };
     }
+    if (isTemplateOf('RC_LOCK', address)) {
+      // const params = {
+      //   signature: '0x' + '0'.repeat(130),
+      //   rc_identity: {
+      //     identity: 0,
+      //     proofs: 0,
+      //   },
+      //   preimage: 0,
+      // };
+      // buf2hex(SerializeRcLockWitnessLock(params))
+      // 10000000100000001000000010000000
+      return {
+        lock: '0x10000000100000001000000010000000',
+        input_type: '',
+        output_type: '',
+      };
+    }
 
     if (isTemplateOf('UNIPASS', address)) {
       return {
@@ -76,3 +95,6 @@ export abstract class AbstractPwSenderBuilder extends Builder {
     boom(`Unsupported lock ${address}`);
   }
 }
+// function buf2hex(buffer: ArrayBuffer) {
+//   return Array.prototype.map.call(new Uint8Array(buffer), (x) => ('00' + x.toString(16)).slice(-2)).join('');
+// }

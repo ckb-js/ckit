@@ -6,15 +6,55 @@ import {
   TransferCkbBuilder,
 } from '../tx-builders';
 import { randomHexString } from '../utils';
-import { InternalRcPwSigner } from '../wallets/RcWallet';
+import { InternalRcPwSigner, RCLockSigner } from '../wallets/RcWallet';
 import { TestProvider } from './TestProvider';
+
+test('test rc signer 1', async () => {
+  console.log(`start test rc signer`);
+  const provider = new TestProvider();
+
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(1);
+  const rcSigner = new RCLockSigner(randomHexString(64), provider);
+
+  // genesis -> rc-lock
+
+  const address = await rcSigner.getAddress();
+  console.log(`address is ${address}`);
+
+  const builder = new TransferCkbBuilder(
+    {
+      recipients: [
+        {
+          recipient: await rcSigner.getAddress(),
+          amount: '100000000000', //  100 CKB
+          capacityPolicy: 'createAcp',
+        },
+      ],
+    },
+    provider,
+    genesisSigner,
+  );
+  await provider.sendTxUntilCommitted(await genesisSigner.seal(await builder.build()));
+
+  // rc-lock -> genesis
+  const tx = await new TransferCkbBuilder(
+    {
+      recipients: [{ recipient: await genesisSigner.getAddress(), amount: '16100000000', capacityPolicy: 'createAcp' }],
+    },
+    provider,
+    rcSigner,
+  ).build();
+  await provider.sendTxUntilCommitted(await rcSigner.seal(tx));
+});
 
 // TODO remove skip when rc-lock related modules are implemented
 test.skip('test rc signer', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const rcSigner = new InternalRcPwSigner(randomHexString(64), provider);
+  const rcSigner = new RCLockSigner(randomHexString(64), provider);
 
   // genesis --100M ckb-> rc
   await provider.transferCkbFromGenesis(await rcSigner.getAddress(), CkbAmount.fromCkb(1000000).toHex(), {
