@@ -36,8 +36,8 @@ export interface WalletConnector {
 }
 
 export interface EntrySigner<TX = unknown> {
-  getAddress(): Promise<string>;
-  seal(obj: TX): Promise<Transaction>;
+  getAddress(): Promise<string> | HexString;
+  seal(obj: TX): Promise<Transaction> | Transaction;
 }
 
 export interface TransactionBuilder {
