@@ -1,0 +1,20 @@
+vector UTF8Bytes <byte>;
+
+array Uint128 [byte; 16];
+
+array Byte32 [byte; 32];
+
+table UdtInfo {
+  decimals:             byte,
+  name:                 UTF8Bytes,
+  symbol:               UTF8Bytes,
+  description:          UTF8Bytes,
+}
+
+table UdtCellData {
+  version:              byte,
+  current_supply:       Uint128,
+  max_supply:           Uint128,
+  sudt_script_hash:     Byte32,
+  udt_info:             UdtInfo,
+}

@@ -4,7 +4,7 @@
   "main": "dist",
   "license": "MIT",
   "scripts": {
-    "build": "yarn run build:js && yarn run build:types",
+    "build": "yarn run build:js && yarn run build:types && copyfiles src/**/generated/* dist -a -u 1 --verbose",
     "clean": "rimraf -rf ./dist",
     "build:js": "babel --root-mode upward --extensions '.ts' --ignore '**/*.spec.ts' --ignore '**/__tests__/**' --out-dir dist src",
     "build:types": "tsc -p tsconfig.build.json",
@@ -18,6 +18,7 @@
     "@ckb-lumos/helpers": "^0.16.0",
     "@ckb-lumos/rpc": "^0.16.0",
     "@ckit/base": "*",
+    "@ckit/easy-byte": "*",
     "@ckit/mercury-client": "*",
     "@ckit/utils": "*",
     "@metamask/detect-provider": "^1.2.0",
