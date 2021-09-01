@@ -3,22 +3,26 @@ import {
   AcpTransferSudtBuilder,
   CreateRcUdtInfoCellBuilder,
   MintRcUdtBuilder,
+  RcHelper,
   TransferCkbBuilder,
 } from '../tx-builders';
-import { randomHexString } from '../utils';
-import { InternalRcPwSigner } from '../wallets/RcWallet';
+import { nonNullable, randomHexString } from '../utils';
+import { RcInternalSigner } from '../wallets/RcInternalSigner';
 import { TestProvider } from './TestProvider';
 
+const testPrivateKeysIndex = 0;
+jest.setTimeout(120000);
+
 // TODO remove skip when rc-lock related modules are implemented
-test.skip('test rc signer', async () => {
+test('test rc signer', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const rcSigner = new InternalRcPwSigner(randomHexString(64), provider);
+  const rcSigner = new RcInternalSigner(randomHexString(64), provider);
 
-  // genesis --100M ckb-> rc
+  // genesis -> rc: 100M ckb
   await provider.transferCkbFromGenesis(await rcSigner.getAddress(), CkbAmount.fromCkb(1000000).toHex(), {
-    testPrivateKeysIndex: 3,
+    testPrivateKeysIndex,
   });
 
   const recipient = provider.generateAcpSigner();
@@ -41,26 +45,26 @@ test.skip('test rc signer', async () => {
     ),
   );
 
-  const received = await provider.getCkbLiveCellsBalance(await rcSigner.getAddress());
+  const received = await provider.getCkbLiveCellsBalance(await recipient.getAddress());
   expect(CkbAmount.fromShannon(received).eq(CkbAmount.fromCkb(100))).toBe(true);
 });
 
 // TODO remove skip when rc-lock related modules are implemented
-test.skip('test rc udt lock', async () => {
+test('test rc udt lock', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerSigner = new InternalRcPwSigner(randomHexString(64), provider);
+  const issuerSigner = new RcInternalSigner(randomHexString(64), provider);
 
-  // genesis --100M ckb-> rc
-  await provider.transferCkbFromGenesis(await issuerSigner.getAddress(), '100000000000000', {
-    testPrivateKeysIndex: 3,
+  // genesis -> rc: 100M ckb
+  await provider.transferCkbFromGenesis(await issuerSigner.getAddress(), CkbAmount.fromCkb(1_000_000).toHex(), {
+    testPrivateKeysIndex,
   });
 
   // create a rc udt info cell
   const createRcUdtInfoTxBuilder = new CreateRcUdtInfoCellBuilder(
     {
-      rcIdentity: await issuerSigner.getRcIdentity(),
+      rcIdentity: issuerSigner.getRcIdentity(),
       sudtInfo: {
         name: 'Test Token',
         symbol: 'TT',
@@ -74,34 +78,49 @@ test.skip('test rc udt lock', async () => {
   const createRcUdtInfoTx = await createRcUdtInfoTxBuilder.build();
   await provider.sendTxUntilCommitted(await issuerSigner.seal(createRcUdtInfoTx));
 
+  const helper = new RcHelper(provider);
+  const sudts = await helper.listIssuedUdt({ rcIdentity: issuerSigner.getRcIdentity() });
+
+  const udtInfo = nonNullable(sudts[0]);
+
   const recipient1Signer = provider.generateAcpSigner();
+  const recipient2Signer = provider.generateAcpSigner();
+
   // issuer -> recipient1: 100 udt
-  await provider.sendTxUntilCommitted(
-    await issuerSigner.seal(
-      await new MintRcUdtBuilder(
-        {
-          udtId: createRcUdtInfoTxBuilder.getTypeHash(),
-          recipients: [
-            {
-              recipient: await recipient1Signer.getAddress(),
-              // 1ckb additional capacity for tx fee
-              additionalCapacity: CkbAmount.fromCkb(1).toHex(),
-              capacityPolicy: 'createAcp',
-              amount: '100',
-            },
-          ],
-        },
-        provider,
-      ).build(),
-    ),
+  const signedMintTx = await issuerSigner.seal(
+    await new MintRcUdtBuilder(
+      {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        udtId: udtInfo.udtId,
+        rcIdentity: issuerSigner.getRcIdentity(),
+        recipients: [
+          {
+            recipient: await recipient1Signer.getAddress(),
+            // 1ckb additional capacity for tx fee
+            additionalCapacity: CkbAmount.fromCkb(1).toHex(),
+            capacityPolicy: 'createAcp',
+            amount: '100',
+          },
+          {
+            recipient: await recipient2Signer.getAddress(),
+            // 1ckb additional capacity for tx fee
+            additionalCapacity: CkbAmount.fromCkb(1).toHex(),
+            capacityPolicy: 'createAcp',
+            amount: '0',
+          },
+        ],
+      },
+      provider,
+    ).build(),
   );
 
-  const testUdt = provider.newSudtScript(createRcUdtInfoTxBuilder.getIssuerLockHash());
+  await provider.sendTxUntilCommitted(signedMintTx);
+
+  const testUdt = helper.newSudtScript(udtInfo.rcIdentity, udtInfo.udtId);
   const recipient1UdtBalance1 = await provider.getUdtBalance(await recipient1Signer.getAddress(), testUdt);
 
   expect(Number(recipient1UdtBalance1) === 100).toBe(true);
 
-  const recipient2Signer = provider.generateAcpSigner();
   // recipient 1 -> recipient 2: 10 udt
   await provider.sendTxUntilCommitted(
     await recipient1Signer.seal(
@@ -117,4 +136,9 @@ test.skip('test rc udt lock', async () => {
   expect(Number(recipient1UdtBalance2) === 90).toBe(true);
   const recipient2UdtBalance2 = await provider.getUdtBalance(await recipient2Signer.getAddress(), testUdt);
   expect(Number(recipient2UdtBalance2) === 10).toBe(true);
+});
+
+// TODO test with RC eth identity
+test.skip('test rc eth identity', () => {
+  // TODO
 });

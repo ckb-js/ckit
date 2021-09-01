@@ -3,22 +3,29 @@
 
 import { utils } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { TestProvider } from '../__tests__/TestProvider';
 import { CkbAmount } from '../helpers';
+import {
+  AcpTransferSudtBuilder,
+  MintOptions,
+  MintSudtBuilder,
+  TransferCkbBuilder,
+  TransferCkbOptions,
+} from '../tx-builders';
 import { randomHexString } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/PwWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
-import { AcpTransferSudtBuilder } from './AcpTransferSudtBuilder';
-import { MintOptions, MintSudtBuilder } from './MintSudtBuilder';
-import { TransferCkbBuilder, TransferCkbOptions } from './TransferCkbBuilder';
+import { TestProvider } from './TestProvider';
+
+const testPrivateKeyIndex = 1;
+jest.setTimeout(120000);
 
 // TODO remove skip when docker available in ci
 test('test mint and transfer sudt with secp256k1', async () => {
-  jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerPrivateKey = provider.assemberPrivateKey;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const issuerPrivateKey = provider.testPrivateKeys[testPrivateKeyIndex]!;
 
   const recipientPrivKey0 = randomHexString(64);
   const recipientPrivKey1 = randomHexString(64);
@@ -103,8 +110,6 @@ test('test mint and transfer sudt with secp256k1', async () => {
 });
 
 test('test non-acp-pw lock mint and transfer', async () => {
-  jest.setTimeout(120000);
-
   const provider = new TestProvider();
   await provider.init();
 
@@ -183,8 +188,6 @@ test('test non-acp-pw lock mint and transfer', async () => {
 });
 
 test('mint sudt with a mix of policies', async () => {
-  jest.setTimeout(120000);
-
   const provider = new TestProvider();
   await provider.init();
 
