@@ -1,56 +1,19 @@
-import { CkbAmount } from '../helpers';
+import {CkbAmount} from '../helpers';
 import {
   AcpTransferSudtBuilder,
   CreateRcUdtInfoCellBuilder,
   MintRcUdtBuilder,
   TransferCkbBuilder,
 } from '../tx-builders';
-import { randomHexString } from '../utils';
-import { InternalRcPwSigner, RCLockSigner } from '../wallets/RcWallet';
-import { TestProvider } from './TestProvider';
+import {randomHexString} from '../utils';
+import {InternalRcPwSigner, RC_MODE, RCEthSigner, RCLockSigner} from '../wallets/RcWallet';
+import {TestProvider} from './TestProvider';
 
-test('test rc signer 1', async () => {
-  console.log(`start test rc signer`);
-  const provider = new TestProvider();
 
-  await provider.init();
-
-  const genesisSigner = provider.getGenesisSigner(1);
-  const rcSigner = new RCLockSigner(randomHexString(64), provider);
-
-  // genesis -> rc-lock
-
-  const address = await rcSigner.getAddress();
-  console.log(`address is ${address}`);
-
-  const builder = new TransferCkbBuilder(
-    {
-      recipients: [
-        {
-          recipient: await rcSigner.getAddress(),
-          amount: '100000000000', //  100 CKB
-          capacityPolicy: 'createAcp',
-        },
-      ],
-    },
-    provider,
-    genesisSigner,
-  );
-  await provider.sendTxUntilCommitted(await genesisSigner.seal(await builder.build()));
-
-  // rc-lock -> genesis
-  const tx = await new TransferCkbBuilder(
-    {
-      recipients: [{ recipient: await genesisSigner.getAddress(), amount: '16100000000', capacityPolicy: 'createAcp' }],
-    },
-    provider,
-    rcSigner,
-  ).build();
-  await provider.sendTxUntilCommitted(await rcSigner.seal(tx));
-});
 
 // TODO remove skip when rc-lock related modules are implemented
 test.skip('test rc signer', async () => {
+  jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
 
@@ -157,4 +120,139 @@ test.skip('test rc udt lock', async () => {
   expect(Number(recipient1UdtBalance2) === 90).toBe(true);
   const recipient2UdtBalance2 = await provider.getUdtBalance(await recipient2Signer.getAddress(), testUdt);
   expect(Number(recipient2UdtBalance2) === 10).toBe(true);
+});
+
+
+test('test rc with acp', async () => {
+  // genesis -> rcSigner1(acp): 100M ckb
+  //         -> rcSigner2(acp): 61 ckb
+
+  // rcSigner1 -> rcSigner2: 1 ckb
+  // rcSigner1 balance: 999998.999...
+
+  // rcSigner2 balance: 62 ckb
+
+  jest.setTimeout(120000);
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(1);
+  const rcSigner1 = new RCLockSigner(randomHexString(64), provider);
+  const rcSigner2 = new RCLockSigner(randomHexString(64), provider);
+
+  // genesis -> rc-lock
+
+
+  const builder = new TransferCkbBuilder(
+      {
+        recipients: [
+          {
+            recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
+            amount: '15000000000', //  100 CKB
+            capacityPolicy: 'createAcp',
+          },
+          {
+            recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
+            amount: '6100000000', //  100 CKB
+            capacityPolicy: 'createAcp',
+          },
+        ],
+      },
+      provider,
+      genesisSigner,
+  );
+  await provider.sendTxUntilCommitted(await genesisSigner.seal(await builder.build()));
+
+  // rc-lock -> genesis
+  const tx = await new TransferCkbBuilder(
+      {
+        recipients: [{ recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP), amount: '100000000', capacityPolicy: 'createAcp' }],
+      },
+      provider,
+      rcSigner1,
+  ).build();
+  const signed = await rcSigner1.seal(tx);
+  console.log(`signed tx is ${JSON.stringify(signed,null,2)}`);
+  await provider.sendTxUntilCommitted(signed);
+});
+
+test('test rc signer 1', async () => {
+  jest.setTimeout(120000);
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(1);
+  const rcSigner = new RCLockSigner(randomHexString(64), provider);
+
+  // genesis -> rc-lock
+
+  const address = await rcSigner.getAddress();
+  console.log(`address is ${address}`);
+
+  const builder = new TransferCkbBuilder(
+      {
+        recipients: [
+          {
+            recipient: await rcSigner.getAddress(),
+            amount: '15000000000', //  100 CKB
+            capacityPolicy: 'createAcp',
+          },
+        ],
+      },
+      provider,
+      genesisSigner,
+  );
+  await provider.sendTxUntilCommitted(await genesisSigner.seal(await builder.build()));
+
+  // rc-lock -> genesis
+  const tx = await new TransferCkbBuilder(
+      {
+        recipients: [{ recipient: await genesisSigner.getAddress(), amount: '6100000000', capacityPolicy: 'createAcp' }],
+      },
+      provider,
+      rcSigner,
+  ).build();
+  const signed = await rcSigner.seal(tx);
+  console.log(`signed tx is ${JSON.stringify(signed,null,2)}`);
+  await provider.sendTxUntilCommitted(signed);
+});
+test('test eth rc signer', async () => {
+  jest.setTimeout(120000);
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(1);
+  const rcSigner = new RCEthSigner(randomHexString(64), provider);
+
+  // genesis -> rc-lock
+
+  const address = await rcSigner.getAddress();
+  console.log(`address is ${address}`);
+
+  const builder = new TransferCkbBuilder(
+      {
+        recipients: [
+          {
+            recipient: await rcSigner.getAddress(),
+            amount: '15000000000', //  100 CKB
+            capacityPolicy: 'createAcp',
+          },
+        ],
+      },
+      provider,
+      genesisSigner,
+  );
+  await provider.sendTxUntilCommitted(await genesisSigner.seal(await builder.build()));
+
+  // rc-lock -> genesis
+  const tx = await new TransferCkbBuilder(
+      {
+        recipients: [{ recipient: await genesisSigner.getAddress(), amount: '6100000000', capacityPolicy: 'createAcp' }],
+      },
+      provider,
+      rcSigner,
+  ).build();
+  const signed = await rcSigner.seal(tx);
+  console.log(`signed tx is ${JSON.stringify(signed,null,2)}`);
+  await provider.sendTxUntilCommitted(signed);
 });
