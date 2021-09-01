@@ -1,41 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { HexString, Transaction } from '@ckb-lumos/base';
 import { AbstractProvider, EntrySigner } from '@ckit/base';
-import {
-  Blake2bHasher,
-  Hasher,
-  Message,
-  Transaction as PwTransaction,
-  transformers,
-  Signer as PwSigner,
-} from '@lay2/pw-core';
-import { Pw } from '../helpers/pw';
-
-class PwAdapterSigner extends PwSigner {
-  constructor(
-    private rawSigner: AbstractSingleEntrySigner,
-    private provider: AbstractProvider,
-    hasher = new Blake2bHasher(),
-  ) {
-    super(hasher);
-  }
-
-  protected async signMessages(messages: Message[]): Promise<string[]> {
-    const sigs = [];
-    const signerLock = Pw.toPwScript(this.provider.parseToScript(await this.rawSigner.getAddress()));
-
-    for (const item of messages) {
-      if (item.lock.sameWith(signerLock)) {
-        const sig = await this.rawSigner.signMessage(item.message);
-        sigs.push(sig);
-      } else {
-        sigs.push('0x');
-      }
-    }
-
-    return sigs;
-  }
-}
+import { Blake2bHasher, Hasher, Transaction as PwTransaction, transformers } from '@lay2/pw-core';
+import { PwAdapterSigner } from './pw/PwAdapterSigner';
 
 interface Options {
   provider: AbstractProvider;

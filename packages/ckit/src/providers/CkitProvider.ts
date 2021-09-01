@@ -42,8 +42,11 @@ export class CkitProvider extends MercuryProvider {
     return script;
   }
 
-  newSudtScript(issuerAddress: Address): Script {
-    const issuerLockHash = utils.computeScriptHash(this.parseToScript(issuerAddress));
+  newSudtScript(issuer: Address | Script): Script {
+    const issuerLockHash =
+      typeof issuer === 'string'
+        ? utils.computeScriptHash(this.parseToScript(issuer))
+        : utils.computeScriptHash(issuer);
 
     return this.newScript('SUDT', issuerLockHash);
   }
