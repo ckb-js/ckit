@@ -6,12 +6,14 @@ import {
   Hexadecimal,
   HexNumber,
   HexString,
+  Input,
   Script,
   Transaction,
   TxPoolInfo,
 } from '@ckb-lumos/base';
 import { predefined, Config as LumosConfig, ScriptConfig } from '@ckb-lumos/config-manager';
 import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
+import { generateTypeIdScript } from './typeid';
 import { Provider, ResolvedOutpoint } from './';
 
 type OptionalConfig = {
@@ -38,6 +40,18 @@ export abstract class AbstractProvider implements Provider {
     if (!scriptConfig) return undefined;
 
     return { code_hash: scriptConfig.CODE_HASH, args, hash_type: scriptConfig.HASH_TYPE };
+  }
+
+  newTypeIdScript(args: HexString): Script {
+    return {
+      code_hash: '0x00000000000000000000000000000000000000000000000000545950455f4944', // Buffer.from('TYPE_ID')
+      hash_type: 'type',
+      args,
+    };
+  }
+
+  generateTypeIdScript(input: Input, outputIndex: HexNumber): Script {
+    return generateTypeIdScript(input, outputIndex);
   }
 
   getCellDep(configKey: string): CellDep | undefined {
