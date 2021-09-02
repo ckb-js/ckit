@@ -1,16 +1,16 @@
-import {HexString} from '@ckb-lumos/base';
-import {key} from '@ckb-lumos/hd';
-import {SerializeRcLockWitnessLock} from '@ckit/rc-lock';
-import {bytes} from '@ckit/utils';
-import {Keccak256Hasher} from '@lay2/pw-core';
-import {Reader} from 'ckb-js-toolkit';
-import {publicKeyCreate} from 'secp256k1';
-import {CkitProvider} from '../providers';
-import {RcIdentity, RcIdentityFlag} from '../tx-builders';
-import {hexToBytes} from '../utils';
-import {AbstractSingleEntrySigner} from './AbstractSingleEntrySigner';
-import {hashMessage} from './PwWallet';
-import {RcSigner} from './RcOwnerWallet';
+import { HexString } from '@ckb-lumos/base';
+import { key } from '@ckb-lumos/hd';
+import { SerializeRcLockWitnessLock } from '@ckit/rc-lock';
+import { bytes } from '@ckit/utils';
+import { Keccak256Hasher } from '@lay2/pw-core';
+import { Reader } from 'ckb-js-toolkit';
+import { publicKeyCreate } from 'secp256k1';
+import { CkitProvider } from '../providers';
+import { RcIdentity, RcIdentityFlag } from '../tx-builders';
+import { hexToBytes } from '../utils';
+import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
+import { hashMessage } from './PwWallet';
+import { RcSigner } from './RcOwnerWallet';
 
 /**
  * Please do not use this signer directly in a production environment,
@@ -143,7 +143,7 @@ export class RCEthSigner extends AbstractSingleEntrySigner implements RcSigner {
     const sig = result.slice(2, -2);
     const signature = '0x' + sig + v.toString(16).padStart(2, '0');
     return Promise.resolve(
-        new Reader(SerializeRcLockWitnessLock({ signature: new Reader(signature) })).serializeJson(),
+      new Reader(SerializeRcLockWitnessLock({ signature: new Reader(signature) })).serializeJson(),
     );
   }
 }
