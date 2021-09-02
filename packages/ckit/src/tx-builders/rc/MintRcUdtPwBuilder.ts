@@ -1,4 +1,5 @@
 import { formatByteLike, toBuffer } from '@ckit/easy-byte';
+import { RcIdentityLockArgs, RcLockFlag, RcSupplyLockArgs, RcSupplyOutputData } from '@ckit/rc-lock';
 import { bytes } from '@ckit/utils';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
@@ -9,7 +10,6 @@ import { nonNullable } from '../../utils';
 import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from '../pw/AbstractPwSenderBuilder';
 import { MintRcUdtOptions } from './MintRcUdtBuilder';
-import { RcIdentityLockArgs, RcLockFlag, RcSupplyLockArgs, RcSupplyOutputData } from './rc-helper';
 
 export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
   constructor(private options: MintRcUdtOptions, protected provider: CkitProvider) {

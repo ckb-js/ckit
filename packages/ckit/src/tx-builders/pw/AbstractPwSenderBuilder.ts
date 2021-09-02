@@ -1,10 +1,10 @@
 import { Address, Script } from '@ckb-lumos/base';
+import { SerializeRcLockWitnessLock } from '@ckit/rc-lock';
 import { Builder, CellDep, WitnessArgs } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
 import { Pw } from '../../helpers/pw';
 import { CkitConfigKeys, CkitProvider } from '../../providers';
 import { boom } from '../../utils';
-import { SerializeRcLockWitnessLock } from '../generated/rc-lock';
 // TODO uncomment me when ran in Aggron or Mainnet
 // import { getCellDeps } from '../unipass/config';
 

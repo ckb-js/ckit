@@ -3,7 +3,7 @@ import {
   AcpTransferSudtBuilder,
   CreateRcUdtInfoCellBuilder,
   MintRcUdtBuilder,
-  RcHelper,
+  RcSupplyLockHelper,
   TransferCkbBuilder,
 } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
@@ -78,8 +78,12 @@ test('test rc udt lock', async () => {
   const createRcUdtInfoTx = await createRcUdtInfoTxBuilder.build();
   await provider.sendTxUntilCommitted(await issuerSigner.seal(createRcUdtInfoTx));
 
-  const helper = new RcHelper(provider);
-  const sudts = await helper.listIssuedUdt({ rcIdentity: issuerSigner.getRcIdentity() });
+  const helper = new RcSupplyLockHelper(provider.mercury, {
+    sudtType: provider.newScriptTemplate('SUDT'),
+    rcLock: provider.newScriptTemplate('RC_LOCK'),
+  });
+
+  const sudts = await helper.listCreatedSudt({ rcIdentity: issuerSigner.getRcIdentity() });
 
   const udtInfo = nonNullable(sudts[0]);
 
@@ -116,7 +120,7 @@ test('test rc udt lock', async () => {
 
   await provider.sendTxUntilCommitted(signedMintTx);
 
-  const testUdt = helper.newSudtScript(udtInfo.rcIdentity, udtInfo.udtId);
+  const testUdt = helper.newSudtScript(udtInfo);
   const recipient1UdtBalance1 = await provider.getUdtBalance(await recipient1Signer.getAddress(), testUdt);
 
   expect(Number(recipient1UdtBalance1) === 100).toBe(true);

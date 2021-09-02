@@ -1,10 +1,10 @@
 import { Hash } from '@ckb-lumos/base';
+import { RcIdentity } from '@ckit/rc-lock';
 import { Transaction } from '@lay2/pw-core';
 import { CkitProvider } from '../../providers';
 import { AbstractTransactionBuilder } from '../AbstractTransactionBuilder';
 import { RecipientOptions } from '../MintSudtBuilder';
 import { MintRcUdtPwBuilder } from './MintRcUdtPwBuilder';
-import { RcIdentity } from './rc-helper';
 
 export interface MintRcUdtOptions {
   /**

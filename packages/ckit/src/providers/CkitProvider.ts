@@ -42,6 +42,14 @@ export class CkitProvider extends MercuryProvider {
     return script;
   }
 
+  newScriptTemplate(configKey: CkitConfigKeys): Omit<Script, 'args'> {
+    const template = this.newScript(configKey);
+    return {
+      code_hash: template.code_hash,
+      hash_type: template.hash_type,
+    };
+  }
+
   newSudtScript(issuer: Address | Script): Script {
     const issuerLockHash =
       typeof issuer === 'string'
