@@ -16,8 +16,8 @@ export abstract class AbstractSingleEntrySigner implements EntrySigner {
     this.adapter = new PwAdapterSigner(this, options.provider, hasher);
   }
 
-  abstract getAddress(): Promise<string>;
-  abstract signMessage(message: HexString): Promise<HexString>;
+  abstract getAddress(): Promise<string> | string;
+  abstract signMessage(message: HexString): Promise<HexString> | HexString;
 
   // TODO refactor to sig entry to adapt mercury
   /**
