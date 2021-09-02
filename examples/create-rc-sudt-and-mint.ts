@@ -1,4 +1,12 @@
-import { CkitProvider, CreateRcUdtInfoCellBuilder, predefined, internal, RcSupplyLockHelper } from '@ckit/ckit';
+import {
+  CkitProvider,
+  CreateRcUdtInfoCellBuilder,
+  predefined,
+  internal,
+  RcSupplyLockHelper,
+  MintRcUdtBuilder,
+  helpers,
+} from '@ckit/ckit';
 
 const { RcInternalSigner } = internal;
 
@@ -29,7 +37,7 @@ async function showBasicInfo() {
 async function createUdt() {
   const { provider, signer } = await getContext();
 
-  const tx = await new CreateRcUdtInfoCellBuilder(
+  const unsigned = await new CreateRcUdtInfoCellBuilder(
     {
       rcIdentity: signer.getRcIdentity(),
       sudtInfo: {
@@ -43,7 +51,7 @@ async function createUdt() {
     provider,
   ).build();
 
-  const signed = await signer.seal(tx);
+  const signed = await signer.seal(unsigned);
 
   const txHash = await provider.sendTransaction(signed);
   console.log(`udt has created with txHash: ${txHash}`);
@@ -62,6 +70,37 @@ async function listUdt() {
   console.log(JSON.stringify(sudts, null, 2));
 }
 
+async function mintUdt() {
+  // from listUdt[n].udtId
+  const udtId = '0x126e754aaa32898714e0466d885f4bb5ffe1723e05acf944b06b2bc9ff3a3a0a';
+
+  const recipients = [
+    {
+      recipient: 'ckt1q2rnvmpk0rc5ej7kv3ecdgvwqkhz0jte0r22d9f0kkpqe35cycur2myv07qpv9y9c0j2mnk6f3kyy4qszsq9g2qxr8j',
+      amount: '0x2540be400', // 10_000_000_000
+      capacityPolicy: 'createAcp' as const, // as const to treat TypeScript compiler
+      additionalCapacity: helpers.CkbAmount.fromCkb('1').toHex(), // additional 1 capacity for tx fee
+    },
+  ];
+
+  const { signer, provider } = await getContext();
+
+  const unsigned = await new MintRcUdtBuilder(
+    {
+      rcIdentity: signer.getRcIdentity(),
+      udtId,
+      recipients,
+    },
+    provider,
+  ).build();
+
+  const signed = await signer.seal(unsigned);
+
+  const txHash = await provider.sendTransaction(signed);
+  console.log(`udt has minted with txHash: ${txHash}`);
+}
+
 showBasicInfo();
 // createUdt();
 // listUdt();
+// mintUdt();
