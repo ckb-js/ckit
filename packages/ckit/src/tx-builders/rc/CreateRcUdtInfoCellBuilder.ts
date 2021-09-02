@@ -1,12 +1,13 @@
-import { Hash, HexString } from '@ckb-lumos/base';
+import { Hash } from '@ckb-lumos/base';
+import { RcIdentity, SudtStaticInfo } from '@ckit/rc-lock';
+import { invariant } from '@ckit/utils';
 import { Transaction } from '@lay2/pw-core';
 import { CkitProvider } from '../../providers';
-import { unimplemented } from '../../utils';
 import { AbstractTransactionBuilder } from '../AbstractTransactionBuilder';
-import { SudtStaticInfo } from './types';
+import { CreateRcUdtInfoCellPwBuilder } from './CreateRcUdtInfoCellPwBuilder';
 
 export interface CreateRcUdtInfoCellOptions {
-  rcIdentity: HexString;
+  rcIdentity: RcIdentity;
   sudtInfo: SudtStaticInfo;
 }
 
@@ -35,18 +36,25 @@ export class CreateRcUdtInfoCellBuilder extends AbstractTransactionBuilder {
     super();
   }
 
-  build(): Promise<Transaction> {
-    throw new Error('unimplemented');
+  async build(): Promise<Transaction> {
+    this.builtTransaction = await new CreateRcUdtInfoCellPwBuilder(this.options, this.provider).build();
+    return this.builtTransaction;
   }
 
   /**
    * the type hash is used as udt id
    */
   getTypeHash(): Hash {
-    unimplemented();
+    if (!this.builtTransaction) throw new Error('Transaction is not built yet');
+    const rcUdtInfoCell = this.builtTransaction.raw.outputs[0];
+    invariant(rcUdtInfoCell && rcUdtInfoCell.type);
+    return rcUdtInfoCell.type.toHash();
   }
 
   getIssuerLockHash(): Hash {
-    unimplemented();
+    if (!this.builtTransaction) throw new Error('Transaction is not built yet');
+    const rcUdtInfoCell = this.builtTransaction.raw.outputs[0];
+    invariant(rcUdtInfoCell && rcUdtInfoCell.type);
+    return rcUdtInfoCell.lock.toHash();
   }
 }

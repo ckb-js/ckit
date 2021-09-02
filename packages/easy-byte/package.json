@@ -1,0 +1,18 @@
+{
+  "name": "@ckit/easy-byte",
+  "version": "0.0.0",
+  "main": "dist",
+  "license": "MIT",
+  "scripts": {
+    "build": "npm run build:js && npm run build:types",
+    "clean": "rimraf -rf ./dist",
+    "build:js": "babel --root-mode upward --extensions '.ts' --out-dir dist src",
+    "build:types": "tsc -p tsconfig.build.json",
+    "watch": "yarn run build:js --watch & yarn run build:types --watch"
+  },
+  "dependencies": {
+    "@ckb-lumos/base": "^0.16.0",
+    "@ckit/base": "*",
+    "@open-rpc/client-js": "^1.7.0"
+  }
+}

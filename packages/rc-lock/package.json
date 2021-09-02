@@ -1,0 +1,20 @@
+{
+  "name": "@ckit/rc-lock",
+  "version": "0.0.0",
+  "main": "dist",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn run build:js && yarn run build:types && copyfiles src/**/generated/* dist -a -u 1",
+    "clean": "rimraf -rf ./dist",
+    "build:js": "babel --root-mode upward --extensions '.ts' --out-dir dist src",
+    "build:types": "tsc -p tsconfig.build.json",
+    "watch": "yarn run build:js --watch & yarn run build:types --watch"
+  },
+  "dependencies": {
+    "@ckit/easy-byte": "*",
+    "@ckit/mercury-client": "*",
+    "@ckit/utils": "*",
+    "ckb-js-toolkit": "^0.10.2",
+    "rxjs": "^7.3.0"
+  }
+}

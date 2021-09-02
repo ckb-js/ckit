@@ -1,10 +1,10 @@
 import { Address, Script } from '@ckb-lumos/base';
+import { SerializeRcLockWitnessLock } from '@ckit/rc-lock';
 import { Builder, CellDep, WitnessArgs } from '@lay2/pw-core';
-import { SerializeRcLockWitnessLock } from '../../tx-builders/generated/rc-lock';
+import { Reader } from 'ckb-js-toolkit';
 import { Pw } from '../../helpers/pw';
 import { CkitConfigKeys, CkitProvider } from '../../providers';
 import { boom } from '../../utils';
-import {Reader} from "@lay2/pw-core/build/main/ckb-js-toolkit/reader";
 // TODO uncomment me when ran in Aggron or Mainnet
 // import { getCellDeps } from '../unipass/config';
 
@@ -67,18 +67,6 @@ export abstract class AbstractPwSenderBuilder extends Builder {
         output_type: '',
       };
     }
-    if (isTemplateOf('RC_LOCK', address)) {
-      const params = {
-        signature: new Reader('0x' +'0'.repeat(130)),
-      };
-      const data =  buf2hex(SerializeRcLockWitnessLock(params));
-      console.log(`witness is ${data}`);
-      return {
-        lock: '0x' + '0'.repeat(data.length),
-        input_type: '',
-        output_type: '',
-      };
-    }
 
     if (isTemplateOf('UNIPASS', address)) {
       return {
@@ -88,9 +76,15 @@ export abstract class AbstractPwSenderBuilder extends Builder {
       };
     }
 
+    if (isTemplateOf('RC_LOCK', address)) {
+      const byteLength = SerializeRcLockWitnessLock({ signature: new Reader('0x' + '0'.repeat(130)) }).byteLength;
+      return {
+        lock: '0x' + '0'.repeat(byteLength * 2),
+        input_type: '',
+        output_type: '',
+      };
+    }
+
     boom(`Unsupported lock ${address}`);
   }
-}
-function buf2hex(buffer: ArrayBuffer) {
-  return Array.prototype.map.call(new Uint8Array(buffer), (x) => ('00' + x.toString(16)).slice(-2)).join('');
 }

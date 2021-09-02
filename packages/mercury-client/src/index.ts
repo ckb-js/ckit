@@ -1,5 +1,4 @@
-import { Hash, HexNumber, HexString, Script } from '@ckb-lumos/base';
-import { ResolvedOutpoint } from '@ckit/base';
+import { Hash, HexNumber, HexString, OutPoint, Output, Script } from '@ckb-lumos/base';
 import { Client, HTTPTransport, RequestManager } from '@open-rpc/client-js';
 
 export interface SearchKey {
@@ -18,6 +17,14 @@ export interface GetCellsPayload {
   order?: 'asc' | 'desc';
   limit?: HexNumber;
   after_cursor?: HexString;
+}
+
+export interface ResolvedOutpoint {
+  block_number: HexNumber;
+  out_point: OutPoint;
+  output: Output;
+  output_data: HexString;
+  tx_index: HexNumber;
 }
 
 interface GetPayloadResponse {
