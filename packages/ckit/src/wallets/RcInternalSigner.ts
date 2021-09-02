@@ -6,7 +6,7 @@ import { Reader } from 'ckb-js-toolkit';
 import { CkitProvider } from '../providers';
 import { RcIdentity, RcIdentityFlag } from '../tx-builders';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
-import { RcSigner } from './RcWallet';
+import { RcSigner } from './RcOwnerWallet';
 
 /**
  * Please do not use this signer directly in a production environment,
@@ -28,7 +28,7 @@ export class RcInternalSigner extends AbstractSingleEntrySigner implements RcSig
     };
   }
 
-  async getAddress(): Promise<string> {
+  getAddress(): string {
     const config = this.ckitProvider.getScriptConfig('RC_LOCK');
     return this.ckitProvider.parseToAddress({
       code_hash: config.CODE_HASH,
