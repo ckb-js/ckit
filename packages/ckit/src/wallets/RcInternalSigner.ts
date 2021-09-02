@@ -1,10 +1,10 @@
 import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
+import { SerializeRcLockWitnessLock } from '@ckit/rc-lock';
 import { bytes } from '@ckit/utils';
 import { Reader } from 'ckb-js-toolkit';
 import { CkitProvider } from '../providers';
 import { RcIdentity, RcIdentityFlag } from '../tx-builders';
-import { SerializeRcLockWitnessLock } from '../tx-builders/generated/rc-lock';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 import { RcSigner } from './RcWallet';
 

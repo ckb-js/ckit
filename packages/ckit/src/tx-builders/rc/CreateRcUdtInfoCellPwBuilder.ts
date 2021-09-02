@@ -1,5 +1,6 @@
 import { utils } from '@ckb-lumos/base';
 import { formatByteLike } from '@ckit/easy-byte/dist';
+import { SerializeUdtInfo, RcSupplyOutputData } from '@ckit/rc-lock';
 import { bytes, invariant } from '@ckit/utils';
 import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
@@ -7,10 +8,8 @@ import { CkbAmount } from '../../helpers';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { byteLenOfRcCell } from '../builder-utils';
-import { SerializeUdtInfo } from '../generated/rc_udt_info';
 import { AbstractPwSenderBuilder } from '../pw/AbstractPwSenderBuilder';
 import { CreateRcUdtInfoCellOptions } from './CreateRcUdtInfoCellBuilder';
-import { RcSupplyOutputData } from './rc-helper';
 
 export class CreateRcUdtInfoCellPwBuilder extends AbstractPwSenderBuilder {
   constructor(private options: CreateRcUdtInfoCellOptions, protected provider: CkitProvider) {

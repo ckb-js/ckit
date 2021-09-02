@@ -1,10 +1,10 @@
 import { Hash } from '@ckb-lumos/base';
+import { RcIdentity, SudtStaticInfo } from '@ckit/rc-lock';
 import { invariant } from '@ckit/utils';
 import { Transaction } from '@lay2/pw-core';
 import { CkitProvider } from '../../providers';
 import { AbstractTransactionBuilder } from '../AbstractTransactionBuilder';
 import { CreateRcUdtInfoCellPwBuilder } from './CreateRcUdtInfoCellPwBuilder';
-import { RcIdentity, SudtStaticInfo } from './rc-helper';
 
 export interface CreateRcUdtInfoCellOptions {
   rcIdentity: RcIdentity;

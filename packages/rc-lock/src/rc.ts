@@ -1,13 +1,11 @@
-import { Hash, HashType, HexNumber, HexString, Script } from '@ckb-lumos/base';
-import { ResolvedOutpoint } from '@ckit/base';
+import { Hash, HexNumber, HexString, Script, utils } from '@ckb-lumos/base';
 import { createField, createFixedStruct, Field, formatByteLike, toBuffer, U128LE, U8 } from '@ckit/easy-byte';
-import { SearchKey } from '@ckit/mercury-client';
+import { MercuryClient, SearchKey, ResolvedOutpoint } from '@ckit/mercury-client';
 import { bytes } from '@ckit/utils';
 import { Reader } from 'ckb-js-toolkit';
-import { concatMap, expand, from, lastValueFrom, takeWhile, toArray } from 'rxjs';
-import { CkitProvider } from '../../providers';
-import { nonNullable } from '../../utils';
-import { UdtInfo } from '../generated/rc_udt_info';
+import { from, lastValueFrom } from 'rxjs';
+import { concatMap, expand, toArray, takeWhile } from 'rxjs/operators';
+import { UdtInfo } from './generated/rc_udt_info';
 
 function Bytes(byteWidth: number): Field<HexString> {
   return {
@@ -38,6 +36,9 @@ export const RcSupplyOutputData = createFixedStruct()
   .field('max_supply', U128LE)
   .field('sudt_script_hash', Bytes(32));
 
+/**
+ * {@link https://github.com/XuJiandong/ckb-c-stdlib/blob/4eca989f8a/ckb_identity.h#L45-L51 RC Identity}
+ */
 export enum RcIdentityFlag {
   CKB = 0x00,
   ETH = 0x01,
@@ -83,11 +84,10 @@ export interface SudtInfo extends SudtStaticInfo {
   rcIdentity: RcIdentity;
 }
 
+type ScriptTemplate = Omit<Script, 'args'>;
 export interface RcHelperConfig {
-  rcLock: {
-    code_hash: HexString;
-    hash_type: HashType;
-  };
+  rcLock: ScriptTemplate;
+  sudtType: ScriptTemplate;
 }
 
 /**
@@ -117,25 +117,17 @@ export function convertToSudtInfo(cell: ResolvedOutpoint): SudtInfo {
   };
 }
 
-export class RcHelper {
-  private config: RcHelperConfig;
+export class RcSupplyLockHelper {
+  constructor(private indexer: MercuryClient, private config: RcHelperConfig) {}
 
-  constructor(private provider: CkitProvider, config: Partial<RcHelperConfig> = {}) {
-    this.config = {
-      rcLock: {
-        code_hash: nonNullable(config.rcLock?.code_hash ?? provider.getScriptConfig('RC_LOCK')?.CODE_HASH),
-        hash_type: nonNullable(config.rcLock?.hash_type ?? provider.getScriptConfig('RC_LOCK')?.HASH_TYPE),
-      },
-    };
-  }
-
-  async listIssuedUdt(options: { rcIdentity: RcIdentity }): Promise<SudtInfo[]> {
-    const mercury = this.provider.mercury;
+  async listCreatedSudt(options: { rcIdentity: RcIdentity; udtId?: Hash }): Promise<SudtInfo[]> {
+    const { rcIdentity, udtId } = options;
+    const mercury = this.indexer;
 
     const searchKey: SearchKey = {
       script: {
         ...this.config.rcLock,
-        args: bytes.concat(options.rcIdentity.flag, options.rcIdentity.pubkeyHash, RcLockFlag.SUPPLY_MASK),
+        args: bytes.concat(rcIdentity.flag, rcIdentity.pubkeyHash, RcLockFlag.SUPPLY_MASK, udtId ?? ''),
       },
       script_type: 'lock',
     };
@@ -150,17 +142,26 @@ export class RcHelper {
     return supplyCells.map(convertToSudtInfo);
   }
 
-  newSudtScript(rcIdentity: RcIdentity, udtId: Hash): Script {
-    return this.provider.newSudtScript({
+  /**
+   * generate sudt script which was issued by a rc_lock_supply
+   * @param options
+   */
+  newSudtScript({ rcIdentity, udtId }: { rcIdentity: RcIdentity; udtId: Hash }): Script {
+    const infoLock = {
       ...this.config.rcLock,
       args: bytes.toHex(
         RcSupplyLockArgs.encode({
-          rc_lock_flag: RcLockFlag.SUPPLY_MASK,
           rc_identity_flag: rcIdentity.flag,
           rc_identity_pubkey_hash: rcIdentity.pubkeyHash,
+          rc_lock_flag: RcLockFlag.SUPPLY_MASK,
           type_id_hash: udtId,
         }),
       ),
-    });
+    };
+
+    return {
+      ...this.config.sudtType,
+      args: utils.computeScriptHash(infoLock),
+    };
   }
 }
