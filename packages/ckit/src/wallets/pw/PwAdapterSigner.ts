@@ -12,6 +12,7 @@ import {
   SerializeWitnessArgs,
   Reader,
 } from '@lay2/pw-core';
+import { Pw } from '../../helpers/pw';
 import { AbstractSingleEntrySigner } from '../AbstractSingleEntrySigner';
 
 export class PwAdapterSigner {
@@ -23,9 +24,11 @@ export class PwAdapterSigner {
 
   protected async signMessages(messages: Message[]): Promise<string[]> {
     const sigs = [];
-    // const signerLock = Pw.toPwScript(this.provider.parseToScript(await this.rawSigner.getAddress()));
+    const signerLock = Pw.toPwScript(this.provider.parseToScript(await this.rawSigner.getAddress()));
 
     for (const item of messages) {
+      if (item.lock.codeHash !== signerLock.codeHash || item.lock.hashType !== signerLock.hashType) continue;
+
       const sig = await this.rawSigner.signMessage(item.message);
       sigs.push(sig);
     }

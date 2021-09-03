@@ -15,7 +15,7 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
 
   async build(): Promise<Transaction> {
     const recipientCreatedCells = this.options.recipients
-      .filter((item) => item.capacityPolicy === 'createAcp')
+      .filter((item) => item.capacityPolicy === 'createCell')
       .map((item) => new Cell(new Amount(item.amount, 0), Pw.toPwScript(this.provider.parseToScript(item.recipient))));
 
     const acpOptions = this.options.recipients.filter((item) => item.capacityPolicy === 'findAcp');

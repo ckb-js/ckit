@@ -11,7 +11,7 @@ type CapacityPolicy =
   // mint only when recipient has ACP cell
   | 'findAcp'
   // mint and create an ACP cell for recipient
-  | 'createAcp';
+  | 'createCell';
 
 export interface TransferCkbOptions {
   recipients: RecipientOption[];

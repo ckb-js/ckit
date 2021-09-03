@@ -70,7 +70,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
       recipient: recipientAddr0,
       additionalCapacity: Math.ceil(Math.random() * 10 ** 8).toString(),
       amount: '0',
-      capacityPolicy: 'createAcp',
+      capacityPolicy: 'createCell',
     },
 
     // mint random udt
@@ -78,7 +78,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
       recipient: recipientAddr1,
       additionalCapacity: Math.ceil(Math.random() * 10 ** 8).toString(),
       amount: Math.ceil(Math.random() * 10 ** 8).toString(),
-      capacityPolicy: 'createAcp',
+      capacityPolicy: 'createCell',
     },
   ];
 
@@ -125,7 +125,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const transferCkbRecipients: TransferCkbOptions['recipients'] = Array(1000).fill({
     recipient: await pwSigner.getAddress(),
     amount: String(61n * 10n ** 8n),
-    capacityPolicy: 'createAcp',
+    capacityPolicy: 'createCell',
   });
   debug(`start transfer %o`, { from: await genesisSigner.getAddress(), to: transferCkbRecipients });
   const unsignedTransferCkbTx = await new TransferCkbBuilder(
@@ -143,14 +143,14 @@ test('test non-acp-pw lock mint and transfer', async () => {
     {
       recipient: await recipient1Signer.getAddress(),
       amount: '0',
-      capacityPolicy: 'createAcp',
+      capacityPolicy: 'createCell',
       additionalCapacity: CkbAmount.fromCkb(1).toString(),
     },
     // mint 1000 unit udt with additional 5 ckb
     {
       recipient: await recipient2Signer.getAddress(),
       amount: '1000',
-      capacityPolicy: 'createAcp',
+      capacityPolicy: 'createCell',
       additionalCapacity: CkbAmount.fromCkb(5).toString(),
     },
   ];
@@ -201,7 +201,7 @@ test('mint sudt with a mix of policies', async () => {
   const failedTx = new MintSudtBuilder(
     {
       recipients: [
-        { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+        { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
         { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
         { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
       ],
@@ -210,7 +210,7 @@ test('mint sudt with a mix of policies', async () => {
     issuerSigner,
   ).build();
 
-  // cannot createAcp for an address without acp cell
+  // cannot createCell for an address without acp cell
   await expect(failedTx).rejects.toBeTruthy();
 
   // issuer -> recipient1: 0
@@ -221,13 +221,13 @@ test('mint sudt with a mix of policies', async () => {
       await new MintSudtBuilder(
         {
           recipients: [
-            { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createAcp' },
+            { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createCell' },
 
-            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
 
             // the sudt balance of recipient3 will be split into 2 cells
-            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
-            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
+            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
           ],
         },
         provider,
@@ -253,7 +253,7 @@ test('mint sudt with a mix of policies', async () => {
             { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
 
             // the sudt balance of recipient2 will be split into 2 cells
-            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createAcp' },
+            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
 
             { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
           ],
@@ -311,7 +311,7 @@ test('test serialize and deserialized', async () => {
         {
           recipient: await provider.generateAcpSigner().getAddress(),
           amount: '6100000000',
-          capacityPolicy: 'createAcp',
+          capacityPolicy: 'createCell',
         },
       ],
     },
