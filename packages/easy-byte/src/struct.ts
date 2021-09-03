@@ -34,16 +34,19 @@ type NamedField<T = any, K extends string = string> = [K, Field<T>];
 
 export interface Struct<S> {
   readonly fields: NamedField[];
+  readonly byteWidth: number;
   field: <Name extends string, T>(name: Name, type: Field<T>) => Struct<S & { [K in Name]: T }>;
   decode: (buf: Buffer) => S;
   encode: (obj: S) => Buffer;
 }
 
 export class FixedStruct<T> implements Struct<T> {
-  fields: NamedField[];
+  readonly fields: NamedField[];
+  readonly byteWidth: number;
 
   constructor(fields: NamedField[] = []) {
     this.fields = fields;
+    this.byteWidth = fields.reduce((width, field) => width + field[1].byteWidth, 0);
   }
 
   field<Name extends string, F>(name: Name, field: Field<F>): Struct<T & Record<Name, F>> {
