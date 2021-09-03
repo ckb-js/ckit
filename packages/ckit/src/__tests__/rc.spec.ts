@@ -7,7 +7,7 @@ import {
   TransferCkbBuilder,
 } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
-import { RcInternalSigner } from '../wallets/RcInternalSigner';
+import { RC_MODE, RCEthSigner, RcInternalSigner, RCLockSigner } from '../wallets/RcInternalSigner';
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeysIndex = 0;
@@ -18,7 +18,7 @@ test('test rc signer', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const rcSigner = new RcInternalSigner(randomHexString(64), provider);
+  const rcSigner = new RCLockSigner(randomHexString(64), provider);
 
   // genesis -> rc: 100M ckb
   await provider.transferCkbFromGenesis(await rcSigner.getAddress(), CkbAmount.fromCkb(1000000).toHex(), {
@@ -142,7 +142,108 @@ test('test rc udt lock', async () => {
   expect(Number(recipient2UdtBalance2) === 10).toBe(true);
 });
 
-// TODO test with RC eth identity
-test.skip('test rc eth identity', () => {
-  // TODO
+test('test rc with acp', async () => {
+  // genesis -> rcSigner1(acp): 64 ckb
+  //         -> rcSigner2(acp): 62 ckb
+  // rcSigner1 -> rcSigner2: 1 ckb
+  // expect(rcSigner1Balance < 63 ckb).toBe(true)
+  // expect(rcSigner1Balance > 62.9 ckb).toBe(true)
+  // expect(rcSigner2Balance  === 62 ckb).toBe(true)
+
+  jest.setTimeout(120000);
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeysIndex);
+  const rcSigner1 = new RCLockSigner(randomHexString(64), provider);
+  const rcSigner2 = new RCLockSigner(randomHexString(64), provider);
+
+  // genesis -> rc-lock
+
+  await provider.sendTxUntilCommitted(
+    await genesisSigner.seal(
+      await new TransferCkbBuilder(
+        {
+          recipients: [
+            {
+              recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
+              amount: '6700000000', //  100 CKB
+              capacityPolicy: 'createAcp',
+            },
+            {
+              recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
+              amount: '6500000000', //  65 CKB
+              capacityPolicy: 'createAcp',
+            },
+          ],
+        },
+        provider,
+        genesisSigner,
+      ).build(),
+    ),
+  );
+
+  const recipient = await rcSigner2.getAddressByMode(RC_MODE.ACP);
+  // rcSigner1 -> rcSigner2: 1 ckb
+  const signed = await rcSigner1.seal(
+    await new TransferCkbBuilder(
+      {
+        recipients: [
+          {
+            recipient: recipient,
+            amount: '100000000',
+            capacityPolicy: 'findAcp',
+          },
+        ],
+      },
+      provider,
+      rcSigner1,
+    ).build(),
+  );
+  await provider.sendTxUntilCommitted(signed);
+  const recipientBalance = await provider.getCkbLiveCellsBalance(recipient);
+  expect(CkbAmount.fromShannon(recipientBalance).eq(CkbAmount.fromCkb(66))).toBe(true);
+});
+
+test('test eth rc signer', async () => {
+  jest.setTimeout(120000);
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeysIndex);
+  const rcSigner = new RCEthSigner(randomHexString(64), provider);
+  await provider.sendTxUntilCommitted(
+    await genesisSigner.seal(
+      await new TransferCkbBuilder(
+        {
+          recipients: [
+            {
+              recipient: await rcSigner.getAddress(),
+              amount: '15000000000', //  100 CKB
+              capacityPolicy: 'createAcp',
+            },
+          ],
+        },
+        provider,
+        genesisSigner,
+      ).build(),
+    ),
+  );
+
+  // rc-lock -> ramdom-acp
+  const recipient = provider.generateAcpSigner();
+
+  await provider.sendTxUntilCommitted(
+    await rcSigner.seal(
+      await new TransferCkbBuilder(
+        {
+          recipients: [{ recipient: await recipient.getAddress(), amount: '6100000000', capacityPolicy: 'createAcp' }],
+        },
+        provider,
+        rcSigner,
+      ).build(),
+    ),
+  );
+  const received = await provider.getCkbLiveCellsBalance(await recipient.getAddress());
+  expect(CkbAmount.fromShannon(received).eq(CkbAmount.fromCkb(61))).toBe(true);
 });
