@@ -84,7 +84,7 @@ function useWallet() {
     autorun(() => {
       setSignerAddress(undefined);
       const wallet = wallets.find((value) => value.descriptor.name === currentWalletName);
-      void wallet?.signer?.getAddress().then((address) => {
+      void Promise.resolve(wallet?.signer?.getAddress()).then((address) => {
         setSignerAddress(address);
         setIsInitialized(true);
       });
