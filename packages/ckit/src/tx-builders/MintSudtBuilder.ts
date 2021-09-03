@@ -11,7 +11,7 @@ type CapacityPolicy =
   | 'findAcp'
   // mint and create a cell for recipient
   // TODO rename to createCell
-  | 'createAcp';
+  | 'createCell';
 
 export type RecipientOptions = {
   recipient: Address;

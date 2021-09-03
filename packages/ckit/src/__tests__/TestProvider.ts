@@ -101,7 +101,7 @@ export class TestProvider extends CkitProvider {
       await this.getGenesisSigner(testPrivateKeysIndex).seal(
         await new TransferCkbBuilder(
           {
-            recipients: [{ recipient, capacityPolicy: 'createAcp', amount }],
+            recipients: [{ recipient, capacityPolicy: 'createCell', amount }],
           },
           this,
           this.getGenesisSigner(testPrivateKeysIndex),
