@@ -2,7 +2,6 @@
   "name": "ckit-app",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://homura.github.io/ckit-app-preview",
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
     "@ckit/base": "*",
