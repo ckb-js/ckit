@@ -142,20 +142,19 @@ test('test rc udt lock', async () => {
   expect(Number(recipient2UdtBalance2) === 10).toBe(true);
 });
 
-test.skip('test rc with acp', async () => {
-  // genesis -> rcSigner1(acp): 100M ckb
-  //         -> rcSigner2(acp): 61 ckb
-
+test('test rc with acp', async () => {
+  // genesis -> rcSigner1(acp): 64 ckb
+  //         -> rcSigner2(acp): 62 ckb
   // rcSigner1 -> rcSigner2: 1 ckb
-  // rcSigner1 balance: 999998.999...
-
-  // rcSigner2 balance: 62 ckb
+  // expect(rcSigner1Balance < 63 ckb).toBe(true)
+  // expect(rcSigner1Balance > 62.9 ckb).toBe(true)
+  // expect(rcSigner2Balance  === 62 ckb).toBe(true)
 
   jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
 
-  const genesisSigner = provider.getGenesisSigner(1);
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeysIndex);
   const rcSigner1 = new RCLockSigner(randomHexString(64), provider);
   const rcSigner2 = new RCLockSigner(randomHexString(64), provider);
 
@@ -168,12 +167,12 @@ test.skip('test rc with acp', async () => {
           recipients: [
             {
               recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
-              amount: '15000000000', //  100 CKB
+              amount: '6400000000', //  100 CKB
               capacityPolicy: 'createAcp',
             },
             {
               recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
-              amount: '6500000000', //  65 CKB
+              amount: '6200000000', //  65 CKB
               capacityPolicy: 'createAcp',
             },
           ],
@@ -184,15 +183,16 @@ test.skip('test rc with acp', async () => {
     ),
   );
 
-  // rc-lock -> genesis
+  const recipient = await rcSigner2.getAddressByMode(RC_MODE.ACP);
+  // rcSigner1 -> rcSigner2: 1 ckb
   const signed = await rcSigner1.seal(
     await new TransferCkbBuilder(
       {
         recipients: [
           {
-            recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
-            amount: '200000000',
-            capacityPolicy: 'createAcp',
+            recipient: recipient,
+            amount: '100000000',
+            capacityPolicy: 'findAcp',
           },
         ],
       },
@@ -201,6 +201,8 @@ test.skip('test rc with acp', async () => {
     ).build(),
   );
   await provider.sendTxUntilCommitted(signed);
+  const recipientBalance = await provider.getCkbLiveCellsBalance(recipient);
+  expect(CkbAmount.fromShannon(recipientBalance).eq(CkbAmount.fromCkb(63))).toBe(true);
 });
 
 test('test eth rc signer', async () => {
@@ -208,7 +210,7 @@ test('test eth rc signer', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const genesisSigner = provider.getGenesisSigner(1);
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeysIndex);
   const rcSigner = new RCEthSigner(randomHexString(64), provider);
   await provider.sendTxUntilCommitted(
     await genesisSigner.seal(
@@ -228,7 +230,7 @@ test('test eth rc signer', async () => {
     ),
   );
 
-  // rc-lock -> genesis
+  // rc-lock -> ramdom-acp
   const recipient = provider.generateAcpSigner();
 
   await provider.sendTxUntilCommitted(

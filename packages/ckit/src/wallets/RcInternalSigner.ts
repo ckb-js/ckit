@@ -110,7 +110,6 @@ export class RCEthSigner extends AbstractSingleEntrySigner implements RcSigner {
   readonly #privateKey: HexString;
   constructor(privateKey: HexString, private ckitProvider: CkitProvider) {
     super({ provider: ckitProvider });
-    console.log(`privkey is ${privateKey}`);
     this.#privateKey = privateKey;
   }
 
