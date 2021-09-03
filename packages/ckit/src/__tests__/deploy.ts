@@ -111,6 +111,13 @@ async function deployScripts(
       INDEX: '0x3',
       DEP_TYPE: 'code',
     },
+    RC_LOCK: {
+      CODE_HASH: calculateCodeHashByBin(nonNullable(scriptBins[4])),
+      HASH_TYPE: 'data',
+      TX_HASH: txHash,
+      INDEX: '0x4',
+      DEP_TYPE: 'code',
+    },
     SECP256K1_BLAKE160: secp256k1Config,
 
     // TODO refactor needed, split it into the deploy script and predefined script
@@ -162,11 +169,13 @@ export async function deployCkbScripts(
   const PATH_ACP_DEP = path.join(scriptPath, 'anyone_can_pay');
   const PATH_PW_ACP_DEP = path.join(scriptPath, 'pw_anyone_can_pay');
   const PATH_PW_NON_ACP_DEP = path.join(scriptPath, 'pw_non_anyone_can_pay');
+  const RC_DEP = path.join(scriptPath, 'rc_lock');
 
   const sudtBin = fs.readFileSync(PATH_SUDT_DEP);
   const acpBin = fs.readFileSync(PATH_ACP_DEP);
   const pwAcpBin = fs.readFileSync(PATH_PW_ACP_DEP);
   const pwNonAcpBin = fs.readFileSync(PATH_PW_NON_ACP_DEP);
+  const rcBin = fs.readFileSync(RC_DEP);
 
-  return deployScripts(provider, [sudtBin, acpBin, pwAcpBin, pwNonAcpBin], ckbPrivateKey);
+  return deployScripts(provider, [sudtBin, acpBin, pwAcpBin, pwNonAcpBin, rcBin], ckbPrivateKey);
 }

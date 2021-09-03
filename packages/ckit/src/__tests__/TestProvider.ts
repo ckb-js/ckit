@@ -1,11 +1,12 @@
 import fs from 'fs';
-import { Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
+import { Address, Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
 import { EntrySigner } from '@ckit/base';
 import { TippyClient } from '@ckit/tippy-client';
 import { createDebugger, debug } from '@ckit/utils';
 import appRootPath from 'app-root-path';
 import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
+import { TransferCkbBuilder } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { deployCkbScripts } from './deploy';
@@ -88,6 +89,25 @@ export class TestProvider extends CkitProvider {
 
   generateAcpSigner(key: CkitConfigKeys = 'ANYONE_CAN_PAY'): EntrySigner {
     return new Secp256k1Signer(randomHexString(64), this, this.newScript(key));
+  }
+
+  async transferCkbFromGenesis(
+    recipient: Address,
+    amount: HexNumber,
+    config: { testPrivateKeysIndex?: number } = {},
+  ): Promise<Hash> {
+    const { testPrivateKeysIndex = 0 } = config;
+    return this.sendTxUntilCommitted(
+      await this.getGenesisSigner(testPrivateKeysIndex).seal(
+        await new TransferCkbBuilder(
+          {
+            recipients: [{ recipient, capacityPolicy: 'createCell', amount }],
+          },
+          this,
+          this.getGenesisSigner(testPrivateKeysIndex),
+        ).build(),
+      ),
+    );
   }
 }
 

@@ -8,7 +8,7 @@ import { CkitProvider } from '../providers';
 import { hexToBytes } from '../utils';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 
-interface EthereumProvider {
+export interface EthereumProvider {
   selectedAddress: string;
   isMetaMask?: boolean;
   enable: () => Promise<string[]>;
@@ -17,7 +17,7 @@ interface EthereumProvider {
   request: (payload: { method: 'personal_sign'; params: [string /*from*/, string /*message*/] }) => Promise<string>;
 }
 
-function detect(): Promise<EthereumProvider> {
+export function detect(): Promise<EthereumProvider> {
   return detectEthereumProvider().then(() => window.ethereum as EthereumProvider);
 }
 

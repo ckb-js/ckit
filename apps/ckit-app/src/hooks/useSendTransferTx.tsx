@@ -28,7 +28,7 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
         return txBuilder.build();
       } else {
         const txBuilder = new TransferCkbBuilder(
-          { recipients: [{ recipient: input.recipient, amount: input.amount, capacityPolicy: 'createAcp' }] },
+          { recipients: [{ recipient: input.recipient, amount: input.amount, capacityPolicy: 'createCell' }] },
           provider,
           signer,
         );

@@ -18,7 +18,7 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
 
     // capacity provided by issuer
     const createdRecipientCells = this.options.recipients
-      .filter((item) => item.capacityPolicy === 'createAcp')
+      .filter((item) => item.capacityPolicy === 'createCell')
       .map(
         (item) =>
           new Cell(

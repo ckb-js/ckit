@@ -19,7 +19,7 @@ export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueT
         amount: input.amount,
       };
       if (input.operationKind === 'invite') {
-        recipientsParams.capacityPolicy = 'createAcp';
+        recipientsParams.capacityPolicy = 'createCell';
         recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toHex();
         recipientsParams.amount = '0';
       } else {
