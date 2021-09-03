@@ -167,12 +167,12 @@ test('test rc with acp', async () => {
           recipients: [
             {
               recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
-              amount: '6400000000', //  100 CKB
+              amount: '6700000000', //  100 CKB
               capacityPolicy: 'createAcp',
             },
             {
               recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
-              amount: '6200000000', //  65 CKB
+              amount: '6500000000', //  65 CKB
               capacityPolicy: 'createAcp',
             },
           ],
@@ -202,7 +202,7 @@ test('test rc with acp', async () => {
   );
   await provider.sendTxUntilCommitted(signed);
   const recipientBalance = await provider.getCkbLiveCellsBalance(recipient);
-  expect(CkbAmount.fromShannon(recipientBalance).eq(CkbAmount.fromCkb(63))).toBe(true);
+  expect(CkbAmount.fromShannon(recipientBalance).eq(CkbAmount.fromCkb(66))).toBe(true);
 });
 
 test('test eth rc signer', async () => {
