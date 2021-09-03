@@ -34,7 +34,7 @@ test('test rc signer', async () => {
           recipients: [
             {
               recipient: await recipient.getAddress(),
-              capacityPolicy: 'createAcp',
+              capacityPolicy: 'createCell',
               amount: CkbAmount.fromCkb(100).toHex(),
             },
           ],
@@ -102,14 +102,14 @@ test('test rc udt lock', async () => {
             recipient: await recipient1Signer.getAddress(),
             // 1ckb additional capacity for tx fee
             additionalCapacity: CkbAmount.fromCkb(1).toHex(),
-            capacityPolicy: 'createAcp',
+            capacityPolicy: 'createCell',
             amount: '100',
           },
           {
             recipient: await recipient2Signer.getAddress(),
             // 1ckb additional capacity for tx fee
             additionalCapacity: CkbAmount.fromCkb(1).toHex(),
-            capacityPolicy: 'createAcp',
+            capacityPolicy: 'createCell',
             amount: '0',
           },
         ],
@@ -168,12 +168,12 @@ test('test rc with acp', async () => {
             {
               recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
               amount: '6700000000', //  100 CKB
-              capacityPolicy: 'createAcp',
+              capacityPolicy: 'createCell',
             },
             {
               recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
               amount: '6500000000', //  65 CKB
-              capacityPolicy: 'createAcp',
+              capacityPolicy: 'createCell',
             },
           ],
         },
@@ -220,7 +220,7 @@ test('test eth rc signer', async () => {
             {
               recipient: await rcSigner.getAddress(),
               amount: '15000000000', //  100 CKB
-              capacityPolicy: 'createAcp',
+              capacityPolicy: 'createCell',
             },
           ],
         },
@@ -237,7 +237,7 @@ test('test eth rc signer', async () => {
     await rcSigner.seal(
       await new TransferCkbBuilder(
         {
-          recipients: [{ recipient: await recipient.getAddress(), amount: '6100000000', capacityPolicy: 'createAcp' }],
+          recipients: [{ recipient: await recipient.getAddress(), amount: '6100000000', capacityPolicy: 'createCell' }],
         },
         provider,
         rcSigner,
