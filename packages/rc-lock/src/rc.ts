@@ -120,7 +120,7 @@ export function convertToSudtInfo(cell: ResolvedOutpoint): SudtInfo {
 export class RcSupplyLockHelper {
   constructor(private indexer: MercuryClient, private config: RcHelperConfig) {}
 
-  async listCreatedSudt(options: { rcIdentity: RcIdentity; udtId?: Hash }): Promise<SudtInfo[]> {
+  async listCreatedInfoCells(options: { rcIdentity: RcIdentity; udtId?: Hash }): Promise<ResolvedOutpoint[]> {
     const { rcIdentity, udtId } = options;
     const mercury = this.indexer;
 
@@ -138,8 +138,12 @@ export class RcSupplyLockHelper {
       toArray(),
     );
 
-    const supplyCells = await lastValueFrom(supplyCells$);
-    return supplyCells.map(convertToSudtInfo);
+    return lastValueFrom(supplyCells$);
+  }
+
+  async listCreatedSudt(options: { rcIdentity: RcIdentity; udtId?: Hash }): Promise<SudtInfo[]> {
+    const infoCells = await this.listCreatedInfoCells(options);
+    return infoCells.map(convertToSudtInfo);
   }
 
   /**

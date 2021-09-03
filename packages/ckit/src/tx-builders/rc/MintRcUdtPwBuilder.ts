@@ -1,5 +1,5 @@
 import { formatByteLike, toBuffer } from '@ckit/easy-byte';
-import { RcIdentityLockArgs, RcLockFlag, RcSupplyLockArgs, RcSupplyOutputData } from '@ckit/rc-lock';
+import { RcIdentityLockArgs, RcSupplyLockArgs, RcSupplyLockHelper, RcSupplyOutputData } from '@ckit/rc-lock';
 import { bytes } from '@ckit/utils';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
@@ -17,24 +17,14 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
   }
 
   async build(): Promise<Transaction> {
-    const rcSupplyCell = await this.provider.mercury.get_cells({
-      search_key: {
-        script: this.provider.newScript(
-          'RC_LOCK',
-          bytes.toHex(
-            RcSupplyLockArgs.encode({
-              rc_identity_flag: this.options.rcIdentity.flag,
-              rc_identity_pubkey_hash: this.options.rcIdentity.pubkeyHash,
-              rc_lock_flag: RcLockFlag.SUPPLY_MASK,
-              type_id_hash: this.options.udtId,
-            }),
-          ),
-        ),
-        script_type: 'lock',
-      },
+    const helper = new RcSupplyLockHelper(this.provider.mercury, {
+      rcLock: this.provider.newScriptTemplate('RC_LOCK'),
+      sudtType: this.provider.newScriptTemplate('SUDT'),
     });
 
-    const rcUdtInfoCell = nonNullable(rcSupplyCell.objects[0]);
+    const resolvedInfoCells = await helper.listCreatedInfoCells(this.options);
+
+    const rcUdtInfoCell = nonNullable(resolvedInfoCells[0]);
     const { rc_identity_flag, rc_identity_pubkey_hash } = RcSupplyLockArgs.decode(
       toBuffer(rcUdtInfoCell.output.lock.args),
     );
@@ -88,6 +78,7 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     );
     const foundRecipientCells = await lastValueFrom(foundRecipientCells$);
 
+    // occupied + additional
     const createdRecipientCellsCapacity = createdRecipientCells.reduce(
       (sum, createdCell) => sum.add(createdCell.capacity),
       Amount.ZERO,
@@ -97,10 +88,13 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
       Amount.ZERO,
     );
 
-    const neededCapacityFromIssuer = createdRecipientCellsCapacity
+    const neededCapacityFromIssuer = Amount.ZERO
+      // createCell pocily needed capcacity
+      .add(createdRecipientCellsCapacity)
+      // findAcp policy needed additional capacity
       .add(foundRecipientCellsAdditionalCapacity)
-      // additional 61 ckb to ensure capacity is enough for change cell
-      .add(new Amount(String(byteLenOfCkbLiveCell())))
+      // additional rc-lock script occupied ckb to ensure capacity is enough for change cell
+      .add(new Amount(String(byteLenOfCkbLiveCell(RcIdentityLockArgs.byteWidth))))
       // additional 1 ckb for tx fee, not all 1ckb will be paid,
       // but the real fee will be calculated based on feeRate
       .add(new Amount('1'));

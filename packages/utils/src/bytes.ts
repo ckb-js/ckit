@@ -6,6 +6,13 @@ type HexString = string;
 
 export type CanConvertToHex = Buffer | ByteString | HexString | number | bigint;
 
+/**
+ * concat byte-like into a hex string
+ *
+ * @example
+ * concat('00', '01') // 0x0001
+ * @param hexes
+ */
 export function concat(...hexes: CanConvertToHex[]): HexString {
   return '0x' + hexes.map(padToEven).join('');
 }
