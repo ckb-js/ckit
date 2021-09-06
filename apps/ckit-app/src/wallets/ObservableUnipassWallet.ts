@@ -1,4 +1,4 @@
-import { UnipassWallet, CkitProvider } from '@ckit/ckit';
+import { UnipassWallet, CkitProvider } from '@ckitjs/ckit';
 import { makeObservable, observable } from 'mobx';
 
 export class ObservableUnipassWallet extends UnipassWallet {

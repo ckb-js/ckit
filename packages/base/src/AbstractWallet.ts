@@ -1,4 +1,4 @@
-import { invariant } from '@ckit/utils';
+import { invariant } from '@ckitjs/utils';
 import { default as EventEmitter } from 'eventemitter3';
 import { ConnectStatus, EntrySigner, WalletConnector, WalletDescriptor, WalletEventListener, WalletFeature } from './';
 

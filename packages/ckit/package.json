@@ -1,5 +1,5 @@
 {
-  "name": "@ckit/ckit",
+  "name": "@ckitjs/ckit",
   "version": "0.0.0",
   "main": "dist",
   "license": "MIT",
@@ -17,11 +17,11 @@
     "@ckb-lumos/hd": "^0.16.0",
     "@ckb-lumos/helpers": "^0.16.0",
     "@ckb-lumos/rpc": "^0.16.0",
-    "@ckit/base": "*",
-    "@ckit/easy-byte": "*",
-    "@ckit/mercury-client": "*",
-    "@ckit/rc-lock": "*",
-    "@ckit/utils": "*",
+    "@ckitjs/base": "*",
+    "@ckitjs/easy-byte": "*",
+    "@ckitjs/mercury-client": "*",
+    "@ckitjs/rc-lock": "*",
+    "@ckitjs/utils": "*",
     "@metamask/detect-provider": "^1.2.0",
     "@lay2/pw-core": "^0.4.0-alpha.8",
     "bignumber.js": "^9.0.1",
@@ -29,7 +29,7 @@
     "rxjs": "^7.3.0"
   },
   "devDependencies": {
-    "@ckit/tippy-client": "*",
+    "@ckitjs/tippy-client": "*",
     "@nervosnetwork/ckb-sdk-core": "^0.43.0",
     "@types/app-root-path": "^1.2.4",
     "app-root-path": "^3.0.0"

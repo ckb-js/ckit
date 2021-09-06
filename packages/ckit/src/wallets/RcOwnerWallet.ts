@@ -1,7 +1,7 @@
 import { HexString } from '@ckb-lumos/base';
-import { AbstractWallet, EntrySigner, WalletFeature } from '@ckit/base';
-import { RcIdentityFlag, RcIdentityLockArgs, SerializeRcLockWitnessLock } from '@ckit/rc-lock';
-import { bytes } from '@ckit/utils';
+import { AbstractWallet, EntrySigner, WalletFeature } from '@ckitjs/base';
+import { RcIdentityFlag, RcIdentityLockArgs, SerializeRcLockWitnessLock } from '@ckitjs/rc-lock';
+import { bytes } from '@ckitjs/utils';
 import { Reader } from 'ckb-js-toolkit';
 import { CkitProvider } from '../providers';
 import { RcIdentity } from '../tx-builders';

@@ -1,7 +1,7 @@
 import { Address, ChainInfo, Hash, HexNumber, Transaction, TxPoolInfo } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
-import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckit/base';
-import { MercuryClient, SearchKey } from '@ckit/mercury-client';
+import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
+import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
 import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';

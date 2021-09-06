@@ -1,5 +1,5 @@
 import { SyncOutlined, CheckCircleTwoTone, UsbOutlined } from '@ant-design/icons';
-import { AbstractWallet } from '@ckit/base';
+import { AbstractWallet } from '@ckitjs/base';
 import { List, Modal, Space, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';

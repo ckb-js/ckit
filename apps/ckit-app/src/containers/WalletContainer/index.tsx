@@ -1,4 +1,4 @@
-import { AbstractWallet, ConnectStatus } from '@ckit/ckit';
+import { AbstractWallet, ConnectStatus } from '@ckitjs/ckit';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';

@@ -1,4 +1,4 @@
-import { CkbTypeScript } from '@ckit/base';
+import { CkbTypeScript } from '@ckitjs/base';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { useCallback, useMemo } from 'react';
 

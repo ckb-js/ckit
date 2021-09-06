@@ -1,5 +1,5 @@
 import { utils } from '@ckb-lumos/base';
-import { CkbTypeScript } from '@ckit/base';
+import { CkbTypeScript } from '@ckitjs/base';
 import { Tooltip, Typography, Row, Col } from 'antd';
 import React from 'react';
 import styled from 'styled-components';

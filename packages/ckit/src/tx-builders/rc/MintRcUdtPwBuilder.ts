@@ -1,6 +1,6 @@
-import { formatByteLike, toBuffer } from '@ckit/easy-byte';
-import { RcIdentityLockArgs, RcSupplyLockArgs, RcSupplyLockHelper, RcSupplyOutputData } from '@ckit/rc-lock';
-import { bytes } from '@ckit/utils';
+import { formatByteLike, toBuffer } from '@ckitjs/easy-byte';
+import { RcIdentityLockArgs, RcSupplyLockArgs, RcSupplyLockHelper, RcSupplyOutputData } from '@ckitjs/rc-lock';
+import { bytes } from '@ckitjs/utils';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { NoAvailableCellError } from '../../errors';

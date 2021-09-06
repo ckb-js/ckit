@@ -27,7 +27,7 @@ make test
 It is recommended to use [debug](https://github.com/visionmedia/debug) and the debug output of ckit should start with ckit-, e.g. `ckit-some-module`
 
 ```ts
-import { createDebugger, debug } from '@ckit/base';
+import { createDebugger, debug } from '@ckitjs/base';
 
 const debugSomeModule = createDebugger('ckit-some-module');
 
