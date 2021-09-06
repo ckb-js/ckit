@@ -100,7 +100,32 @@ async function mintUdt() {
   console.log(`udt has minted with txHash: ${txHash}`);
 }
 
+async function queryUdtBalance() {
+  const { provider, signer } = await getContext();
+
+  // const mercury = new MercuryClient('https://testnet.ckb.dev/indexer');
+  const mercury = provider.mercury;
+
+  const helper = new RcSupplyLockHelper(mercury, {
+    rcLock: provider.newScriptTemplate('RC_LOCK'),
+    sudtType: provider.newScriptTemplate('SUDT'),
+  });
+
+  const sudtScript = helper.newSudtScript({
+    rcIdentity: signer.getRcIdentity(),
+    udtId: '0x126e754aaa32898714e0466d885f4bb5ffe1723e05acf944b06b2bc9ff3a3a0a',
+  });
+
+  const balance = await provider.getUdtBalance(
+    'ckt1q2rnvmpk0rc5ej7kv3ecdgvwqkhz0jte0r22d9f0kkpqe35cycur2myv07qpv9y9c0j2mnk6f3kyy4qszsq9g2qxr8j',
+    sudtScript,
+  );
+
+  console.log(balance);
+}
+
 showBasicInfo();
 // createUdt();
 // listUdt();
 // mintUdt();
+// queryUdtBalance();
