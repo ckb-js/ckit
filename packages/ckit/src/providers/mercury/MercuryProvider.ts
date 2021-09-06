@@ -2,6 +2,7 @@ import { Address, ChainInfo, Hash, HexNumber, Transaction, TxPoolInfo } from '@c
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
 import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
+import { bytes } from '@ckitjs/utils';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
 import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';
@@ -82,7 +83,7 @@ export class MercuryProvider extends AbstractProvider {
     );
 
     const balance = await lastValueFrom(balance$, { defaultValue: '0x0' });
-    return String(balance);
+    return bytes.toHex(balance);
   }
 
   override getTxPoolInfo(): Promise<TxPoolInfo> {
@@ -138,7 +139,7 @@ export class MercuryProvider extends AbstractProvider {
       reduce((acc, resolvedCell) => acc + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))), 0n),
     );
 
-    return lastValueFrom(balance$, { defaultValue: 0n }).then((x) => String(x));
+    return lastValueFrom(balance$, { defaultValue: 0n }).then((x) => bytes.toHex(x));
   }
 
   async waitForTransactionCommitted(
