@@ -1,5 +1,5 @@
 {
-  "name": "@ckit/tippy-client",
+  "name": "@ckitjs/tippy-client",
   "version": "0.0.0",
   "main": "dist",
   "license": "MIT",

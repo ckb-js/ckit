@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { AbstractProvider } from '@ckit/base';
+import { AbstractProvider } from '@ckitjs/base';
 import {
   Blake2bHasher,
   Hasher,

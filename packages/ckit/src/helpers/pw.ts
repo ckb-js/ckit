@@ -5,7 +5,7 @@ import {
   Script as LumosScript,
   OutPoint as LumosOutPoint,
 } from '@ckb-lumos/base';
-import { ResolvedOutpoint } from '@ckit/base';
+import { ResolvedOutpoint } from '@ckitjs/base';
 import {
   Amount,
   Cell as PwCell,

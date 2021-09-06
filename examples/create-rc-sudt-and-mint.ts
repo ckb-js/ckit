@@ -6,7 +6,7 @@ import {
   RcSupplyLockHelper,
   MintRcUdtBuilder,
   helpers,
-} from '@ckit/ckit';
+} from '@ckitjs/ckit';
 
 const { RcInternalSigner } = internal;
 

@@ -1,6 +1,6 @@
 import { HexString, Script } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { AbstractProvider, AbstractWallet, EntrySigner } from '@ckit/base';
+import { AbstractProvider, AbstractWallet, EntrySigner } from '@ckitjs/base';
 import { MercuryProvider } from '../providers';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 

@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { CkbTypeScript, EntrySigner } from '@ckit/base';
+import { CkbTypeScript, EntrySigner } from '@ckitjs/base';
 import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';

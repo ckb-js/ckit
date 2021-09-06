@@ -1,4 +1,4 @@
-import { EntrySigner } from '@ckit/base';
+import { EntrySigner } from '@ckitjs/base';
 import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { NoAvailableCellError } from '../../errors';

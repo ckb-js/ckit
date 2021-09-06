@@ -1,4 +1,4 @@
-import { CkitInitOptions, predefined } from '@ckit/ckit';
+import { CkitInitOptions, predefined } from '@ckitjs/ckit';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { useMemo } from 'react';
 

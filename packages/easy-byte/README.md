@@ -1,11 +1,11 @@
-# @ckit/easy-byte
+# @ckitjs/easy-byte
 
 ## Quick Start
 
 ### Work With Struct
 
 ```ts
-import { createFixedStruct, U8, U64LE } from '@ckit/easy-byte';
+import { createFixedStruct, U8, U64LE } from '@ckitjs/easy-byte';
 
 // prettier-ignore
 // define the struct first
@@ -35,7 +35,7 @@ import {
   pad0x,
   prependZeroToEvenLength,
   rm0x,
-} from '@ckit/easy-byte';
+} from '@ckitjs/easy-byte';
 
 const customFormat = pipe(
   rm0x,
@@ -49,7 +49,7 @@ customFormat('0x001020304'); // 0x0403020100
 ### Or Work With `formatByteLike`
 
 ```ts
-import { formatByteLike } from '@ckit/easy-byte';
+import { formatByteLike } from '@ckitjs/easy-byte';
 
 // format a big endian byte string to big endian
 // (0x)  0_01_02_03_04

@@ -1,5 +1,5 @@
 import { Address, Script } from '@ckb-lumos/base';
-import { SerializeRcLockWitnessLock } from '@ckit/rc-lock';
+import { SerializeRcLockWitnessLock } from '@ckitjs/rc-lock';
 import { Builder, CellDep, WitnessArgs } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
 import { Pw } from '../../helpers/pw';

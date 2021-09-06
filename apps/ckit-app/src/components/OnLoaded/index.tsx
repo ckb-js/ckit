@@ -1,4 +1,4 @@
-import { AbstractTransactionBuilder } from '@ckit/ckit';
+import { AbstractTransactionBuilder } from '@ckitjs/ckit';
 import { Transaction } from '@lay2/pw-core';
 import { Spin } from 'antd';
 import React, { useEffect, useState } from 'react';

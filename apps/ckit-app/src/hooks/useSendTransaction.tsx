@@ -1,5 +1,5 @@
 import { Hash } from '@ckb-lumos/base';
-import { AbstractTransactionBuilder, CkitProvider, EntrySigner } from '@ckit/ckit';
+import { AbstractTransactionBuilder, CkitProvider, EntrySigner } from '@ckitjs/ckit';
 import { Transaction } from '@lay2/pw-core';
 import { Modal } from 'antd';
 import React from 'react';

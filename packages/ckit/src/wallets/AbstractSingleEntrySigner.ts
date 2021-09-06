@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { HexString, Transaction } from '@ckb-lumos/base';
-import { AbstractProvider, EntrySigner } from '@ckit/base';
+import { AbstractProvider, EntrySigner } from '@ckitjs/base';
 import { Blake2bHasher, Hasher, Transaction as PwTransaction, transformers } from '@lay2/pw-core';
 import { PwAdapterSigner } from './pw/PwAdapterSigner';
 

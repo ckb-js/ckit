@@ -1,7 +1,7 @@
 import { utils } from '@ckb-lumos/base';
-import { formatByteLike } from '@ckit/easy-byte/dist';
-import { SerializeUdtInfo, RcSupplyOutputData } from '@ckit/rc-lock';
-import { bytes, invariant } from '@ckit/utils';
+import { formatByteLike } from '@ckitjs/easy-byte/dist';
+import { SerializeUdtInfo, RcSupplyOutputData } from '@ckitjs/rc-lock';
+import { bytes, invariant } from '@ckitjs/utils';
 import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
 import { CkbAmount } from '../../helpers';

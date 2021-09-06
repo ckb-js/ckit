@@ -1,4 +1,4 @@
-import { CkitProvider } from '@ckit/ckit';
+import { CkitProvider } from '@ckitjs/ckit';
 import { useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
 import { useConfigStorage } from 'hooks/useConfigStorage';

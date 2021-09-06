@@ -1,7 +1,7 @@
 import { Hash, HexNumber, HexString, Script, utils } from '@ckb-lumos/base';
-import { createField, createFixedStruct, Field, formatByteLike, toBuffer, U128LE, U8 } from '@ckit/easy-byte';
-import { MercuryClient, SearchKey, ResolvedOutpoint } from '@ckit/mercury-client';
-import { bytes } from '@ckit/utils';
+import { createField, createFixedStruct, Field, formatByteLike, toBuffer, U128LE, U8 } from '@ckitjs/easy-byte';
+import { MercuryClient, SearchKey, ResolvedOutpoint } from '@ckitjs/mercury-client';
+import { bytes } from '@ckitjs/utils';
 import { Reader } from 'ckb-js-toolkit';
 import { from, lastValueFrom } from 'rxjs';
 import { concatMap, expand, toArray, takeWhile } from 'rxjs/operators';

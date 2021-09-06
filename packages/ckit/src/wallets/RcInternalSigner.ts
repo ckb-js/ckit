@@ -1,7 +1,7 @@
 import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { SerializeRcLockWitnessLock } from '@ckit/rc-lock';
-import { bytes } from '@ckit/utils';
+import { SerializeRcLockWitnessLock } from '@ckitjs/rc-lock';
+import { bytes } from '@ckitjs/utils';
 import { Keccak256Hasher } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
 import { publicKeyCreate } from 'secp256k1';

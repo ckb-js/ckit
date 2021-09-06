@@ -1,3 +1,3 @@
-# @ckit/rc-lock
+# @ckitjs/rc-lock
 
 Rc-lock related functions

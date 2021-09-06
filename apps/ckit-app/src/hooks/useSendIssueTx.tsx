@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { RecipientOptions, helpers, MintSudtBuilder, CkitProvider, EntrySigner } from '@ckit/ckit';
+import { RecipientOptions, helpers, MintSudtBuilder, CkitProvider, EntrySigner } from '@ckitjs/ckit';
 import { useMutation, UseMutationResult } from 'react-query';
 import { useSendTransaction } from './useSendTransaction';
 
