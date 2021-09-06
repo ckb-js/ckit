@@ -27,6 +27,21 @@ export class RcOwnerWallet extends AbstractWallet {
 
   protected async tryConnect(): Promise<EntrySigner> {
     const ethProvider = await detect();
+
+    // request to connect to MetaMask if never been connected
+    if (!ethProvider.selectedAddress) {
+      await ethProvider.request({ method: 'eth_requestAccounts' });
+    }
+
+    ethProvider.addListener('accountsChanged', (signer) => {
+      if (signer && signer.length > 0) {
+        super.emitChangedSigner(new RcPwSigner(this.provider, ethProvider));
+        return;
+      }
+
+      super.emitConnectStatusChanged('disconnected');
+    });
+
     return new RcPwSigner(this.provider, ethProvider);
   }
 }
