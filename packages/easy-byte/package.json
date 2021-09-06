@@ -1,5 +1,5 @@
 {
-  "name": "@ckit/easy-byte",
+  "name": "@ckitjs/easy-byte",
   "version": "0.0.0",
   "main": "dist",
   "license": "MIT",
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@ckb-lumos/base": "^0.16.0",
-    "@ckit/base": "*",
+    "@ckitjs/base": "*",
     "@open-rpc/client-js": "^1.7.0"
   }
 }

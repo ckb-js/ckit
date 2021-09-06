@@ -1,6 +1,6 @@
 import { HexString } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { AbstractWallet, EntrySigner, WalletFeature } from '@ckit/base';
+import { AbstractWallet, EntrySigner, WalletFeature } from '@ckitjs/base';
 import { Keccak256Hasher, Platform } from '@lay2/pw-core';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { publicKeyCreate } from 'secp256k1';

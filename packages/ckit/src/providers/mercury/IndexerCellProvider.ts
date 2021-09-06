@@ -1,5 +1,5 @@
 import { CellCollector, CellCollectorResults, CellProvider, QueryOptions, Script } from '@ckb-lumos/base';
-import { MercuryClient, SearchKey } from '@ckit/mercury-client';
+import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
 
 export class MercuryCellProvider implements CellProvider {
   constructor(private mercury: MercuryClient) {}

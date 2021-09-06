@@ -1,4 +1,4 @@
-import { UnipassWallet } from '@ckit/ckit';
+import { UnipassWallet } from '@ckitjs/ckit';
 import { useLocalStorage } from '@rehooks/local-storage';
 
 interface UnipassContext {

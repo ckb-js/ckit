@@ -1,6 +1,6 @@
 import { Address, CellDep, Script, utils } from '@ckb-lumos/base';
 import { ScriptConfig } from '@ckb-lumos/config-manager';
-import { ProviderConfig, InitOptions } from '@ckit/base';
+import { ProviderConfig, InitOptions } from '@ckitjs/base';
 import { MercuryProvider } from './mercury/MercuryProvider';
 
 export interface CkitConfig extends ProviderConfig {

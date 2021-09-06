@@ -1,4 +1,4 @@
-export * from '@ckit/base';
+export * from '@ckitjs/base';
 export * from './wallets';
 export * from './providers';
 export * from './tx-builders';

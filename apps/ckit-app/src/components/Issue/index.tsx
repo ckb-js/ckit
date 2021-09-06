@@ -1,4 +1,4 @@
-import { CkbTypeScript } from '@ckit/base';
+import { CkbTypeScript } from '@ckitjs/base';
 import React, { useMemo } from 'react';
 import { AddAssetButton } from '../Assets';
 import { AssetMetaDisplay } from './AssetMetaDisplay';

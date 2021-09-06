@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { CkbTypeScript } from '@ckit/base';
+import { CkbTypeScript } from '@ckitjs/base';
 import { Button, Col, Input, Modal, Row, Typography } from 'antd';
 import { useFormik } from 'formik';
 import React, { useCallback, useMemo, useState } from 'react';

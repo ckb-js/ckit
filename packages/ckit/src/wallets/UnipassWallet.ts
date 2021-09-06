@@ -1,5 +1,5 @@
 import { HexString, Transaction } from '@ckb-lumos/base';
-import { AbstractWallet } from '@ckit/base';
+import { AbstractWallet } from '@ckitjs/base';
 import { CkitProvider } from '../providers';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 import { UnipassRedirectAdapter } from './unipass/UnipassAdapter';

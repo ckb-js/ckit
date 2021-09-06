@@ -1,6 +1,6 @@
 // just for testing case, do not use it
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { EntrySigner } from '@ckit/base';
+import { EntrySigner } from '@ckitjs/base';
 import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';

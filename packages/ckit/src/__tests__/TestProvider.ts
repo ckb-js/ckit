@@ -1,9 +1,9 @@
 import fs from 'fs';
 import { Address, Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
-import { EntrySigner } from '@ckit/base';
-import { TippyClient } from '@ckit/tippy-client';
-import { createDebugger, debug } from '@ckit/utils';
+import { EntrySigner } from '@ckitjs/base';
+import { TippyClient } from '@ckitjs/tippy-client';
+import { createDebugger, debug } from '@ckitjs/utils';
 import appRootPath from 'app-root-path';
 import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
 import { TransferCkbBuilder } from '../tx-builders';

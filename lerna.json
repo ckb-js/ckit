@@ -4,7 +4,7 @@
   "packages": ["packages/*"],
   "command": {
     "publish": {
-      "registry": "http://registry.npmjs.org"
+      "registry": "http://localhost:4873"
     }
   }
 }

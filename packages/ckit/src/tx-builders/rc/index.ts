@@ -1,3 +1,3 @@
 export * from './CreateRcUdtInfoCellBuilder';
 export * from './MintRcUdtBuilder';
-export * from '@ckit/rc-lock';
+export * from '@ckitjs/rc-lock';

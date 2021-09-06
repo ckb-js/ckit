@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { AcpTransferSudtBuilder, TransferCkbBuilder, CkitProvider, EntrySigner } from '@ckit/ckit';
+import { AcpTransferSudtBuilder, TransferCkbBuilder, CkitProvider, EntrySigner } from '@ckitjs/ckit';
 import { useMutation, UseMutationResult } from 'react-query';
 import { AssetMeta } from './useAssetMetaStorage';
 import { useSendTransaction } from './useSendTransaction';
