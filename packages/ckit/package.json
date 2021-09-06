@@ -22,8 +22,8 @@
     "@ckitjs/mercury-client": "*",
     "@ckitjs/rc-lock": "*",
     "@ckitjs/utils": "*",
-    "@metamask/detect-provider": "^1.2.0",
     "@lay2/pw-core": "^0.4.0-alpha.8",
+    "@metamask/detect-provider": "^1.2.0",
     "bignumber.js": "^9.0.1",
     "eventemitter3": "^4.0.7",
     "rxjs": "^7.3.0"
