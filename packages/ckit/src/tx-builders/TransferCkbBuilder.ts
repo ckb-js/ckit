@@ -1,6 +1,5 @@
 // just for testing case, do not use it
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { EntrySigner } from '@ckitjs/base';
 import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
@@ -27,16 +26,15 @@ interface RecipientOption {
 }
 
 export class TransferCkbBuilder extends AbstractTransactionBuilder {
-  constructor(private options: TransferCkbOptions, private provider: CkitProvider, private signer: EntrySigner) {
+  constructor(private options: TransferCkbOptions, private provider: CkitProvider, private signer: Address) {
     super();
   }
 
   async build(): Promise<Transaction> {
-    const signerAddress = await this.signer.getAddress();
     const transferToSelf = this.options.recipients.some(
-      (item) => item.recipient === signerAddress && item.capacityPolicy === 'findAcp',
+      (item) => item.recipient === this.signer && item.capacityPolicy === 'findAcp',
     );
-    if (transferToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
+    if (transferToSelf) throw new RecipientSameWithSenderError({ address: this.signer });
 
     const builder = new TransferCkbPwBuilder(this.options, this.provider, this.signer);
     return builder.build();

@@ -1,4 +1,4 @@
-import { EntrySigner } from '@ckitjs/base';
+import { Address } from '@ckb-lumos/base';
 import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { NoAvailableCellError } from '../../errors';
@@ -9,7 +9,7 @@ import { byteLenOfCkbLiveCell } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
 export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
-  constructor(private options: TransferCkbOptions, provider: CkitProvider, private signer: EntrySigner) {
+  constructor(private options: TransferCkbOptions, provider: CkitProvider, private sender: Address) {
     super(provider);
   }
 
@@ -45,7 +45,7 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
     );
 
     const senderOutpoints = await this.provider.collectCkbLiveCells(
-      await this.signer.getAddress(),
+      this.sender,
       injectedAcpCapacity
         .add(createdCapacity)
         // 61 ckb to ensure change cell capacity is enough
@@ -57,7 +57,7 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
     );
     const senderCells = senderOutpoints.map(Pw.toPwCell);
     if (!senderCells.length || !senderCells[0]) {
-      throw new NoAvailableCellError({ lock: this.provider.parseToScript(await this.signer.getAddress()) });
+      throw new NoAvailableCellError({ lock: this.provider.parseToScript(this.sender) });
     }
 
     // accumulate all sender capacity into one cell
@@ -71,7 +71,7 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
         // TODO getDeps by all script
         this.getCellDeps(),
       ),
-      [this.getWitnessPlaceholder(await this.signer.getAddress())],
+      [this.getWitnessPlaceholder(this.sender)],
     );
 
     const fee = TransferCkbPwBuilder.calcFee(tx);
