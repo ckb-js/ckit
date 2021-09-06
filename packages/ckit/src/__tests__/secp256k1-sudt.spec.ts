@@ -135,7 +135,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const unsignedTransferCkbTx = await new TransferCkbBuilder(
     { recipients: transferCkbRecipients },
     provider,
-    genesisSigner,
+    await genesisSigner.getAddress(),
   ).build();
   const signed = await genesisSigner.seal(unsignedTransferCkbTx);
   const transferCkbTxHash = await provider.sendTxUntilCommitted(signed);
@@ -322,7 +322,7 @@ test('test serialize and deserialized', async () => {
       ],
     },
     provider,
-    genesisSigner,
+    await genesisSigner.getAddress(),
   );
 
   const unsigned = await builder.build();

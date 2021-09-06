@@ -40,7 +40,7 @@ test('test rc signer', async () => {
           ],
         },
         provider,
-        rcSigner,
+        await rcSigner.getAddress(),
       ).build(),
     ),
   );
@@ -143,12 +143,12 @@ test('test rc udt lock', async () => {
 });
 
 test('test rc with acp', async () => {
-  // genesis -> rcSigner1(acp): 64 ckb
-  //         -> rcSigner2(acp): 62 ckb
+  // genesis -> rcSigner1(acp): 67 ckb
+  //         -> rcSigner2(acp): 65 ckb
   // rcSigner1 -> rcSigner2: 1 ckb
-  // expect(rcSigner1Balance < 63 ckb).toBe(true)
-  // expect(rcSigner1Balance > 62.9 ckb).toBe(true)
-  // expect(rcSigner2Balance  === 62 ckb).toBe(true)
+  // expect(rcSigner1Balance < 66 ckb).toBe(true)
+  // expect(rcSigner1Balance > 65.9 ckb).toBe(true)
+  // expect(rcSigner2Balance  === 66 ckb).toBe(true)
 
   jest.setTimeout(120000);
   const provider = new TestProvider();
@@ -159,6 +159,8 @@ test('test rc with acp', async () => {
   const rcSigner2 = new RCLockSigner(randomHexString(64), provider);
 
   // genesis -> rc-lock
+  const sender = await rcSigner1.getAddressByMode(RC_MODE.ACP);
+  const recipient = await rcSigner2.getAddressByMode(RC_MODE.ACP);
 
   await provider.sendTxUntilCommitted(
     await genesisSigner.seal(
@@ -166,24 +168,23 @@ test('test rc with acp', async () => {
         {
           recipients: [
             {
-              recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
-              amount: '6700000000', //  100 CKB
+              recipient: sender,
+              amount: '6700000000', //  67 CKB
               capacityPolicy: 'createCell',
             },
             {
-              recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
+              recipient: recipient,
               amount: '6500000000', //  65 CKB
               capacityPolicy: 'createCell',
             },
           ],
         },
         provider,
-        genesisSigner,
+        await genesisSigner.getAddress(),
       ).build(),
     ),
   );
 
-  const recipient = await rcSigner2.getAddressByMode(RC_MODE.ACP);
   // rcSigner1 -> rcSigner2: 1 ckb
   const signed = await rcSigner1.seal(
     await new TransferCkbBuilder(
@@ -197,7 +198,7 @@ test('test rc with acp', async () => {
         ],
       },
       provider,
-      rcSigner1,
+      sender,
     ).build(),
   );
   await provider.sendTxUntilCommitted(signed);
@@ -225,7 +226,7 @@ test('test eth rc signer', async () => {
           ],
         },
         provider,
-        genesisSigner,
+        await genesisSigner.getAddress(),
       ).build(),
     ),
   );
@@ -240,7 +241,7 @@ test('test eth rc signer', async () => {
           recipients: [{ recipient: await recipient.getAddress(), amount: '6100000000', capacityPolicy: 'createCell' }],
         },
         provider,
-        rcSigner,
+        await rcSigner.getAddress(),
       ).build(),
     ),
   );
