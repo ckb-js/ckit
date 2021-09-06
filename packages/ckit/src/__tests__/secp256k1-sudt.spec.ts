@@ -3,7 +3,7 @@
 
 import { utils } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { CkbAmount } from '../helpers';
+import { CkbAmount, Amount } from '../helpers';
 import {
   AcpTransferSudtBuilder,
   MintOptions,
@@ -18,6 +18,10 @@ import { TestProvider } from './TestProvider';
 
 const testPrivateKeyIndex = 1;
 jest.setTimeout(120000);
+
+function eqAmount(a: string, b: string | number): void {
+  expect(Amount.from(a).eq(b)).toBe(true);
+}
 
 // TODO remove skip when docker available in ci
 test('test mint and transfer sudt with secp256k1', async () => {
@@ -57,7 +61,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
   };
   const beforeBalance0 = await provider.getUdtBalance(recipientAddr0, testUdt);
 
-  expect(beforeBalance0).toBe('0');
+  eqAmount(beforeBalance0, 0);
 
   const issuerSigner = new Secp256k1Signer(issuerPrivateKey, provider, {
     code_hash: SECP256K1_BLAKE160.CODE_HASH,
@@ -88,8 +92,8 @@ test('test mint and transfer sudt with secp256k1', async () => {
 
   expect(mintTx != null).toBe(true);
 
-  expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('0');
-  expect(await provider.getUdtBalance(recipientAddr1, testUdt)).toBe(recipients[1]?.amount);
+  eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 0);
+  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), recipients[1]!.amount);
 
   // recipient1 -> recipient0
   const signer = new Secp256k1Signer(recipientPrivKey1, provider, {
@@ -106,7 +110,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
   const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
 
   expect(transferTx != null).toBe(true);
-  expect(await provider.getUdtBalance(recipientAddr0, testUdt)).toBe('1');
+  eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 1);
 });
 
 test('test non-acp-pw lock mint and transfer', async () => {
@@ -179,12 +183,12 @@ test('test non-acp-pw lock mint and transfer', async () => {
   debug('end transfer sudt: %s', transferSudtTxHash);
 
   expect(transferSudtTxHash != null).toBe(true);
-  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), testUdt)).toBe('1');
-  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), testUdt)).toBe('999');
+  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), testUdt), 1);
+  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), testUdt), 999);
 
   const udtCells1 = await provider.collectUdtCells(await recipient1Signer.getAddress(), testUdt, '1');
   const additionalCapacity1 = Number(udtCells1[0]?.output?.capacity) - 142 * 10 ** 8;
-  expect(CkbAmount.fromShannon(additionalCapacity1).eq(CkbAmount.fromCkb(1))).toBe(true);
+  eqAmount(String(additionalCapacity1), 1);
 });
 
 test('mint sudt with a mix of policies', async () => {
@@ -235,9 +239,10 @@ test('mint sudt with a mix of policies', async () => {
       ).build(),
     ),
   );
-  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('0');
-  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('100');
-  expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('200');
+
+  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType), 0);
+  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType), 100);
+  eqAmount(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType), 200);
 
   // the sudt balance of recipient3 will be split into 2 cells
   expect(await provider.collectUdtCells(await recipient3Signer.getAddress(), sudtType, '101')).toHaveLength(2);
@@ -264,11 +269,12 @@ test('mint sudt with a mix of policies', async () => {
     ),
   );
 
-  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('100');
-  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
+  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType), 100);
+  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType), 200);
+
   // the sudt balance of recipient2 will be split into 2 cells
   expect(await provider.collectUdtCells(await recipient2Signer.getAddress(), sudtType, '101')).toHaveLength(2);
-  expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('300');
+  eqAmount(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType), 300);
 
   // recipient3 sudt
   //                  --merge-->  recipient3 sudt(142 x 2)   --transfer--> recipient1
@@ -283,9 +289,9 @@ test('mint sudt with a mix of policies', async () => {
     ),
   );
 
-  expect(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType)).toBe('400');
-  expect(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType)).toBe('200');
-  expect(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType)).toBe('0');
+  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType), 400);
+  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType), 200);
+  eqAmount(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType), 0);
 
   const recipient3Cells = await provider.collectUdtCells(await recipient3Signer.getAddress(), sudtType, '0');
   expect(recipient3Cells).toHaveLength(1);
