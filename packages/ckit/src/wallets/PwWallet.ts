@@ -8,13 +8,18 @@ import { CkitProvider } from '../providers';
 import { hexToBytes } from '../utils';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 
+interface EthereumRpc {
+  (payload: { method: 'personal_sign'; params: [string /*from*/, string /*message*/] }): Promise<string>;
+  (payload: { method: 'eth_requestAccounts' }): Promise<string[]>;
+}
+
 export interface EthereumProvider {
   selectedAddress: string;
   isMetaMask?: boolean;
   enable: () => Promise<string[]>;
   addListener: (event: 'accountsChanged', listener: (addresses: string[]) => void) => void;
   removeEventListener: (event: 'accountsChanged', listener: (addresses: string[]) => void) => void;
-  request: (payload: { method: 'personal_sign'; params: [string /*from*/, string /*message*/] }) => Promise<string>;
+  request: EthereumRpc;
 }
 
 export function detect(): Promise<EthereumProvider> {

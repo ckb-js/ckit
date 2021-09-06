@@ -78,7 +78,7 @@ async function mintUdt() {
     {
       recipient: 'ckt1q2rnvmpk0rc5ej7kv3ecdgvwqkhz0jte0r22d9f0kkpqe35cycur2myv07qpv9y9c0j2mnk6f3kyy4qszsq9g2qxr8j',
       amount: '0x2540be400', // 10_000_000_000
-      capacityPolicy: 'createAcp' as const, // as const to treat TypeScript compiler
+      capacityPolicy: 'createCell' as const, // as const to treat TypeScript compiler
       additionalCapacity: helpers.CkbAmount.fromCkb('1').toHex(), // additional 1 capacity for tx fee
     },
   ];
