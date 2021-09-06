@@ -1,3 +1,6 @@
+// TODO replace with safe-buffer
+import { Buffer } from 'buffer';
+
 type Fn<I, O> = (input: I) => O;
 
 /**

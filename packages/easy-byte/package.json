@@ -11,8 +11,6 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
-    "@ckb-lumos/base": "^0.16.0",
-    "@ckitjs/base": "*",
-    "@open-rpc/client-js": "^1.7.0"
+    "buffer": "^6.0.3"
   }
 }
