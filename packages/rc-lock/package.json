@@ -1,6 +1,6 @@
 {
   "name": "@ckitjs/rc-lock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist",
   "license": "MIT",
   "scripts": {
@@ -11,9 +11,9 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
-    "@ckitjs/easy-byte": "^1.0.0",
-    "@ckitjs/mercury-client": "^1.0.0",
-    "@ckitjs/utils": "^1.0.0",
+    "@ckitjs/easy-byte": "^1.0.1",
+    "@ckitjs/mercury-client": "^1.0.1",
+    "@ckitjs/utils": "^1.0.1",
     "ckb-js-toolkit": "^0.10.2",
     "rxjs": "^7.3.0"
   }

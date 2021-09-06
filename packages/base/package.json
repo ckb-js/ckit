@@ -1,6 +1,6 @@
 {
   "name": "@ckitjs/base",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist",
   "license": "MIT",
   "scripts": {
@@ -13,7 +13,7 @@
   "dependencies": {
     "@ckb-lumos/base": "^0.16.0",
     "@ckb-lumos/config-manager": "^0.16.0",
-    "@ckitjs/utils": "^1.0.0",
+    "@ckitjs/utils": "^1.0.1",
     "@types/debug": "^4.1.7",
     "debug": "^4.3.2"
   }

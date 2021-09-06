@@ -1,6 +1,6 @@
 {
   "name": "@ckitjs/mercury-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist",
   "license": "MIT",
   "scripts": {
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@ckb-lumos/base": "^0.16.0",
-    "@ckitjs/base": "^1.0.0",
+    "@ckitjs/base": "^1.0.1",
     "@open-rpc/client-js": "^1.7.0"
   }
 }
