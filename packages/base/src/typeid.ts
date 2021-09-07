@@ -1,4 +1,5 @@
 import { core, HexNumber, HexString, Input, Script, utils } from '@ckb-lumos/base';
+import { toBuffer } from '@ckitjs/easy-byte';
 import { normalizers } from 'ckb-js-toolkit';
 
 function toArrayBuffer(buf: Uint8Array) {
@@ -14,7 +15,7 @@ function toArrayBuffer(buf: Uint8Array) {
 
 function toBigUInt64LE(num: HexString | number | bigint) {
   num = BigInt(num);
-  const buf = Buffer.alloc(8);
+  const buf = toBuffer('', 8);
   buf.writeBigUInt64LE(num);
   return toArrayBuffer(buf);
 }
