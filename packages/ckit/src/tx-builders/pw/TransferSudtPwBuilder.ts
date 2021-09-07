@@ -64,7 +64,6 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
           const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
           option.policy = recipientLiveSudtCell ? 'findAcp' : 'createCell';
         }
-        console.log('debug policy', option.policy);
         switch (option.policy) {
           case 'findAcp': {
             const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
@@ -151,13 +150,8 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       (sum, cell) => sum.add(cell.capacity),
       Amount.ZERO,
     );
-
     const inputsContainedCapacity = recipientSudtInputCellsCapacity.add(senderSudtInputCellsCapacity);
-    console.log('input capacity', inputsContainedCapacity);
     const outputsContainedCapacity = recipientSudtOutputCellsCapacity.add(senderSudtOutputCellsCapacity);
-    console.log('output capacity', outputsContainedCapacity);
-
-    // const createSudtCellUsedCapacity = outputsContainedCapacity.sub(inputsContainedCapacity);
 
     const txWithoutSupplyCapacity = new Transaction(
       new RawTransaction(
@@ -171,21 +165,10 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       txWithoutSupplyCapacity,
       Number(this.provider.config.MIN_FEE_RATE),
     );
-    console.log('debug fee', feeWithoutSupplyCapacity.toString());
 
     const needSupplyCapacity =
       containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
-    // if (inputsContainedCapacity.gt(outputsContainedCapacity))
-    //   throw new Error('exception: inputs capacity not equal to outputs');
-
-    // const availableCapacityFromSudtCells = senderSudtOutputCells.reduce(
-    //   (sum, cell) => (cell.capacity.gt(new Amount('1')) ? sum.add(cell.capacity.sub(new Amount('1'))) : sum),
-    //   Amount.ZERO,
-    // );
-    // const needExtraCapacitySupply =  (createSudtCellUsedCapacity.gt(Amount.ZERO) && availableCapacityFromSudtCells.) ||
-
-    console.log('debug tx', txWithoutSupplyCapacity);
     if (needSupplyCapacity) {
       const outputsNeededCapacity = outputsContainedCapacity
         // additional 61 ckb to ensure capacity is enough for change cell
@@ -228,16 +211,13 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       return txWithoutSupplyCapacity;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const cellToPayFee = senderSudtOutputCells[0]!;
     if (cellToPayFee.capacity.lt(feeWithoutSupplyCapacity))
       throw new Error('error: sudt cell capacity not enough to pay tx fee');
 
-    senderSudtOutputCells[0]!.capacity = senderSudtOutputCells[0]!.capacity.sub(feeWithoutSupplyCapacity);
+    cellToPayFee.capacity = cellToPayFee.capacity.sub(feeWithoutSupplyCapacity);
     return txWithoutSupplyCapacity;
-    // const changeCapacity = inputsContainedCapacity.sub(outputsContainedCapacity).sub(feeWithoutSupplyCapacity);
-    // // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    // senderSudtOutputCells[0]!.capacity = senderSudtOutputCells[0]!.capacity.add(changeCapacity);
-    // return txWithoutSupplyCapacity;
   }
 
   deduplicateOptions(options: TransferOptions[]): TransferOptions[] {

@@ -17,11 +17,14 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
     const buildTx = async (provider: CkitProvider, signer: EntrySigner) => {
       if (input.script) {
         const txBuilder = new AcpTransferSudtBuilder(
-          {
-            recipient: input.recipient,
-            sudt: input.script,
-            amount: input.amount,
-          },
+          [
+            {
+              recipient: input.recipient,
+              sudt: input.script,
+              amount: input.amount,
+              policy: 'findAcp',
+            },
+          ],
           provider,
           signer,
         );
