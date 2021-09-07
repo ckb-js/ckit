@@ -86,7 +86,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
     },
   ];
 
-  const unsigned = await new MintSudtBuilder({ recipients }, provider, issuerSigner).build();
+  const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
   const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
@@ -103,7 +103,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
     { amount: '1', recipient: recipientAddr0, sudt: testUdt },
     provider,
-    signer,
+    await signer.getAddress(),
   ).build();
 
   const transferTxHash = await provider.sendTransaction(await signer.seal(unsignedTransferTx));
@@ -125,6 +125,8 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const pwSigner = new InternalNonAcpPwLockSigner(randomHexString(64), provider);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
+  const recipient1Address = await recipient1Signer.getAddress();
+  const recipient2Address = await recipient2Signer.getAddress();
 
   const transferCkbRecipients: TransferCkbOptions['recipients'] = Array(1000).fill({
     recipient: await pwSigner.getAddress(),
@@ -145,14 +147,14 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const sudtRecipients: MintOptions['recipients'] = [
     // create acp cell
     {
-      recipient: await recipient1Signer.getAddress(),
+      recipient: recipient1Address,
       amount: '0',
       capacityPolicy: 'createCell',
       additionalCapacity: CkbAmount.fromCkb(1).toString(),
     },
     // mint 1000 unit udt with additional 5 ckb
     {
-      recipient: await recipient2Signer.getAddress(),
+      recipient: recipient2Address,
       amount: '1000',
       capacityPolicy: 'createCell',
       additionalCapacity: CkbAmount.fromCkb(5).toString(),
@@ -160,7 +162,11 @@ test('test non-acp-pw lock mint and transfer', async () => {
   ];
   debug('mint from %s, to %o', await pwSigner.getAddress(), sudtRecipients);
 
-  const unsignedMintTx = await new MintSudtBuilder({ recipients: sudtRecipients }, provider, pwSigner).build();
+  const unsignedMintTx = await new MintSudtBuilder(
+    { recipients: sudtRecipients },
+    provider,
+    await pwSigner.getAddress(),
+  ).build();
   debug('ready to send unsignedMintTx: %o', unsignedMintTx);
   const mintTxHash = await provider.sendTxUntilCommitted(await pwSigner.seal(unsignedMintTx));
   debug('end mint %s', mintTxHash);
@@ -168,25 +174,25 @@ test('test non-acp-pw lock mint and transfer', async () => {
   const testUdt = provider.newSudtScript(await pwSigner.getAddress());
 
   debug('start transfer sudt %o', {
-    from: await recipient2Signer.getAddress(),
-    to: await recipient1Signer.getAddress(),
+    from: recipient2Address,
+    to: recipient1Address,
     amount: '1',
   });
   // recipient2 -> recipient1 with 1 udt
   const unsignedTransferUdtTx = await new AcpTransferSudtBuilder(
-    { amount: '1', recipient: await recipient1Signer.getAddress(), sudt: testUdt },
+    { amount: '1', recipient: recipient1Address, sudt: testUdt },
     provider,
-    recipient2Signer,
+    recipient2Address,
   ).build();
 
   const transferSudtTxHash = await provider.sendTxUntilCommitted(await recipient2Signer.seal(unsignedTransferUdtTx));
   debug('end transfer sudt: %s', transferSudtTxHash);
 
   expect(transferSudtTxHash != null).toBe(true);
-  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), testUdt), 1);
-  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), testUdt), 999);
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 1);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 999);
 
-  const udtCells1 = await provider.collectUdtCells(await recipient1Signer.getAddress(), testUdt, '1');
+  const udtCells1 = await provider.collectUdtCells(recipient1Address, testUdt, '1');
   const additionalCapacity1 = Number(udtCells1[0]?.output?.capacity) - 142 * 10 ** 8;
   expect(CkbAmount.fromShannon(additionalCapacity1).eq(CkbAmount.fromCkb(1))).toBe(true);
 });
@@ -199,19 +205,24 @@ test('mint sudt with a mix of policies', async () => {
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
+  const recipient1Address = await recipient1Signer.getAddress();
+  const recipient2Address = await recipient2Signer.getAddress();
+  const recipient3Address = await recipient3Signer.getAddress();
 
   const sudtType = provider.newSudtScript(await issuerSigner.getAddress());
+
+  const issuerAddress = await issuerSigner.getAddress();
 
   const failedTx = new MintSudtBuilder(
     {
       recipients: [
-        { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
-        { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
-        { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+        { recipient: recipient1Address, amount: '100', capacityPolicy: 'createCell' },
+        { recipient: recipient2Address, amount: '100', capacityPolicy: 'findAcp' },
+        { recipient: recipient3Address, amount: '100', capacityPolicy: 'findAcp' },
       ],
     },
     provider,
-    issuerSigner,
+    issuerAddress,
   ).build();
 
   // cannot createCell for an address without acp cell
@@ -225,27 +236,27 @@ test('mint sudt with a mix of policies', async () => {
       await new MintSudtBuilder(
         {
           recipients: [
-            { recipient: await recipient1Signer.getAddress(), amount: '0', capacityPolicy: 'createCell' },
+            { recipient: recipient1Address, amount: '0', capacityPolicy: 'createCell' },
 
-            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
+            { recipient: recipient2Address, amount: '100', capacityPolicy: 'createCell' },
 
             // the sudt balance of recipient3 will be split into 2 cells
-            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
-            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
+            { recipient: recipient3Address, amount: '100', capacityPolicy: 'createCell' },
+            { recipient: recipient3Address, amount: '100', capacityPolicy: 'createCell' },
           ],
         },
         provider,
-        issuerSigner,
+        issuerAddress,
       ).build(),
     ),
   );
 
-  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType), 0);
-  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType), 100);
-  eqAmount(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType), 200);
+  eqAmount(await provider.getUdtBalance(recipient1Address, sudtType), 0);
+  eqAmount(await provider.getUdtBalance(recipient2Address, sudtType), 100);
+  eqAmount(await provider.getUdtBalance(recipient3Address, sudtType), 200);
 
   // the sudt balance of recipient3 will be split into 2 cells
-  expect(await provider.collectUdtCells(await recipient3Signer.getAddress(), sudtType, '101')).toHaveLength(2);
+  expect(await provider.collectUdtCells(recipient3Address, sudtType, '101')).toHaveLength(2);
 
   // issuer -> recipient1: 100 (by findAcp)
   //        -> recipient2: 100 (by findAcp)
@@ -255,26 +266,26 @@ test('mint sudt with a mix of policies', async () => {
       await new MintSudtBuilder(
         {
           recipients: [
-            { recipient: await recipient1Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+            { recipient: recipient1Address, amount: '100', capacityPolicy: 'findAcp' },
 
             // the sudt balance of recipient2 will be split into 2 cells
-            { recipient: await recipient2Signer.getAddress(), amount: '100', capacityPolicy: 'createCell' },
+            { recipient: recipient2Address, amount: '100', capacityPolicy: 'createCell' },
 
-            { recipient: await recipient3Signer.getAddress(), amount: '100', capacityPolicy: 'findAcp' },
+            { recipient: recipient3Address, amount: '100', capacityPolicy: 'findAcp' },
           ],
         },
         provider,
-        issuerSigner,
+        issuerAddress,
       ).build(),
     ),
   );
 
-  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType), 100);
-  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType), 200);
+  eqAmount(await provider.getUdtBalance(recipient1Address, sudtType), 100);
+  eqAmount(await provider.getUdtBalance(recipient2Address, sudtType), 200);
 
   // the sudt balance of recipient2 will be split into 2 cells
-  expect(await provider.collectUdtCells(await recipient2Signer.getAddress(), sudtType, '101')).toHaveLength(2);
-  eqAmount(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType), 300);
+  expect(await provider.collectUdtCells(recipient3Address, sudtType, '101')).toHaveLength(2);
+  eqAmount(await provider.getUdtBalance(recipient3Address, sudtType), 300);
 
   // recipient3 sudt
   //                  --merge-->  recipient3 sudt(142 x 2)   --transfer--> recipient1
@@ -282,18 +293,18 @@ test('mint sudt with a mix of policies', async () => {
   await provider.sendTxUntilCommitted(
     await recipient3Signer.seal(
       await new AcpTransferSudtBuilder(
-        { recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300' },
+        { recipient: recipient1Address, sudt: sudtType, amount: '300' },
         provider,
-        recipient3Signer,
+        recipient3Address,
       ).build(),
     ),
   );
 
-  eqAmount(await provider.getUdtBalance(await recipient1Signer.getAddress(), sudtType), 400);
-  eqAmount(await provider.getUdtBalance(await recipient2Signer.getAddress(), sudtType), 200);
-  eqAmount(await provider.getUdtBalance(await recipient3Signer.getAddress(), sudtType), 0);
+  eqAmount(await provider.getUdtBalance(recipient1Address, sudtType), 400);
+  eqAmount(await provider.getUdtBalance(recipient2Address, sudtType), 200);
+  eqAmount(await provider.getUdtBalance(recipient3Address, sudtType), 0);
 
-  const recipient3Cells = await provider.collectUdtCells(await recipient3Signer.getAddress(), sudtType, '0');
+  const recipient3Cells = await provider.collectUdtCells(recipient3Address, sudtType, '0');
   expect(recipient3Cells).toHaveLength(1);
   // capacity after sent
   const twoSudtCellsCapacity = 142n * 2n * 10n ** 8n;
