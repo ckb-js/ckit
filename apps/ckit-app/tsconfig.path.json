@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "src",
 
     "paths": {
-      "@ckitjs/*": ["../../packages/*/src"]
+      "@ckitjs/*": ["../../../packages/*/src"]
     }
   }
 }

@@ -30,7 +30,7 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
         const txBuilder = new TransferCkbBuilder(
           { recipients: [{ recipient: input.recipient, amount: input.amount, capacityPolicy: 'createCell' }] },
           provider,
-          signer,
+          await signer.getAddress(),
         );
         return txBuilder.build();
       }
