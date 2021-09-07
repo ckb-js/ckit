@@ -63,6 +63,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
           const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
           option.policy = recipientLiveSudtCell ? 'findAcp' : 'createCell';
         }
+        console.log('debug policy', option.policy);
         switch (option.policy) {
           case 'findAcp': {
             const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
@@ -86,7 +87,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
           }
           case 'createCell': {
             const recipientSudtOutputCell = new Cell(
-              new Amount('1', 0).add(new Amount(String(byteLenOfSudt()))),
+              new Amount('1').add(new Amount(String(byteLenOfSudt()))),
               Pw.toPwScript(this.provider.parseToScript(option.recipient)),
               Pw.toPwScript(sudtScript),
               undefined,
@@ -120,9 +121,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         sum.setSUDTAmount(sum.getSUDTAmount().add(input.getSUDTAmount()));
         return sum;
       });
-      senderSudtOutputCell.setSUDTAmount(
-        senderSudtOutputCell.getSUDTAmount().sub(new Amount(totalTransferAmount.toHexString(), 0)),
-      );
+      senderSudtOutputCell.setSUDTAmount(senderSudtOutputCell.getSUDTAmount().sub(totalTransferAmount));
       senderSudtOutputCells.push(senderSudtOutputCell);
     }
 
@@ -155,11 +154,15 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       txWithoutSupplyCapacity,
       Number(this.provider.config.MIN_FEE_RATE),
     );
+    console.log('debug fee', feeWithoutSupplyCapacity.toString());
 
     const inputsContainedCapacity = recipientSudtInputCellsCapacity.add(senderSudtInputCellsCapacity);
+    console.log('input capacity', inputsContainedCapacity);
     const outputsContainedCapacity = recipientSudtOutputCellsCapacity.add(senderSudtOutputCellsCapacity);
+    console.log('output capacity', outputsContainedCapacity);
     const needSupplyCapacity = inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
+    console.log('debug tx', txWithoutSupplyCapacity);
     if (needSupplyCapacity) {
       const outputsNeededCapacity = outputsContainedCapacity
         // additional 61 ckb to ensure capacity is enough for change cell
