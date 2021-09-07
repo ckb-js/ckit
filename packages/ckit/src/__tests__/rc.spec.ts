@@ -131,7 +131,7 @@ test('test rc udt lock', async () => {
       await new AcpTransferSudtBuilder(
         { recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10' },
         provider,
-        recipient1Signer,
+        await recipient1Signer.getAddress(),
       ).build(),
     ),
   );

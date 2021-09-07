@@ -1,5 +1,4 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { EntrySigner } from '@ckitjs/base';
 import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
@@ -32,21 +31,19 @@ export interface MintOptions {
 }
 
 export class MintSudtBuilder extends AbstractTransactionBuilder {
-  constructor(private options: MintOptions, private provider: CkitProvider, private signer: EntrySigner) {
+  constructor(private options: MintOptions, private provider: CkitProvider, private sender: Address) {
     super();
   }
 
   private async buildPwTransaction() {
-    const signerAddress = await this.signer.getAddress();
-    const builder = new NonAcpPwMintBuilder(this.options, this.provider, signerAddress);
+    const builder = new NonAcpPwMintBuilder(this.options, this.provider, this.sender);
     return await builder.build();
   }
   async build(): Promise<Transaction> {
-    const signerAddress = await this.signer.getAddress();
     const mintToSelf = this.options.recipients.some(
-      (item) => item.recipient === signerAddress && item.capacityPolicy === 'findAcp',
+      (item) => item.recipient === this.sender && item.capacityPolicy === 'findAcp',
     );
-    if (mintToSelf) throw new RecipientSameWithSenderError({ address: signerAddress });
+    if (mintToSelf) throw new RecipientSameWithSenderError({ address: this.sender });
 
     return this.buildPwTransaction();
   }

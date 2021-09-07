@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { CkbTypeScript, EntrySigner } from '@ckitjs/base';
+import { CkbTypeScript } from '@ckitjs/base';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
@@ -13,15 +13,14 @@ interface TransferOptions {
 }
 
 export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
-  constructor(private options: TransferOptions, provider: CkitProvider, private signer: EntrySigner) {
+  constructor(private options: TransferOptions, provider: CkitProvider, private sender: Address) {
     super(provider);
   }
 
   async build(): Promise<Transaction> {
     const { sudt, recipient, amount } = this.options;
-    const sender = await this.signer.getAddress();
 
-    const senderSudts = await this.provider.collectUdtCells(sender, sudt, amount);
+    const senderSudts = await this.provider.collectUdtCells(this.sender, sudt, amount);
     const recipientSudt = (await this.provider.collectUdtCells(recipient, sudt, '0'))[0];
 
     const cellDeps = await this.getCellDeps();
@@ -61,7 +60,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
 
     const tx = new Transaction(
       new RawTransaction([...senderInputs, recipientInput], [senderOutput, recipientOutput], cellDeps),
-      senderInputs.map(() => this.getWitnessPlaceholder(sender)),
+      senderInputs.map(() => this.getWitnessPlaceholder(this.sender)),
     );
 
     // TODO fix fee

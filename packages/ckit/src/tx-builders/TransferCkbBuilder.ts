@@ -26,17 +26,17 @@ interface RecipientOption {
 }
 
 export class TransferCkbBuilder extends AbstractTransactionBuilder {
-  constructor(private options: TransferCkbOptions, private provider: CkitProvider, private signer: Address) {
+  constructor(private options: TransferCkbOptions, private provider: CkitProvider, private sender: Address) {
     super();
   }
 
   async build(): Promise<Transaction> {
     const transferToSelf = this.options.recipients.some(
-      (item) => item.recipient === this.signer && item.capacityPolicy === 'findAcp',
+      (item) => item.recipient === this.sender && item.capacityPolicy === 'findAcp',
     );
-    if (transferToSelf) throw new RecipientSameWithSenderError({ address: this.signer });
+    if (transferToSelf) throw new RecipientSameWithSenderError({ address: this.sender });
 
-    const builder = new TransferCkbPwBuilder(this.options, this.provider, this.signer);
+    const builder = new TransferCkbPwBuilder(this.options, this.provider, this.sender);
     return builder.build();
   }
 }
