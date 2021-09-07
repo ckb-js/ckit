@@ -21,7 +21,6 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
 
   async build(): Promise<Transaction> {
     const cellDeps = this.getCellDeps();
-    const sender = await this.signer.getAddress();
     let containCreateOption = false;
 
     const optionsGroupBySudt = new Map<string, TransferOptions[]>();
@@ -101,7 +100,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       }
 
       const senderLiveSudtCells = await this.provider.collectUdtCells(
-        sender,
+        this.sender,
         sudtScript,
         totalTransferAmount.toHexString(),
       );
@@ -159,7 +158,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         senderSudtOutputCells.concat(recipientSudtOutputCells),
         cellDeps,
       ),
-      senderSudtInputCells.map(() => this.getWitnessPlaceholder(sender)),
+      senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
     );
     const feeWithoutSupplyCapacity = Builder.calcFee(
       txWithoutSupplyCapacity,
@@ -178,7 +177,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         .add(new Amount('1'));
       const neededSupplyCapacity = outputsNeededCapacity.sub(inputsContainedCapacity);
       const supplyCapacityLiveCells = await this.provider.collectCkbLiveCells(
-        sender,
+        this.sender,
         neededSupplyCapacity.toHexString(),
       );
 
@@ -193,7 +192,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
           senderSudtOutputCells.concat(recipientSudtOutputCells).concat([capacityChangeCell]),
           cellDeps,
         ),
-        senderSudtInputCells.map(() => this.getWitnessPlaceholder(sender)),
+        senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
       );
       const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
       capacityChangeCell.capacity = capacityChangeCell.capacity
