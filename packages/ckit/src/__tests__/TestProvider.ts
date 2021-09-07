@@ -104,7 +104,7 @@ export class TestProvider extends CkitProvider {
             recipients: [{ recipient, capacityPolicy: 'createCell', amount }],
           },
           this,
-          this.getGenesisSigner(testPrivateKeysIndex),
+          await this.getGenesisSigner(testPrivateKeysIndex).getAddress(),
         ).build(),
       ),
     );

@@ -40,7 +40,7 @@ test('test rc signer', async () => {
           ],
         },
         provider,
-        rcSigner,
+        await rcSigner.getAddress(),
       ).build(),
     ),
   );
@@ -131,7 +131,7 @@ test('test rc udt lock', async () => {
       await new AcpTransferSudtBuilder(
         [{ recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10', policy: 'findOrCreate' }],
         provider,
-        recipient1Signer,
+        await recipient1Signer.getAddress(),
       ).build(),
     ),
   );
@@ -159,6 +159,8 @@ test('test rc with acp', async () => {
   const rcSigner2 = new RCLockSigner(randomHexString(64), provider);
 
   // genesis -> rc-lock
+  const sender = await rcSigner1.getAddressByMode(RC_MODE.ACP);
+  const recipient = await rcSigner2.getAddressByMode(RC_MODE.ACP);
 
   await provider.sendTxUntilCommitted(
     await genesisSigner.seal(
@@ -166,24 +168,23 @@ test('test rc with acp', async () => {
         {
           recipients: [
             {
-              recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
+              recipient: sender,
               amount: '6700000000', //  67 CKB
               capacityPolicy: 'createCell',
             },
             {
-              recipient: await rcSigner2.getAddressByMode(RC_MODE.ACP),
+              recipient: recipient,
               amount: '6500000000', //  65 CKB
               capacityPolicy: 'createCell',
             },
           ],
         },
         provider,
-        genesisSigner,
+        await genesisSigner.getAddress(),
       ).build(),
     ),
   );
 
-  const recipient = await rcSigner2.getAddressByMode(RC_MODE.ACP);
   // rcSigner1 -> rcSigner2: 1 ckb
   const signed = await rcSigner1.seal(
     await new TransferCkbBuilder(
@@ -197,7 +198,7 @@ test('test rc with acp', async () => {
         ],
       },
       provider,
-      rcSigner1,
+      sender,
     ).build(),
   );
   await provider.sendTxUntilCommitted(signed);
@@ -225,7 +226,7 @@ test('test eth rc signer', async () => {
           ],
         },
         provider,
-        genesisSigner,
+        await genesisSigner.getAddress(),
       ).build(),
     ),
   );
@@ -240,7 +241,7 @@ test('test eth rc signer', async () => {
           recipients: [{ recipient: await recipient.getAddress(), amount: '6100000000', capacityPolicy: 'createCell' }],
         },
         provider,
-        rcSigner,
+        await rcSigner.getAddress(),
       ).build(),
     ),
   );

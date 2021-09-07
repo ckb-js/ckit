@@ -1,3 +1,5 @@
+// TODO replace with safe-buffer
+import { Buffer } from 'buffer';
 import { formatByteLike } from './utils';
 
 function createReader<T>(fnName: keyof Buffer): (buf: Buffer, offset?: number) => T {
