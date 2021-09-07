@@ -344,3 +344,14 @@ test('test serialize and deserialized', async () => {
 
   expect(txHash).toBeTruthy();
 });
+
+// TODO impl testcase
+test.skip('test duplicate options', async () => {
+  return;
+});
+test.skip('test mixed policy options', async () => {
+  return;
+});
+test.skip('other testcases', async () => {
+  return;
+});

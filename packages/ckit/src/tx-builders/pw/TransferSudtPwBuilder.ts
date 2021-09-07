@@ -1,21 +1,14 @@
-import { Address, HexNumber } from '@ckb-lumos/base';
-import { CkbTypeScript } from '@ckitjs/base';
+import { Address } from '@ckb-lumos/base';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { boom } from '../../utils';
+import { TransferSudtOptions, RecipientOption } from '../AcpTransferSudtBuilder';
 import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
-interface TransferOptions {
-  readonly recipient: Address;
-  readonly sudt: CkbTypeScript;
-  amount: HexNumber;
-  policy: 'findAcp' | 'createCell' | 'findOrCreate';
-}
-
 export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
-  constructor(private options: TransferOptions[], provider: CkitProvider, private sender: Address) {
+  constructor(private options: TransferSudtOptions, provider: CkitProvider, private sender: Address) {
     super(provider);
   }
 
@@ -23,8 +16,8 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     const cellDeps = this.getCellDeps();
     let containCreateOption = false;
 
-    const optionsGroupBySudt = new Map<string, TransferOptions[]>();
-    this.options.forEach((options) => {
+    const optionsGroupBySudt = new Map<string, RecipientOption[]>();
+    this.options.recipients.forEach((options) => {
       const oldRecipientOptions = optionsGroupBySudt.get(options.sudt.args);
       const newRecipientOptions =
         oldRecipientOptions === undefined
@@ -219,8 +212,8 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     return txWithoutSupplyCapacity;
   }
 
-  deduplicateOptions(options: TransferOptions[]): TransferOptions[] {
-    const deduplicateOptions = new Map<string, TransferOptions>();
+  deduplicateOptions(options: RecipientOption[]): RecipientOption[] {
+    const deduplicateOptions = new Map<string, RecipientOption>();
     options.forEach((option) => {
       const existedOption = deduplicateOptions.get(option.recipient);
       if (existedOption) {
