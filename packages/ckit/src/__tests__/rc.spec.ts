@@ -129,7 +129,7 @@ test('test rc udt lock', async () => {
   await provider.sendTxUntilCommitted(
     await recipient1Signer.seal(
       await new AcpTransferSudtBuilder(
-        { recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10' },
+        [{ recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10', policy: 'findOrCreate' }],
         provider,
         recipient1Signer,
       ).build(),
@@ -143,12 +143,12 @@ test('test rc udt lock', async () => {
 });
 
 test('test rc with acp', async () => {
-  // genesis -> rcSigner1(acp): 64 ckb
-  //         -> rcSigner2(acp): 62 ckb
+  // genesis -> rcSigner1(acp): 67 ckb
+  //         -> rcSigner2(acp): 65 ckb
   // rcSigner1 -> rcSigner2: 1 ckb
-  // expect(rcSigner1Balance < 63 ckb).toBe(true)
-  // expect(rcSigner1Balance > 62.9 ckb).toBe(true)
-  // expect(rcSigner2Balance  === 62 ckb).toBe(true)
+  // expect(rcSigner1Balance < 67 ckb).toBe(true)
+  // expect(rcSigner1Balance > 66.9 ckb).toBe(true)
+  // expect(rcSigner2Balance  === 66 ckb).toBe(true)
 
   jest.setTimeout(120000);
   const provider = new TestProvider();
@@ -167,7 +167,7 @@ test('test rc with acp', async () => {
           recipients: [
             {
               recipient: await rcSigner1.getAddressByMode(RC_MODE.ACP),
-              amount: '6700000000', //  100 CKB
+              amount: '6700000000', //  67 CKB
               capacityPolicy: 'createCell',
             },
             {

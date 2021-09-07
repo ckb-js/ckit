@@ -19,30 +19,15 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     super(provider);
   }
 
-  deduplicateOptions(options: TransferOptions[]): TransferOptions[] {
-    const deduplicateOptions = new Map<string, TransferOptions>();
-    options.forEach((option) => {
-      const existedOption = deduplicateOptions.get(option.recipient);
-      if (existedOption) {
-        if (existedOption.policy !== option.policy)
-          throw new Error('error: same recipient and sudt, but different policy');
-        existedOption.amount = new Amount(existedOption.amount, 0).add(new Amount(option.amount, 0)).toHexString();
-      } else {
-        deduplicateOptions.set(option.recipient, option);
-      }
-    });
-    return Array.from(deduplicateOptions.values());
-  }
-
-  // TODO pre handle params
   async build(): Promise<Transaction> {
+    const cellDeps = this.getCellDeps();
     const sender = await this.signer.getAddress();
 
     const optionsGroupBySudt = new Map<string, TransferOptions[]>();
     this.options.forEach((options) => {
-      const oldrecipientOptions = optionsGroupBySudt.get(options.sudt.args);
-      const newrecipientOptions =
-        oldrecipientOptions === undefined
+      const oldRecipientOptions = optionsGroupBySudt.get(options.sudt.args);
+      const newRecipientOptions =
+        oldRecipientOptions === undefined
           ? [
               {
                 recipient: options.recipient,
@@ -51,13 +36,13 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
                 policy: options.policy,
               },
             ]
-          : oldrecipientOptions.concat({
+          : oldRecipientOptions.concat({
               recipient: options.recipient,
               amount: options.amount,
               sudt: options.sudt,
               policy: options.policy,
             });
-      optionsGroupBySudt.set(options.sudt.args, newrecipientOptions);
+      optionsGroupBySudt.set(options.sudt.args, newRecipientOptions);
     });
 
     const senderSudtInputCells = new Array<Cell>(0);
@@ -68,6 +53,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     for (const item of optionsGroupBySudt) {
       let [, optionsOfSameSudt] = item;
       optionsOfSameSudt = this.deduplicateOptions(optionsOfSameSudt);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const sudtScript = optionsOfSameSudt[0]!.sudt;
 
       let totalTransferAmount = new Amount('0', 0);
@@ -135,48 +121,60 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         return sum;
       });
       senderSudtOutputCell.setSUDTAmount(
-        senderSudtOutputCell.getSUDTAmount().sub(new Amount(totalTransferAmount.toString(), 0)),
+        senderSudtOutputCell.getSUDTAmount().sub(new Amount(totalTransferAmount.toHexString(), 0)),
       );
       senderSudtOutputCells.push(senderSudtOutputCell);
     }
-
-    const senderSudtOutputCellsCapacity = senderSudtOutputCells.reduce(
-      (sum, cell) => sum.add(cell.capacity),
-      Amount.ZERO,
-    );
 
     const senderSudtInputCellsCapacity = senderSudtInputCells.reduce(
       (sum, cell) => sum.add(cell.capacity),
       Amount.ZERO,
     );
-
+    const senderSudtOutputCellsCapacity = senderSudtOutputCells.reduce(
+      (sum, cell) => sum.add(cell.capacity),
+      Amount.ZERO,
+    );
+    const recipientSudtInputCellsCapacity = recipientSudtInputCells.reduce(
+      (sum, cell) => sum.add(cell.capacity),
+      Amount.ZERO,
+    );
     const recipientSudtOutputCellsCapacity = recipientSudtOutputCells.reduce(
       (sum, cell) => sum.add(cell.capacity),
       Amount.ZERO,
     );
 
-    const recipientSudtInputCellsCapacity = recipientSudtInputCells.reduce(
-      (sum, cell) => sum.add(cell.capacity),
-      Amount.ZERO,
+    const txWithoutSupplyCapacity = new Transaction(
+      new RawTransaction(
+        senderSudtInputCells.concat(recipientSudtInputCells),
+        senderSudtOutputCells.concat(recipientSudtOutputCells),
+        cellDeps,
+      ),
+      senderSudtInputCells.map(() => this.getWitnessPlaceholder(sender)),
+    );
+    const feeWithoutSupplyCapacity = Builder.calcFee(
+      txWithoutSupplyCapacity,
+      Number(this.provider.config.MIN_FEE_RATE),
     );
 
-    const outputsNeededCapacity = recipientSudtOutputCellsCapacity
-      .add(senderSudtOutputCellsCapacity)
-      // additional 61 ckb to ensure capacity is enough for change cell
-      .add(new Amount(String(byteLenOfCkbLiveCell())))
-      // additional 1 ckb for tx fee, not all 1ckb will be paid,
-      // but the real fee will be calculated based on feeRate
-      .add(new Amount('1'));
-
     const inputsContainedCapacity = recipientSudtInputCellsCapacity.add(senderSudtInputCellsCapacity);
+    const outputsContainedCapacity = recipientSudtOutputCellsCapacity.add(senderSudtOutputCellsCapacity);
+    const needSupplyCapacity = inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
-    const cellDeps = this.getCellDeps();
-
-    if (inputsContainedCapacity.lt(outputsNeededCapacity)) {
-      const needSupplyCapacity = outputsNeededCapacity.sub(inputsContainedCapacity);
-      const supplyCapacityLiveCells = await this.provider.collectCkbLiveCells(sender, needSupplyCapacity.toHexString());
+    if (needSupplyCapacity) {
+      const outputsNeededCapacity = outputsContainedCapacity
+        // additional 61 ckb to ensure capacity is enough for change cell
+        .add(new Amount(String(byteLenOfCkbLiveCell())))
+        // additional 1 ckb for tx fee, not all 1ckb will be paid,
+        // but the real fee will be calculated based on feeRate
+        .add(new Amount('1'));
+      const neededSupplyCapacity = outputsNeededCapacity.sub(inputsContainedCapacity);
+      const supplyCapacityLiveCells = await this.provider.collectCkbLiveCells(
+        sender,
+        neededSupplyCapacity.toHexString(),
+      );
 
       const supplyCapacityInputCells = supplyCapacityLiveCells.map(Pw.toPwCell);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const capacityChangeCell = supplyCapacityInputCells[0]!.clone();
       capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
 
@@ -189,30 +187,32 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         senderSudtInputCells.map(() => this.getWitnessPlaceholder(sender)),
       );
       const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
-
       capacityChangeCell.capacity = capacityChangeCell.capacity
         .sub(fee)
         .add(inputsContainedCapacity)
-        .sub(recipientSudtOutputCellsCapacity)
-        .sub(senderSudtOutputCellsCapacity);
+        .sub(outputsContainedCapacity);
 
       return tx;
     }
 
-    const tx = new Transaction(
-      new RawTransaction(
-        senderSudtInputCells.concat(recipientSudtInputCells),
-        senderSudtOutputCells.concat(recipientSudtOutputCells),
-        cellDeps,
-      ),
-      senderSudtInputCells.map(() => this.getWitnessPlaceholder(sender)),
-    );
-    const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
-    const changeCapacity = inputsContainedCapacity
-      .sub(recipientSudtOutputCellsCapacity)
-      .sub(senderSudtOutputCellsCapacity)
-      .sub(fee);
+    const changeCapacity = inputsContainedCapacity.sub(outputsContainedCapacity).sub(feeWithoutSupplyCapacity);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     senderSudtOutputCells[0]!.capacity = senderSudtOutputCells[0]!.capacity.add(changeCapacity);
-    return tx;
+    return txWithoutSupplyCapacity;
+  }
+
+  deduplicateOptions(options: TransferOptions[]): TransferOptions[] {
+    const deduplicateOptions = new Map<string, TransferOptions>();
+    options.forEach((option) => {
+      const existedOption = deduplicateOptions.get(option.recipient);
+      if (existedOption) {
+        if (existedOption.policy !== option.policy)
+          throw new Error('error: same recipient and sudt, but different policy');
+        existedOption.amount = new Amount(existedOption.amount, 0).add(new Amount(option.amount, 0)).toHexString();
+      } else {
+        deduplicateOptions.set(option.recipient, option);
+      }
+    });
+    return Array.from(deduplicateOptions.values());
   }
 }

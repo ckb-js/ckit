@@ -101,7 +101,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
     hash_type: ANYONE_CAN_PAY.HASH_TYPE,
   });
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
-    { amount: '1', recipient: recipientAddr0, sudt: testUdt },
+    [{ amount: '1', recipient: recipientAddr0, sudt: testUdt, policy: 'findOrCreate' }],
     provider,
     signer,
   ).build();
@@ -174,7 +174,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
   });
   // recipient2 -> recipient1 with 1 udt
   const unsignedTransferUdtTx = await new AcpTransferSudtBuilder(
-    { amount: '1', recipient: await recipient1Signer.getAddress(), sudt: testUdt },
+    [{ amount: '1', recipient: await recipient1Signer.getAddress(), sudt: testUdt, policy: 'findOrCreate' }],
     provider,
     recipient2Signer,
   ).build();
@@ -282,7 +282,7 @@ test('mint sudt with a mix of policies', async () => {
   await provider.sendTxUntilCommitted(
     await recipient3Signer.seal(
       await new AcpTransferSudtBuilder(
-        { recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300' },
+        [{ recipient: await recipient1Signer.getAddress(), sudt: sudtType, amount: '300', policy: 'findOrCreate' }],
         provider,
         recipient3Signer,
       ).build(),
