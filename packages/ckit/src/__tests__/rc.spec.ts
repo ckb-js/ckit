@@ -129,7 +129,11 @@ test('test rc udt lock', async () => {
   await provider.sendTxUntilCommitted(
     await recipient1Signer.seal(
       await new AcpTransferSudtBuilder(
-        [{ recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10', policy: 'findOrCreate' }],
+        {
+          recipients: [
+            { recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10', policy: 'findOrCreate' },
+          ],
+        },
         provider,
         await recipient1Signer.getAddress(),
       ).build(),

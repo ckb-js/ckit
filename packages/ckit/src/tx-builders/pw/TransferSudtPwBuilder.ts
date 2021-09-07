@@ -38,10 +38,10 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       optionsGroupBySudt.set(options.sudt.args, newRecipientOptions);
     });
 
-    const senderSudtInputCells = new Array<Cell>(0);
-    const recipientSudtInputCells = new Array<Cell>(0);
-    const senderSudtOutputCells = new Array<Cell>(0);
-    const recipientSudtOutputCells = new Array<Cell>(0);
+    const senderSudtInputCells: Cell[] = [];
+    const recipientSudtInputCells: Cell[] = [];
+    const senderSudtOutputCells: Cell[] = [];
+    const recipientSudtOutputCells: Cell[] = [];
 
     for (const item of optionsGroupBySudt) {
       let [, optionsOfSameSudt] = item;
@@ -80,7 +80,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
           case 'createCell': {
             containCreateOption = true;
             const recipientSudtOutputCell = new Cell(
-              new Amount('1').add(new Amount(String(byteLenOfSudt()))),
+              new Amount('1').add(new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(option.recipient))))),
               Pw.toPwScript(this.provider.parseToScript(option.recipient)),
               Pw.toPwScript(sudtScript),
               undefined,
@@ -97,16 +97,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         sudtScript,
         totalTransferAmount.toHexString(),
       );
-      const senderSudtInputCell: Cell[] = senderLiveSudtCells.map(
-        (point) =>
-          new Cell(
-            new Amount(point.output.capacity, 0),
-            Pw.toPwScript(point.output.lock),
-            point.output.type && Pw.toPwScript(point.output.type),
-            Pw.toPwOutPoint(point.out_point),
-            point.output_data,
-          ),
-      );
+      const senderSudtInputCell: Cell[] = senderLiveSudtCells.map(Pw.toPwCell);
       senderSudtInputCells.push(...senderSudtInputCell);
 
       const senderSudtOutputCell = senderSudtInputCell.reduce((sum, input) => {
@@ -162,9 +153,10 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
     if (needSupplyCapacity) {
+      const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
       const outputsNeededCapacity = outputsContainedCapacity
         // additional 61 ckb to ensure capacity is enough for change cell
-        .add(new Amount(String(byteLenOfCkbLiveCell())))
+        .add(new Amount(String(byteLenOfCkbLiveCell(senderLockscriptArgsLen))))
         // additional 1 ckb for tx fee, not all 1ckb will be paid,
         // but the real fee will be calculated based on feeRate
         .add(new Amount('1'));
@@ -210,6 +202,10 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
 
     cellToPayFee.capacity = cellToPayFee.capacity.sub(feeWithoutSupplyCapacity);
     return txWithoutSupplyCapacity;
+  }
+
+  getLockscriptArgsLength(address: string): number {
+    return (this.provider.parseToScript(address).args.length - 2) / 2;
   }
 
   deduplicateOptions(options: RecipientOption[]): RecipientOption[] {
