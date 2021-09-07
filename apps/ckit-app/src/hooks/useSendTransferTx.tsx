@@ -23,7 +23,7 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
             amount: input.amount,
           },
           provider,
-          signer,
+          await signer.getAddress(),
         );
         return txBuilder.build();
       } else {

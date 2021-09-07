@@ -25,7 +25,7 @@ export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueT
       } else {
         recipientsParams.capacityPolicy = 'findAcp';
       }
-      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, provider, signer);
+      const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, provider, await signer.getAddress());
       return txBuilder.build();
     };
 
