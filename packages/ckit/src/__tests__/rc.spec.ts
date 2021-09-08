@@ -129,7 +129,11 @@ test('test rc udt lock', async () => {
   await provider.sendTxUntilCommitted(
     await recipient1Signer.seal(
       await new AcpTransferSudtBuilder(
-        { recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10' },
+        {
+          recipients: [
+            { recipient: await recipient2Signer.getAddress(), sudt: testUdt, amount: '10', policy: 'findOrCreate' },
+          ],
+        },
         provider,
         await recipient1Signer.getAddress(),
       ).build(),
@@ -146,8 +150,8 @@ test('test rc with acp', async () => {
   // genesis -> rcSigner1(acp): 67 ckb
   //         -> rcSigner2(acp): 65 ckb
   // rcSigner1 -> rcSigner2: 1 ckb
-  // expect(rcSigner1Balance < 66 ckb).toBe(true)
-  // expect(rcSigner1Balance > 65.9 ckb).toBe(true)
+  // expect(rcSigner1Balance < 67 ckb).toBe(true)
+  // expect(rcSigner1Balance > 66.9 ckb).toBe(true)
   // expect(rcSigner2Balance  === 66 ckb).toBe(true)
 
   jest.setTimeout(120000);

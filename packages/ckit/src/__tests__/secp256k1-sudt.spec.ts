@@ -101,7 +101,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
     hash_type: ANYONE_CAN_PAY.HASH_TYPE,
   });
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
-    { amount: '1', recipient: recipientAddr0, sudt: testUdt },
+    { recipients: [{ amount: '1', recipient: recipientAddr0, sudt: testUdt, policy: 'findOrCreate' }] },
     provider,
     await signer.getAddress(),
   ).build();
@@ -180,7 +180,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
   });
   // recipient2 -> recipient1 with 1 udt
   const unsignedTransferUdtTx = await new AcpTransferSudtBuilder(
-    { amount: '1', recipient: recipient1Address, sudt: testUdt },
+    { recipients: [{ amount: '1', recipient: recipient1Address, sudt: testUdt, policy: 'findOrCreate' }] },
     provider,
     recipient2Address,
   ).build();
@@ -293,7 +293,7 @@ test('mint sudt with a mix of policies', async () => {
   await provider.sendTxUntilCommitted(
     await recipient3Signer.seal(
       await new AcpTransferSudtBuilder(
-        { recipient: recipient1Address, sudt: sudtType, amount: '300' },
+        { recipients: [{ recipient: recipient1Address, sudt: sudtType, amount: '300', policy: 'findOrCreate' }] },
         provider,
         recipient3Address,
       ).build(),
@@ -343,4 +343,15 @@ test('test serialize and deserialized', async () => {
   const txHash = await provider.sendTransaction(await genesisSigner.seal(deserialized));
 
   expect(txHash).toBeTruthy();
+});
+
+// TODO impl testcase
+test.skip('test duplicate options', async () => {
+  return;
+});
+test.skip('test mixed policy options', async () => {
+  return;
+});
+test.skip('other testcases', async () => {
+  return;
 });
