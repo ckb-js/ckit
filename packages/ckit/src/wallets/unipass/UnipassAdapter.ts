@@ -15,7 +15,7 @@ interface UnipassLoginData {
 
 function isUnipassLoginData(x: unknown): x is UnipassLoginData {
   if (typeof x !== 'object' || x === null) return false;
-  return 'email' in x && 'pubkey' in x && 'recovery' in x;
+  return 'email' in x && 'pubkey' in x;
 }
 
 interface UnipassSigData {
@@ -124,7 +124,7 @@ export class UnipassRedirectAdapter {
     localStorage.setItem(this.config.loginDataCacheKey, JSON.stringify(data));
   }
 
-  private getLoginDataFromCache(): UnipassLoginData | undefined {
+  public getLoginDataFromCache(): UnipassLoginData | undefined {
     const serialized = localStorage.getItem(this.config.loginDataCacheKey);
 
     if (serialized == null) return;
