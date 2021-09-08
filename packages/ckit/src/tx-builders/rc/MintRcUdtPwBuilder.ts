@@ -28,11 +28,13 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     const udtType = this.provider.newSudtScript(this.provider.parseToAddress(rcUdtInfoCell.output.lock));
 
     const recipients = from(this.options.recipients.filter((item) => item.capacityPolicy === 'findOrCreate')).pipe(
-      mergeMap((item) =>
-        this.provider.collectUdtCells(item.recipient, udtType, '0').then((cells) => ({
-          ...item,
-          capacityPolicy: cells.length > 0 ? ('findAcp' as const) : ('createCell' as const),
-        })),
+      mergeMap(
+        (item) =>
+          this.provider.collectUdtCells(item.recipient, udtType, '0').then((cells) => ({
+            ...item,
+            capacityPolicy: cells.length > 0 ? ('findAcp' as const) : ('createCell' as const),
+          })),
+        5,
       ),
       toArray(),
     );
