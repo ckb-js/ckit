@@ -16,7 +16,36 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     super(provider);
   }
 
+  private async determineFindOrCreate() {
+    const helper = new RcSupplyLockHelper(this.provider.mercury, {
+      rcLock: this.provider.newScriptTemplate('RC_LOCK'),
+      sudtType: this.provider.newScriptTemplate('SUDT'),
+    });
+
+    const resolvedInfoCells = await helper.listCreatedInfoCells(this.options);
+
+    const rcUdtInfoCell = nonNullable(resolvedInfoCells[0]);
+    const udtType = this.provider.newSudtScript(this.provider.parseToAddress(rcUdtInfoCell.output.lock));
+
+    const recipients = from(this.options.recipients.filter((item) => item.capacityPolicy === 'findOrCreate')).pipe(
+      mergeMap((item) =>
+        this.provider.collectUdtCells(item.recipient, udtType, '0').then((cells) => ({
+          ...item,
+          capacityPolicy: cells.length > 0 ? ('findAcp' as const) : ('createCell' as const),
+        })),
+      ),
+      toArray(),
+    );
+
+    return lastValueFrom(recipients);
+  }
+
   async build(): Promise<Transaction> {
+    this.options = {
+      ...this.options,
+      recipients: await this.determineFindOrCreate(),
+    };
+
     const helper = new RcSupplyLockHelper(this.provider.mercury, {
       rcLock: this.provider.newScriptTemplate('RC_LOCK'),
       sudtType: this.provider.newScriptTemplate('SUDT'),
