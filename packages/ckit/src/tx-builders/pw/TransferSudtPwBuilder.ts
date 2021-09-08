@@ -48,8 +48,9 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       optionsOfSameSudt = this.deduplicateOptions(optionsOfSameSudt);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const sudtScript = optionsOfSameSudt[0]!.sudt;
-
       let totalTransferAmount = new Amount('0', 0);
+
+      // build sudt cells of recipients
       for (const option of optionsOfSameSudt) {
         totalTransferAmount = totalTransferAmount.add(new Amount(option.amount, 0));
         if (option.policy === 'findOrCreate') {
@@ -92,6 +93,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         }
       }
 
+      // build sudt cells of sender
       const senderLiveSudtCells = await this.provider.collectUdtCells(
         this.sender,
         sudtScript,
@@ -109,10 +111,14 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       senderSudtOutputCells.push(senderSudtOutputCell);
     }
 
+    // supply capacity from sudt cells prior if need create cell
     if (containCreateOption) {
+      const baseSudtCellCapacity = new Amount('1').add(
+        new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(this.sender)))),
+      );
       senderSudtOutputCells.forEach((cell) => {
-        if (cell.capacity.gt(new Amount('1'))) {
-          cell.capacity = new Amount('1');
+        if (cell.capacity.gt(baseSudtCellCapacity)) {
+          cell.capacity = baseSudtCellCapacity;
         }
       });
     }
@@ -152,6 +158,8 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     const needSupplyCapacity =
       containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
+    // build tx with extra capacity cell supplied
+    // supply (created cell capacity) + (tx fee) from (sender sudt cells) + (extra capacity cells)
     if (needSupplyCapacity) {
       const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
       const outputsNeededCapacity = outputsContainedCapacity
@@ -171,7 +179,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       const capacityChangeCell = supplyCapacityInputCells[0]!.clone();
       capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
 
-      const tx = new Transaction(
+      const txWithSupplyCapacity = new Transaction(
         new RawTransaction(
           senderSudtInputCells.concat(recipientSudtInputCells).concat(supplyCapacityInputCells),
           senderSudtOutputCells.concat(recipientSudtOutputCells).concat([capacityChangeCell]),
@@ -179,15 +187,17 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         ),
         senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
       );
-      const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
+      const fee = Builder.calcFee(txWithSupplyCapacity, Number(this.provider.config.MIN_FEE_RATE));
       capacityChangeCell.capacity = capacityChangeCell.capacity
         .sub(fee)
         .add(inputsContainedCapacity)
         .sub(outputsContainedCapacity);
 
-      return tx;
+      return txWithSupplyCapacity;
     }
 
+    // build tx without extra capacity cell supplied
+    // supply created cell capacity and tx fee from sender sudt cells
     if (containCreateOption) {
       const changeCapacity = inputsContainedCapacity.sub(outputsContainedCapacity).sub(feeWithoutSupplyCapacity);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -195,11 +205,12 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       return txWithoutSupplyCapacity;
     }
 
+    // build tx without extra capacity cell supplied
+    // supply tx fee from sender sudt cells
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const cellToPayFee = senderSudtOutputCells[0]!;
     if (cellToPayFee.capacity.lt(feeWithoutSupplyCapacity))
       throw new Error('error: sudt cell capacity not enough to pay tx fee');
-
     cellToPayFee.capacity = cellToPayFee.capacity.sub(feeWithoutSupplyCapacity);
     return txWithoutSupplyCapacity;
   }
