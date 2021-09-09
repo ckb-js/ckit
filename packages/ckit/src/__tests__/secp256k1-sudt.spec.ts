@@ -345,6 +345,107 @@ test('test serialize and deserialized', async () => {
   expect(txHash).toBeTruthy();
 });
 
+test('test find_acp_transfer_sudt with extra capacity supply', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+  const { debug } = provider;
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const issuerPrivateKey = provider.testPrivateKeys[testPrivateKeyIndex]!;
+
+  const recipientPrivKey0 = randomHexString(64);
+  const recipientPrivKey1 = randomHexString(64);
+
+  const { SECP256K1_BLAKE160, ANYONE_CAN_PAY, SUDT } = provider.config.SCRIPTS;
+
+  const recipientAddr0 = provider.parseToAddress({
+    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+    code_hash: ANYONE_CAN_PAY.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey0),
+  });
+
+  const recipientAddr1 = provider.parseToAddress({
+    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+    code_hash: ANYONE_CAN_PAY.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey1),
+  });
+
+  const issuerLockHash = utils.computeScriptHash({
+    code_hash: SECP256K1_BLAKE160.CODE_HASH,
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+    args: key.privateKeyToBlake160(issuerPrivateKey),
+  });
+
+  const testUdt = {
+    code_hash: SUDT.CODE_HASH,
+    hash_type: SUDT.HASH_TYPE,
+    args: issuerLockHash,
+  };
+  const beforeBalance0 = await provider.getUdtBalance(recipientAddr0, testUdt);
+
+  eqAmount(beforeBalance0, 0);
+
+  const issuerSigner = new Secp256k1Signer(issuerPrivateKey, provider, {
+    code_hash: SECP256K1_BLAKE160.CODE_HASH,
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+  });
+
+  // transfer ckb to recipientAddr1
+  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipientAddr1 });
+  const unsignedTransferCkbTx = await new TransferCkbBuilder(
+    { recipients: [{ recipient: recipientAddr1, amount: '1000000000000', capacityPolicy: 'createCell' }] },
+    provider,
+    await issuerSigner.getAddress(),
+  ).build();
+  const signed = await issuerSigner.seal(unsignedTransferCkbTx);
+  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed);
+  debug(`end transfer ckb, %s`, transferCkbTxHash);
+
+  const recipients: MintOptions['recipients'] = [
+    // create acp cell
+    {
+      recipient: recipientAddr0,
+      additionalCapacity: '0',
+      amount: '0',
+      capacityPolicy: 'createCell',
+    },
+
+    // mint random udt
+    {
+      recipient: recipientAddr1,
+      additionalCapacity: '0',
+      amount: Math.ceil(Math.random() * 10 ** 8).toString(),
+      capacityPolicy: 'createCell',
+    },
+  ];
+
+  const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
+  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
+
+  expect(mintTx != null).toBe(true);
+
+  eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 0);
+  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), recipients[1]!.amount);
+
+  // recipient1 -> recipient0
+  const signer = new Secp256k1Signer(recipientPrivKey1, provider, {
+    code_hash: ANYONE_CAN_PAY.CODE_HASH,
+    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
+  });
+  const unsignedTransferTx = await new AcpTransferSudtBuilder(
+    { recipients: [{ amount: '1', recipient: recipientAddr0, sudt: testUdt, policy: 'findAcp' }] },
+    provider,
+    await signer.getAddress(),
+  ).build();
+
+  const transferTxHash = await provider.sendTransaction(await signer.seal(unsignedTransferTx));
+  const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
+
+  expect(transferTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 1);
+});
+
 // TODO impl testcase
 test.skip('test duplicate options', async () => {
   return;
