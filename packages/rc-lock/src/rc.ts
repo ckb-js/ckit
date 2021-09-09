@@ -146,12 +146,8 @@ export class RcSupplyLockHelper {
     return infoCells.map(convertToSudtInfo);
   }
 
-  /**
-   * generate sudt script which was issued by a rc_lock_supply
-   * @param options
-   */
-  newSudtScript({ rcIdentity, udtId }: { rcIdentity: RcIdentity; udtId: Hash }): Script {
-    const infoLock = {
+  newRcSupplyLockScript({ rcIdentity, udtId }: { rcIdentity: RcIdentity; udtId: Hash }): Script {
+    return {
       ...this.config.rcLock,
       args: bytes.toHex(
         RcSupplyLockArgs.encode({
@@ -162,6 +158,14 @@ export class RcSupplyLockHelper {
         }),
       ),
     };
+  }
+
+  /**
+   * generate sudt script which was issued by a rc_lock_supply
+   * @param options
+   */
+  newSudtScript({ rcIdentity, udtId }: { rcIdentity: RcIdentity; udtId: Hash }): Script {
+    const infoLock = this.newRcSupplyLockScript({ rcIdentity, udtId });
 
     return {
       ...this.config.sudtType,

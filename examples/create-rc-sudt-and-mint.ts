@@ -32,6 +32,9 @@ async function showBasicInfo() {
 
   const ckbBalance = await provider.getCkbLiveCellsBalance(address);
   console.log(`ckb balance is: ${ckbBalance}`);
+
+  const rcIdentity = signer.getRcIdentity();
+  console.log('rc identity is: ', rcIdentity);
 }
 
 async function createUdt() {
@@ -41,9 +44,9 @@ async function createUdt() {
     {
       rcIdentity: signer.getRcIdentity(),
       sudtInfo: {
-        name: 'Hello',
-        symbol: 'Ho',
-        maxSupply: '10000000000',
+        name: 'Test Token',
+        symbol: 'TT',
+        maxSupply: '10000000000000000',
         description: 'a hello world token',
         decimals: 8,
       },
@@ -67,17 +70,25 @@ async function listUdt() {
 
   const sudts = await helper.listCreatedSudt({ rcIdentity: signer.getRcIdentity() });
 
-  console.log(JSON.stringify(sudts, null, 2));
+  sudts.forEach((sudt) => {
+    const issuerLockScript = helper.newRcSupplyLockScript(sudt);
+    console.log('sudt issuer lock: ', issuerLockScript);
+
+    const sudtTypeScript = helper.newSudtScript(sudt);
+    console.log('sudt type script', sudtTypeScript);
+
+    console.log(`sudt(${sudt.name}) info is: `, sudt);
+  });
 }
 
 async function mintUdt() {
   // from listUdt[n].udtId
-  const udtId = '0x126e754aaa32898714e0466d885f4bb5ffe1723e05acf944b06b2bc9ff3a3a0a';
+  const udtId = '0x1e1815c526770f4ef6a32081df26696b29b3a8d2b7a9eab6b7b7fc01e2a07ad6';
 
   const recipients = [
     {
-      recipient: 'ckt1q2rnvmpk0rc5ej7kv3ecdgvwqkhz0jte0r22d9f0kkpqe35cycur2myv07qpv9y9c0j2mnk6f3kyy4qszsq9g2qxr8j',
-      amount: '0x2540be400', // 10_000_000_000
+      recipient: 'ckt1qsfy5cxd0x0pl09xvsvkmert8alsajm38qfnmjh2fzfu2804kq47drjt08nt3vr7lyaxt5ph99p9h309tfqvqrhgtnf',
+      amount: '10000000000', // 10_000_000_000
       capacityPolicy: 'createCell' as const, // as const to treat TypeScript compiler
       additionalCapacity: helpers.CkbAmount.fromCkb('1').toHex(), // additional 1 capacity for tx fee
     },
