@@ -103,7 +103,7 @@ test('test rc udt lock', async () => {
             // 1ckb additional capacity for tx fee
             additionalCapacity: CkbAmount.fromCkb(1).toHex(),
             capacityPolicy: 'createCell',
-            amount: '100',
+            amount: '50',
           },
           {
             recipient: await recipient2Signer.getAddress(),
@@ -123,7 +123,32 @@ test('test rc udt lock', async () => {
   const testUdt = helper.newSudtScript(udtInfo);
   const recipient1UdtBalance1 = await provider.getUdtBalance(await recipient1Signer.getAddress(), testUdt);
 
-  expect(Number(recipient1UdtBalance1) === 100).toBe(true);
+  expect(Number(recipient1UdtBalance1) === 50).toBe(true);
+
+  await provider.sendTxUntilCommitted(
+    await issuerSigner.seal(
+      await new MintRcUdtBuilder(
+        {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          udtId: udtInfo.udtId,
+          rcIdentity: issuerSigner.getRcIdentity(),
+          recipients: [
+            {
+              recipient: await recipient1Signer.getAddress(),
+              // 1ckb additional capacity for tx fee
+              additionalCapacity: CkbAmount.fromCkb(1).toHex(),
+              capacityPolicy: 'findOrCreate',
+              amount: '50',
+            },
+          ],
+        },
+        provider,
+      ).build(),
+    ),
+  );
+
+  const collectedCells = await provider.collectUdtCells(await recipient1Signer.getAddress(), testUdt, '100');
+  expect(collectedCells.length).toBe(1);
 
   // recipient 1 -> recipient 2: 10 udt
   await provider.sendTxUntilCommitted(

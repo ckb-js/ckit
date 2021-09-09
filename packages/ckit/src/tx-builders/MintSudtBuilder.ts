@@ -9,8 +9,9 @@ type CapacityPolicy =
   // mint only when recipient has ACP cell
   | 'findAcp'
   // mint and create a cell for recipient
-  // TODO rename to createCell
-  | 'createCell';
+  | 'createCell'
+  // find usable cell at first, if not found, create it
+  | 'findOrCreate';
 
 export type RecipientOptions = {
   recipient: Address;

@@ -24,8 +24,10 @@
     "@ckitjs/utils": "*",
     "@lay2/pw-core": "^0.4.0-alpha.8",
     "@metamask/detect-provider": "^1.2.0",
+    "@types/lodash": "^4.14.172",
     "bignumber.js": "^9.0.1",
     "eventemitter3": "^4.0.7",
+    "lodash": "^4.17.21",
     "rxjs": "^7.3.0"
   },
   "devDependencies": {
