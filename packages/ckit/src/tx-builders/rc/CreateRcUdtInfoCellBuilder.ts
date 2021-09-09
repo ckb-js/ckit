@@ -21,7 +21,7 @@ export interface CreateRcUdtInfoCellOptions {
  *  - info: molecule table
  *  - name: bytes
  *  - symbol: bytes
- *  - decimals: u32
+ *  - decimals: u8
  *  - description: bytes
  * Type: <Info Cell type ID>
  * Lock: <RC Lock Script 1>

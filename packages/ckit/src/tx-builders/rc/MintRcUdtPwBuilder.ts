@@ -8,8 +8,8 @@ import { NoAvailableCellError } from '../../errors';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { nonNullable } from '../../utils';
-import { RecipientOptions } from '../MintSudtBuilder';
 import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
+import { RecipientOptions } from '../MintSudtBuilder';
 import { AbstractPwSenderBuilder } from '../pw/AbstractPwSenderBuilder';
 import { MintRcUdtOptions } from './MintRcUdtBuilder';
 
@@ -18,7 +18,7 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     super(provider);
   }
 
-  private async determineFindOrCreate() {
+  private async determineFindOrCreate(): Promise<RecipientOptions[]> {
     const helper = new RcSupplyLockHelper(this.provider.mercury, {
       rcLock: this.provider.newScriptTemplate('RC_LOCK'),
       sudtType: this.provider.newScriptTemplate('SUDT'),
