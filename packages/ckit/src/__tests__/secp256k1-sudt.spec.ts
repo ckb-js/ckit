@@ -17,7 +17,7 @@ import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeyIndex = 1;
-jest.setTimeout(120000);
+jest.setTimeout(360000);
 
 function eqAmount(a: string, b: string | number): void {
   expect(Amount.from(a).eq(b)).toBe(true);
