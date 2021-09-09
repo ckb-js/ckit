@@ -446,6 +446,52 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 1);
 });
 
+test('test create_cell_transfer_sudt without extra capacity supply', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const issuerSigner = provider.getGenesisSigner(1);
+  const recipient1Signer = provider.generateAcpSigner();
+  const recipient2Signer = provider.generateAcpSigner();
+  const recipient1Address = await recipient1Signer.getAddress();
+  const recipient2Address = await recipient2Signer.getAddress();
+  const testUdt = provider.newSudtScript(await issuerSigner.getAddress());
+
+  const beforeBalance0 = await provider.getUdtBalance(recipient1Address, testUdt);
+  eqAmount(beforeBalance0, 0);
+
+  const recipients: MintOptions['recipients'] = [
+    // create acp cell
+    {
+      recipient: recipient1Address,
+      additionalCapacity: '1000000000000',
+      amount: '10000',
+      capacityPolicy: 'createCell',
+    },
+  ];
+
+  const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
+  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
+
+  expect(mintTx != null).toBe(true);
+
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), recipients[0]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 0);
+
+  const unsignedTransferTx = await new AcpTransferSudtBuilder(
+    { recipients: [{ amount: '1', recipient: recipient2Address, sudt: testUdt, policy: 'findOrCreate' }] },
+    provider,
+    await recipient1Signer.getAddress(),
+  ).build();
+
+  const transferTxHash = await provider.sendTransaction(await recipient1Signer.seal(unsignedTransferTx));
+  const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
+
+  expect(transferTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 1);
+});
+
 // TODO impl testcase
 test.skip('test duplicate options', async () => {
   return;
