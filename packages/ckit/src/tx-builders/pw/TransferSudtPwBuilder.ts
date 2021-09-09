@@ -69,8 +69,13 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
               Pw.toPwOutPoint(recipientLiveSudtCell.out_point),
               recipientLiveSudtCell.output_data,
             );
-            // increase recipient sudt
-            const recipientSudtOutputCell = recipientSudtInputCell.clone();
+            const recipientSudtOutputCell: Cell = new Cell(
+              new Amount(recipientLiveSudtCell.output.capacity, 0),
+              Pw.toPwScript(recipientLiveSudtCell.output.lock),
+              recipientLiveSudtCell.output.type && Pw.toPwScript(recipientLiveSudtCell.output.type),
+              undefined,
+              recipientLiveSudtCell.output_data,
+            );
             recipientSudtOutputCell.setSUDTAmount(
               recipientSudtOutputCell.getSUDTAmount().add(new Amount(option.amount, 0)),
             );
@@ -199,7 +204,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
 
       const supplyCapacityInputCells = supplyCapacityLiveCells.map(Pw.toPwCell);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const capacityChangeCell = supplyCapacityInputCells[0]!.clone();
+      const capacityChangeCell = Pw.toPwCell(supplyCapacityLiveCells[0]!);
       capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
 
       const txWithSupplyCapacity = new Transaction(
