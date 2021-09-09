@@ -350,50 +350,23 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   await provider.init();
   const { debug } = provider;
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const issuerPrivateKey = provider.testPrivateKeys[testPrivateKeyIndex]!;
+  const issuerSigner = provider.getGenesisSigner(1);
+  const recipient1Signer = provider.generateAcpSigner();
+  const recipient2Signer = provider.generateAcpSigner();
+  const recipient3Signer = provider.generateAcpSigner();
+  const recipient1Address = await recipient1Signer.getAddress();
+  const recipient2Address = await recipient2Signer.getAddress();
+  const recipient3Address = await recipient3Signer.getAddress();
+  const testUdt = provider.newSudtScript(await issuerSigner.getAddress());
 
-  const recipientPrivKey0 = randomHexString(64);
-  const recipientPrivKey1 = randomHexString(64);
-
-  const { SECP256K1_BLAKE160, ANYONE_CAN_PAY, SUDT } = provider.config.SCRIPTS;
-
-  const recipientAddr0 = provider.parseToAddress({
-    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
-    code_hash: ANYONE_CAN_PAY.CODE_HASH,
-    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey0),
-  });
-
-  const recipientAddr1 = provider.parseToAddress({
-    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
-    code_hash: ANYONE_CAN_PAY.CODE_HASH,
-    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey1),
-  });
-
-  const issuerLockHash = utils.computeScriptHash({
-    code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-    args: key.privateKeyToBlake160(issuerPrivateKey),
-  });
-
-  const testUdt = {
-    code_hash: SUDT.CODE_HASH,
-    hash_type: SUDT.HASH_TYPE,
-    args: issuerLockHash,
-  };
-  const beforeBalance0 = await provider.getUdtBalance(recipientAddr0, testUdt);
+  const beforeBalance0 = await provider.getUdtBalance(recipient1Address, testUdt);
 
   eqAmount(beforeBalance0, 0);
 
-  const issuerSigner = new Secp256k1Signer(issuerPrivateKey, provider, {
-    code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-  });
-
   // transfer ckb to recipientAddr1
-  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipientAddr1 });
+  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient2Address });
   const unsignedTransferCkbTx = await new TransferCkbBuilder(
-    { recipients: [{ recipient: recipientAddr1, amount: '1000000000000', capacityPolicy: 'createCell' }] },
+    { recipients: [{ recipient: recipient2Address, amount: '1000000000000', capacityPolicy: 'createCell' }] },
     provider,
     await issuerSigner.getAddress(),
   ).build();
@@ -404,7 +377,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   const recipients: MintOptions['recipients'] = [
     // create acp cell
     {
-      recipient: recipientAddr0,
+      recipient: recipient1Address,
       additionalCapacity: '0',
       amount: '0',
       capacityPolicy: 'createCell',
@@ -412,7 +385,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
 
     // mint random udt
     {
-      recipient: recipientAddr1,
+      recipient: recipient2Address,
       additionalCapacity: '0',
       amount: Math.ceil(Math.random() * 10 ** 8).toString(),
       capacityPolicy: 'createCell',
@@ -425,25 +398,31 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
 
   expect(mintTx != null).toBe(true);
 
-  eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 0);
-  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), recipients[1]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 0);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), recipients[1]!.amount);
 
-  // recipient1 -> recipient0
-  const signer = new Secp256k1Signer(recipientPrivKey1, provider, {
-    code_hash: ANYONE_CAN_PAY.CODE_HASH,
-    hash_type: ANYONE_CAN_PAY.HASH_TYPE,
-  });
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
-    { recipients: [{ amount: '1', recipient: recipientAddr0, sudt: testUdt, policy: 'findAcp' }] },
+    {
+      recipients: [
+        { amount: '1', recipient: recipient1Address, sudt: testUdt, policy: 'findAcp' },
+        {
+          amount: '1',
+          recipient: recipient3Address,
+          sudt: testUdt,
+          policy: 'findOrCreate',
+        },
+      ],
+    },
     provider,
-    await signer.getAddress(),
+    await recipient2Signer.getAddress(),
   ).build();
 
-  const transferTxHash = await provider.sendTransaction(await signer.seal(unsignedTransferTx));
+  const transferTxHash = await provider.sendTransaction(await recipient2Signer.seal(unsignedTransferTx));
   const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
 
   expect(transferTx != null).toBe(true);
-  eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 1);
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 1);
+  eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
 });
 
 test('test create_cell_transfer_sudt without extra capacity supply', async () => {
@@ -453,8 +432,10 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   const issuerSigner = provider.getGenesisSigner(1);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
+  const recipient3Signer = provider.generateAcpSigner();
   const recipient1Address = await recipient1Signer.getAddress();
   const recipient2Address = await recipient2Signer.getAddress();
+  const recipient3Address = await recipient3Signer.getAddress();
   const testUdt = provider.newSudtScript(await issuerSigner.getAddress());
 
   const beforeBalance0 = await provider.getUdtBalance(recipient1Address, testUdt);
@@ -466,6 +447,12 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
       recipient: recipient1Address,
       additionalCapacity: '1000000000000',
       amount: '10000',
+      capacityPolicy: 'createCell',
+    },
+    {
+      recipient: recipient3Address,
+      additionalCapacity: '1',
+      amount: '0',
       capacityPolicy: 'createCell',
     },
   ];
@@ -480,7 +467,17 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 0);
 
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
-    { recipients: [{ amount: '1', recipient: recipient2Address, sudt: testUdt, policy: 'findOrCreate' }] },
+    {
+      recipients: [
+        { amount: '1', recipient: recipient2Address, sudt: testUdt, policy: 'findOrCreate' },
+        {
+          amount: '1',
+          recipient: recipient3Address,
+          sudt: testUdt,
+          policy: 'findOrCreate',
+        },
+      ],
+    },
     provider,
     await recipient1Signer.getAddress(),
   ).build();
@@ -490,6 +487,7 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
 
   expect(transferTx != null).toBe(true);
   eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 1);
+  eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
 });
 
 // TODO impl testcase
