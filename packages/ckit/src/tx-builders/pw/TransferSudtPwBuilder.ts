@@ -104,9 +104,10 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       senderSudtInputCells.push(...senderSudtInputCell);
 
       const senderSudtOutputCell = senderSudtInputCell.reduce((sum, input) => {
-        sum.capacity = sum.capacity.add(input.capacity);
-        sum.setSUDTAmount(sum.getSUDTAmount().add(input.getSUDTAmount()));
-        return sum;
+        const outputCell = sum.clone();
+        outputCell.capacity = sum.capacity.add(input.capacity);
+        outputCell.setSUDTAmount(sum.getSUDTAmount().add(input.getSUDTAmount()));
+        return outputCell;
       });
       senderSudtOutputCell.setSUDTAmount(senderSudtOutputCell.getSUDTAmount().sub(totalTransferAmount));
       senderSudtOutputCells.push(senderSudtOutputCell);
