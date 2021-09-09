@@ -423,6 +423,8 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   expect(transferTx != null).toBe(true);
   eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 1);
   eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
+  const recipient2Balance = await provider.getCkbLiveCellsBalance(recipient2Address);
+  expect(CkbAmount.fromShannon(recipient2Balance).gt(CkbAmount.fromCkb(10000 - 143 - 1))).toBe(true);
 });
 
 test('test create_cell_transfer_sudt without extra capacity supply', async () => {
@@ -488,6 +490,11 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   expect(transferTx != null).toBe(true);
   eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 1);
   eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
+  const recipient1SudtCells = await provider.collectUdtCells(recipient1Address, testUdt, '1');
+  expect(recipient1SudtCells.length).toBe(1);
+  expect(CkbAmount.fromShannon(recipient1SudtCells[0]!.output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1))).toBe(
+    true,
+  );
 });
 
 // TODO impl testcase
