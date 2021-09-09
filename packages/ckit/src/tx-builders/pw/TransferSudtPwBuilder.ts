@@ -53,6 +53,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       // build sudt cells of recipients
       for (const option of optionsOfSameSudt) {
         totalTransferAmount = totalTransferAmount.add(new Amount(option.amount, 0));
+
         if (option.policy === 'findOrCreate') {
           const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
           option.policy = recipientLiveSudtCell ? 'findAcp' : 'createCell';
@@ -155,12 +156,21 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       Number(this.provider.config.MIN_FEE_RATE),
     );
 
-    const needSupplyCapacity =
+    const needSupplyCapacityToCreateCell =
       containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
+    const senderSudtCellToPayFee = senderSudtOutputCells.find((cell) =>
+      cell.capacity
+        .sub(new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(this.sender)))))
+        .gte(feeWithoutSupplyCapacity),
+    );
+
+    const needSupplyCapacityToFindAcp = !containCreateOption && !senderSudtCellToPayFee;
+
     // build tx with extra capacity cell supplied
-    // supply (created cell capacity) + (tx fee) from (sender sudt cells) + (extra capacity cells)
-    if (needSupplyCapacity) {
+    // needSupplyCapacityToCreateCell: supply (created cell capacity) + (tx fee) from (sender sudt cells) + (extra capacity cells)
+    // needSupplyCapacityToFindAcp: supply (tx fee) from (extra capacity cells)
+    if (needSupplyCapacityToCreateCell || needSupplyCapacityToFindAcp) {
       const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
       const outputsNeededCapacity = outputsContainedCapacity
         // additional 61 ckb to ensure capacity is enough for change cell
@@ -208,10 +218,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     // build tx without extra capacity cell supplied
     // supply tx fee from sender sudt cells
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const cellToPayFee = senderSudtOutputCells[0]!;
-    if (cellToPayFee.capacity.lt(feeWithoutSupplyCapacity))
-      throw new Error('error: sudt cell capacity not enough to pay tx fee');
-    cellToPayFee.capacity = cellToPayFee.capacity.sub(feeWithoutSupplyCapacity);
+    senderSudtCellToPayFee!.capacity = senderSudtCellToPayFee!.capacity.sub(feeWithoutSupplyCapacity);
     return txWithoutSupplyCapacity;
   }
 
