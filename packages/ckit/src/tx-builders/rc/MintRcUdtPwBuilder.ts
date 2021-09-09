@@ -2,11 +2,13 @@ import { formatByteLike, toBuffer } from '@ckitjs/easy-byte';
 import { RcIdentityLockArgs, RcSupplyLockArgs, RcSupplyLockHelper, RcSupplyOutputData } from '@ckitjs/rc-lock';
 import { bytes } from '@ckitjs/utils';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
+import { groupBy, map, partition } from 'lodash';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { NoAvailableCellError } from '../../errors';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { nonNullable } from '../../utils';
+import { RecipientOptions } from '../MintSudtBuilder';
 import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from '../pw/AbstractPwSenderBuilder';
 import { MintRcUdtOptions } from './MintRcUdtBuilder';
@@ -27,7 +29,27 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     const rcUdtInfoCell = nonNullable(resolvedInfoCells[0]);
     const udtType = this.provider.newSudtScript(this.provider.parseToAddress(rcUdtInfoCell.output.lock));
 
-    const recipients = from(this.options.recipients.filter((item) => item.capacityPolicy === 'findOrCreate')).pipe(
+    // recipients -> [findOrCreate, findAcp + createCell]
+    const [findOrCreatePolicies, alreadyDetermined] = partition(
+      this.options.recipients,
+      (item) => item.capacityPolicy === 'findOrCreate',
+    );
+
+    // findOrCreate -> {'addr1': [option1, option2], 'addr2': [option3]}
+    const groupByRecipient = groupBy(findOrCreatePolicies, (item) => item.recipient);
+
+    // {'addr1': [option1, option2], 'addr2': [option1]} -> [ merge(option1, option2), merge(option3) ]
+    const mergedFindOrCreatePolicies = map(groupByRecipient, (items) =>
+      items.reduce((left, right) => ({
+        ...left,
+        amount: new Amount(left.amount, 0).add(new Amount(right.amount, 0)).toHexString(),
+        additionalCapacity: new Amount(left.additionalCapacity || '0', 0)
+          .add(new Amount(right.additionalCapacity || '0', 0))
+          .toHexString(),
+      })),
+    );
+
+    const recipients = from(mergedFindOrCreatePolicies).pipe(
       mergeMap(
         (item) =>
           this.provider.collectUdtCells(item.recipient, udtType, '0').then((cells) => ({
@@ -39,7 +61,8 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
       toArray(),
     );
 
-    return lastValueFrom(recipients);
+    const determinedFindOrUpdatePolicies: RecipientOptions[] = await lastValueFrom(recipients);
+    return determinedFindOrUpdatePolicies.concat(alreadyDetermined);
   }
 
   async build(): Promise<Transaction> {
