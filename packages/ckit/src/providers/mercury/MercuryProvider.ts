@@ -146,7 +146,7 @@ export class MercuryProvider extends AbstractProvider {
     txHash: string,
     options: { pollIntervalMs?: number; timeoutMs?: number } = {},
   ): Promise<Transaction | null> {
-    const { pollIntervalMs = 1000, timeoutMs = 60000 } = options;
+    const { pollIntervalMs = 1000, timeoutMs = 120000 } = options;
     const start = Date.now();
 
     let result: Transaction | null = null;
