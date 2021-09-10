@@ -9,4 +9,5 @@ module.exports = {
       babelConfig: true,
     },
   },
+  globalSetup: '<rootDir>/packages/ckit/src/__tests__/jestGlobalSetup.ts'
 };
