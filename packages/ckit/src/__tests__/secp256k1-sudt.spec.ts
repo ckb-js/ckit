@@ -119,7 +119,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
 
   const { debug } = provider;
 
-  const genesisSigner = provider.getGenesisSigner(1);
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   // TODO replace with pw signer when it is fixed
   // const pwSigner = new Secp256k1Signer(randomHexString(64), provider, provider.newScript('SECP256K1_BLAKE160'));
   const pwSigner = new InternalNonAcpPwLockSigner(randomHexString(64), provider);
@@ -201,7 +201,7 @@ test('mint sudt with a mix of policies', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerSigner = provider.getGenesisSigner(1);
+  const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
@@ -321,7 +321,7 @@ test('test serialize and deserialized', async () => {
 
   await provider.init();
 
-  const genesisSigner = provider.getGenesisSigner(1);
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const builder = new TransferCkbBuilder(
     {
       recipients: [
@@ -350,7 +350,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   await provider.init();
   const { debug } = provider;
 
-  const issuerSigner = provider.getGenesisSigner(1);
+  const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
@@ -363,8 +363,8 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
 
   eqAmount(beforeBalance0, 0);
 
-  // transfer ckb to recipientAddr1
-  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient2Address });
+  // transfer ckb to recipient1Address
+  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient1Address });
   const unsignedTransferCkbTx = await new TransferCkbBuilder(
     { recipients: [{ recipient: recipient2Address, amount: '1000000000000', capacityPolicy: 'createCell' }] },
     provider,
@@ -431,7 +431,7 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerSigner = provider.getGenesisSigner(1);
+  const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
