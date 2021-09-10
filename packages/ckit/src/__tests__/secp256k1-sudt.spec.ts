@@ -17,7 +17,7 @@ import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeyIndex = 1;
-jest.setTimeout(360000);
+jest.setTimeout(600000);
 
 function eqAmount(a: string, b: string | number): void {
   expect(Amount.from(a).eq(b)).toBe(true);
@@ -349,8 +349,6 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   const provider = new TestProvider();
   await provider.init();
   const { debug } = provider;
-
-  debug('mkxbl start find acp test');
 
   const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const recipient1Signer = provider.generateAcpSigner();
