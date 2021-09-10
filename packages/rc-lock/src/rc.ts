@@ -60,6 +60,11 @@ export enum RcLockFlag {
   SUPPLY_MASK = 1 << 3,
 }
 
+export interface RcIdentity {
+  flag: RcIdentityFlag;
+  pubkeyHash: HexString;
+}
+
 export interface SudtStaticInfo {
   name: string;
   symbol: string;
@@ -69,18 +74,16 @@ export interface SudtStaticInfo {
   description: string;
 }
 
-export interface RcIdentity {
-  flag: RcIdentityFlag;
-  pubkeyHash: HexString;
-}
-export interface SudtInfo extends SudtStaticInfo {
+export interface SudtSupplyInfo extends SudtStaticInfo {
   version: HexString;
+  currentSupply: HexNumber;
+}
+
+export interface SudtInfo extends SudtSupplyInfo {
   /**
    * rc info cell type id hash
    */
   udtId: Hash;
-  currentSupply: HexNumber;
-
   rcIdentity: RcIdentity;
 }
 
@@ -88,6 +91,23 @@ type ScriptTemplate = Omit<Script, 'args'>;
 export interface RcHelperConfig {
   rcLock: ScriptTemplate;
   sudtType: ScriptTemplate;
+}
+
+export function convertToSudtSupplyInfo(outputData: HexString): SudtSupplyInfo {
+  const { current_supply, max_supply, version } = RcSupplyOutputData.decode(toBuffer(outputData));
+  const fixedDataLen = RcSupplyOutputData.fields.reduce((acc, field) => acc + field[1].byteWidth, 0);
+  const udtInfo = new UdtInfo(new Reader(bytes.toHex(outputData.slice(2 /*0x*/ + fixedDataLen * 2))));
+
+  return {
+    version: bytes.toHex(version),
+    currentSupply: bytes.toHex(current_supply),
+    maxSupply: bytes.toHex(max_supply),
+
+    description: Buffer.from(udtInfo.getDescription().raw()).toString(),
+    symbol: Buffer.from(udtInfo.getSymbol().raw()).toString(),
+    name: Buffer.from(udtInfo.getName().raw()).toString(),
+    decimals: udtInfo.getDecimals(),
+  };
 }
 
 /**
@@ -99,21 +119,10 @@ export function convertToSudtInfo(cell: ResolvedOutpoint): SudtInfo {
     toBuffer(cell.output.lock.args),
   );
 
-  const { current_supply, max_supply, version } = RcSupplyOutputData.decode(toBuffer(cell.output_data));
-  const fixedDataLen = RcSupplyOutputData.fields.reduce((acc, field) => acc + field[1].byteWidth, 0);
-  const udtInfo = new UdtInfo(new Reader(bytes.toHex(cell.output_data.slice(2 /*0x*/ + fixedDataLen * 2))));
-
   return {
     rcIdentity: { flag: rc_identity_flag, pubkeyHash: rc_identity_pubkey_hash },
     udtId: type_id_hash,
-    version: bytes.toHex(version),
-    currentSupply: bytes.toHex(current_supply),
-    maxSupply: bytes.toHex(max_supply),
-
-    description: Buffer.from(udtInfo.getDescription().raw()).toString(),
-    symbol: Buffer.from(udtInfo.getSymbol().raw()).toString(),
-    name: Buffer.from(udtInfo.getName().raw()).toString(),
-    decimals: udtInfo.getDecimals(),
+    ...convertToSudtSupplyInfo(cell.output_data),
   };
 }
 

@@ -86,7 +86,11 @@ export class CreateRcUdtInfoCellPwBuilder extends AbstractPwSenderBuilder {
 
     senderOutput.capacity = senderCells.reduce((acc, next) => acc.add(next.capacity), new Amount('0'));
 
-    const rawTransaction = new RawTransaction(senderCells, [rcInfoCell, senderOutput], this.getCellDeps());
+    const rawTransaction = new RawTransaction(
+      senderCells,
+      [rcInfoCell, senderOutput],
+      this.getCellDepsByCells(senderCells, [rcInfoCell, senderOutput]),
+    );
     const tx: Transaction = new Transaction(rawTransaction, [
       this.getWitnessPlaceholder(provider.parseToAddress(provider.newScript('RC_LOCK'))),
     ]);

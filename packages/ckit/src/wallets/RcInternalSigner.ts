@@ -16,7 +16,7 @@ import { RcSigner } from './RcOwnerWallet';
  * Please do not use this signer directly in a production environment,
  * as it can only be used for testing purposes.
  */
-export class RcInternalSigner extends AbstractSingleEntrySigner implements RcSigner {
+export class RcSecp256k1Signer extends AbstractSingleEntrySigner implements RcSigner {
   readonly #privateKey: HexString;
 
   constructor(privateKey: HexString, private ckitProvider: CkitProvider) {
@@ -106,7 +106,7 @@ export class RCLockSigner extends AbstractSingleEntrySigner implements RcSigner 
   }
 }
 
-export class RCEthSigner extends AbstractSingleEntrySigner implements RcSigner {
+export class RcEthSigner extends AbstractSingleEntrySigner implements RcSigner {
   readonly #privateKey: HexString;
   constructor(privateKey: HexString, private ckitProvider: CkitProvider) {
     super({ provider: ckitProvider });
@@ -119,8 +119,8 @@ export class RCEthSigner extends AbstractSingleEntrySigner implements RcSigner {
       pubkeyHash: this.getEthAddress(),
     };
   }
-  async getAddress(): Promise<string> {
-    const config = await this.ckitProvider.getScriptConfig('RC_LOCK');
+  getAddress(): string {
+    const config = this.ckitProvider.getScriptConfig('RC_LOCK');
     const ethAddress = this.getEthAddress();
     const rc_args = `0x01${ethAddress.substring(2)}00`;
     return this.ckitProvider.parseToAddress({
