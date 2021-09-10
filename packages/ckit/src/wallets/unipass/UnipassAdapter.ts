@@ -28,7 +28,7 @@ function isUnipassSigData(x: unknown): x is UnipassSigData {
   return 'sig' in x && 'pubkey' in x;
 }
 
-interface AdapterConfig {
+export interface AdapterConfig {
   host: string;
   loginDataCacheKey: string;
 }

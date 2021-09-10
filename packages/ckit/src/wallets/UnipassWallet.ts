@@ -2,14 +2,14 @@ import { HexString, Transaction } from '@ckb-lumos/base';
 import { AbstractWallet } from '@ckitjs/base';
 import { CkitProvider } from '../providers';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
-import { UnipassRedirectAdapter } from './unipass/UnipassAdapter';
+import { AdapterConfig, UnipassRedirectAdapter } from './unipass/UnipassAdapter';
 
 export class UnipassWallet extends AbstractWallet {
   static UnipassRedirectAdapter: typeof UnipassRedirectAdapter = UnipassRedirectAdapter;
 
-  private adapter: UnipassRedirectAdapter;
+  readonly adapter: UnipassRedirectAdapter;
 
-  constructor(private provider: CkitProvider) {
+  constructor(private provider: CkitProvider, adapterConfig?: AdapterConfig) {
     super();
     this.setDescriptor({
       name: 'UnipassWallet',
@@ -17,8 +17,7 @@ export class UnipassWallet extends AbstractWallet {
       features: ['acp'],
     });
 
-    // TODO check the network and choose a right UniPass host
-    this.adapter = new UnipassRedirectAdapter({ host: 'https://unipass.xyz', loginDataCacheKey: '__unipass__' });
+    this.adapter = new UnipassRedirectAdapter(adapterConfig ?? {});
   }
 
   protected async tryConnect(): Promise<AbstractSingleEntrySigner> {
