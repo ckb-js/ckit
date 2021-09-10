@@ -371,7 +371,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
     await issuerSigner.getAddress(),
   ).build();
   const signed = await issuerSigner.seal(unsignedTransferCkbTx);
-  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed);
+  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed, { timeoutMs: 180000 });
   debug(`end transfer ckb, %s`, transferCkbTxHash);
 
   const recipients: MintOptions['recipients'] = [
