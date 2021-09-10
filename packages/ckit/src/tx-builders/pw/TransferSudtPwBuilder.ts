@@ -53,6 +53,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       // build sudt cells of recipients
       for (const option of optionsOfSameSudt) {
         totalTransferAmount = totalTransferAmount.add(new Amount(option.amount, 0));
+
         if (option.policy === 'findOrCreate') {
           const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
           option.policy = recipientLiveSudtCell ? 'findAcp' : 'createCell';
@@ -68,8 +69,13 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
               Pw.toPwOutPoint(recipientLiveSudtCell.out_point),
               recipientLiveSudtCell.output_data,
             );
-            // increase recipient sudt
-            const recipientSudtOutputCell = recipientSudtInputCell.clone();
+            const recipientSudtOutputCell: Cell = new Cell(
+              new Amount(recipientLiveSudtCell.output.capacity, 0),
+              Pw.toPwScript(recipientLiveSudtCell.output.lock),
+              recipientLiveSudtCell.output.type && Pw.toPwScript(recipientLiveSudtCell.output.type),
+              undefined,
+              recipientLiveSudtCell.output_data,
+            );
             recipientSudtOutputCell.setSUDTAmount(
               recipientSudtOutputCell.getSUDTAmount().add(new Amount(option.amount, 0)),
             );
@@ -102,11 +108,24 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       const senderSudtInputCell: Cell[] = senderLiveSudtCells.map(Pw.toPwCell);
       senderSudtInputCells.push(...senderSudtInputCell);
 
-      const senderSudtOutputCell = senderSudtInputCell.reduce((sum, input) => {
-        sum.capacity = sum.capacity.add(input.capacity);
-        sum.setSUDTAmount(sum.getSUDTAmount().add(input.getSUDTAmount()));
-        return sum;
-      });
+      const [cellCapacity, sudtAmount] = senderSudtInputCell.reduce(
+        ([cellCapacity, sudtAmount], input) => {
+          cellCapacity = cellCapacity.add(input.capacity);
+          sudtAmount = sudtAmount.add(input.getSUDTAmount());
+          return [cellCapacity, sudtAmount];
+        },
+        [Amount.ZERO, Amount.ZERO],
+      );
+      const senderSudtOutputCell = new Cell(
+        cellCapacity,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        senderSudtInputCell[0]!.lock,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        senderSudtInputCell[0]!.type,
+        undefined,
+        sudtAmount.toUInt128LE(),
+      );
+
       senderSudtOutputCell.setSUDTAmount(senderSudtOutputCell.getSUDTAmount().sub(totalTransferAmount));
       senderSudtOutputCells.push(senderSudtOutputCell);
     }
@@ -155,12 +174,21 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       Number(this.provider.config.MIN_FEE_RATE),
     );
 
-    const needSupplyCapacity =
+    const needSupplyCapacityToCreateCell =
       containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
 
+    const senderSudtCellToPayFee = senderSudtOutputCells.find((cell) =>
+      cell.capacity
+        .sub(new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(this.sender)))))
+        .gte(feeWithoutSupplyCapacity),
+    );
+
+    const needSupplyCapacityToFindAcp = !containCreateOption && !senderSudtCellToPayFee;
+
     // build tx with extra capacity cell supplied
-    // supply (created cell capacity) + (tx fee) from (sender sudt cells) + (extra capacity cells)
-    if (needSupplyCapacity) {
+    // needSupplyCapacityToCreateCell: supply (created cell capacity) + (tx fee) from (sender sudt cells) + (extra capacity cells)
+    // needSupplyCapacityToFindAcp: supply (tx fee) from (extra capacity cells)
+    if (needSupplyCapacityToCreateCell || needSupplyCapacityToFindAcp) {
       const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
       const outputsNeededCapacity = outputsContainedCapacity
         // additional 61 ckb to ensure capacity is enough for change cell
@@ -176,7 +204,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
 
       const supplyCapacityInputCells = supplyCapacityLiveCells.map(Pw.toPwCell);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const capacityChangeCell = supplyCapacityInputCells[0]!.clone();
+      const capacityChangeCell = Pw.toPwCell(supplyCapacityLiveCells[0]!);
       capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
 
       const txWithSupplyCapacity = new Transaction(
@@ -208,10 +236,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     // build tx without extra capacity cell supplied
     // supply tx fee from sender sudt cells
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const cellToPayFee = senderSudtOutputCells[0]!;
-    if (cellToPayFee.capacity.lt(feeWithoutSupplyCapacity))
-      throw new Error('error: sudt cell capacity not enough to pay tx fee');
-    cellToPayFee.capacity = cellToPayFee.capacity.sub(feeWithoutSupplyCapacity);
+    senderSudtCellToPayFee!.capacity = senderSudtCellToPayFee!.capacity.sub(feeWithoutSupplyCapacity);
     return txWithoutSupplyCapacity;
   }
 

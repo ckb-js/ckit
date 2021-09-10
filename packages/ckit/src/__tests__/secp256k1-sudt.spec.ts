@@ -17,7 +17,7 @@ import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeyIndex = 1;
-jest.setTimeout(120000);
+jest.setTimeout(600000);
 
 function eqAmount(a: string, b: string | number): void {
   expect(Amount.from(a).eq(b)).toBe(true);
@@ -119,7 +119,7 @@ test('test non-acp-pw lock mint and transfer', async () => {
 
   const { debug } = provider;
 
-  const genesisSigner = provider.getGenesisSigner(1);
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   // TODO replace with pw signer when it is fixed
   // const pwSigner = new Secp256k1Signer(randomHexString(64), provider, provider.newScript('SECP256K1_BLAKE160'));
   const pwSigner = new InternalNonAcpPwLockSigner(randomHexString(64), provider);
@@ -201,7 +201,7 @@ test('mint sudt with a mix of policies', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerSigner = provider.getGenesisSigner(1);
+  const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
@@ -321,7 +321,7 @@ test('test serialize and deserialized', async () => {
 
   await provider.init();
 
-  const genesisSigner = provider.getGenesisSigner(1);
+  const genesisSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const builder = new TransferCkbBuilder(
     {
       recipients: [
@@ -343,6 +343,158 @@ test('test serialize and deserialized', async () => {
   const txHash = await provider.sendTransaction(await genesisSigner.seal(deserialized));
 
   expect(txHash).toBeTruthy();
+});
+
+test('test find_acp_transfer_sudt with extra capacity supply', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+  const { debug } = provider;
+
+  const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
+  const recipient1Signer = provider.generateAcpSigner();
+  const recipient2Signer = provider.generateAcpSigner();
+  const recipient3Signer = provider.generateAcpSigner();
+  const recipient1Address = await recipient1Signer.getAddress();
+  const recipient2Address = await recipient2Signer.getAddress();
+  const recipient3Address = await recipient3Signer.getAddress();
+  const testUdt = provider.newSudtScript(await issuerSigner.getAddress());
+
+  const beforeBalance0 = await provider.getUdtBalance(recipient1Address, testUdt);
+
+  eqAmount(beforeBalance0, 0);
+
+  // transfer ckb to recipient2Address
+  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient2Address });
+  const unsignedTransferCkbTx = await new TransferCkbBuilder(
+    { recipients: [{ recipient: recipient2Address, amount: '1000000000000', capacityPolicy: 'createCell' }] },
+    provider,
+    await issuerSigner.getAddress(),
+  ).build();
+  const signed = await issuerSigner.seal(unsignedTransferCkbTx);
+  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed, { timeoutMs: 360000 });
+  debug(`end transfer ckb, %s`, transferCkbTxHash);
+
+  const recipients: MintOptions['recipients'] = [
+    // create acp cell
+    {
+      recipient: recipient1Address,
+      additionalCapacity: '0',
+      amount: '0',
+      capacityPolicy: 'createCell',
+    },
+
+    // mint random udt
+    {
+      recipient: recipient2Address,
+      additionalCapacity: '0',
+      amount: Math.ceil(Math.random() * 10 ** 8).toString(),
+      capacityPolicy: 'createCell',
+    },
+  ];
+
+  const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
+  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
+
+  expect(mintTx != null).toBe(true);
+
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 0);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), recipients[1]!.amount);
+
+  const unsignedTransferTx = await new AcpTransferSudtBuilder(
+    {
+      recipients: [
+        { amount: '1', recipient: recipient1Address, sudt: testUdt, policy: 'findAcp' },
+        {
+          amount: '1',
+          recipient: recipient3Address,
+          sudt: testUdt,
+          policy: 'findOrCreate',
+        },
+      ],
+    },
+    provider,
+    await recipient2Signer.getAddress(),
+  ).build();
+
+  const transferTxHash = await provider.sendTransaction(await recipient2Signer.seal(unsignedTransferTx));
+  const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
+
+  expect(transferTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 1);
+  eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
+  const recipient2Balance = await provider.getCkbLiveCellsBalance(recipient2Address);
+  expect(CkbAmount.fromShannon(recipient2Balance).gt(CkbAmount.fromCkb(10000 - 143 - 1))).toBe(true);
+});
+
+test('test create_cell_transfer_sudt without extra capacity supply', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
+  const recipient1Signer = provider.generateAcpSigner();
+  const recipient2Signer = provider.generateAcpSigner();
+  const recipient3Signer = provider.generateAcpSigner();
+  const recipient1Address = await recipient1Signer.getAddress();
+  const recipient2Address = await recipient2Signer.getAddress();
+  const recipient3Address = await recipient3Signer.getAddress();
+  const testUdt = provider.newSudtScript(await issuerSigner.getAddress());
+
+  const beforeBalance0 = await provider.getUdtBalance(recipient1Address, testUdt);
+  eqAmount(beforeBalance0, 0);
+
+  const recipients: MintOptions['recipients'] = [
+    // create acp cell
+    {
+      recipient: recipient1Address,
+      additionalCapacity: '1000000000000',
+      amount: '10000',
+      capacityPolicy: 'createCell',
+    },
+    {
+      recipient: recipient3Address,
+      additionalCapacity: '1',
+      amount: '0',
+      capacityPolicy: 'createCell',
+    },
+  ];
+
+  const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
+  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
+
+  expect(mintTx != null).toBe(true);
+
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), recipients[0]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 0);
+
+  const unsignedTransferTx = await new AcpTransferSudtBuilder(
+    {
+      recipients: [
+        { amount: '1', recipient: recipient2Address, sudt: testUdt, policy: 'findOrCreate' },
+        {
+          amount: '1',
+          recipient: recipient3Address,
+          sudt: testUdt,
+          policy: 'findOrCreate',
+        },
+      ],
+    },
+    provider,
+    await recipient1Signer.getAddress(),
+  ).build();
+
+  const transferTxHash = await provider.sendTransaction(await recipient1Signer.seal(unsignedTransferTx));
+  const transferTx = await provider.waitForTransactionCommitted(transferTxHash);
+
+  expect(transferTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 1);
+  eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
+  const recipient1SudtCells = await provider.collectUdtCells(recipient1Address, testUdt, '1');
+  expect(recipient1SudtCells.length).toBe(1);
+  expect(CkbAmount.fromShannon(recipient1SudtCells[0]!.output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1))).toBe(
+    true,
+  );
 });
 
 // TODO impl testcase
