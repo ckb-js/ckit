@@ -350,6 +350,8 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   await provider.init();
   const { debug } = provider;
 
+  debug('mkxbl start find acp test');
+
   const issuerSigner = provider.getGenesisSigner(testPrivateKeyIndex);
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
@@ -363,8 +365,8 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
 
   eqAmount(beforeBalance0, 0);
 
-  // transfer ckb to recipient1Address
-  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient1Address });
+  // transfer ckb to recipient2Address
+  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient2Address });
   const unsignedTransferCkbTx = await new TransferCkbBuilder(
     { recipients: [{ recipient: recipient2Address, amount: '1000000000000', capacityPolicy: 'createCell' }] },
     provider,
