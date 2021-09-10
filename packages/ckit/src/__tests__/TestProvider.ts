@@ -79,8 +79,11 @@ export class TestProvider extends CkitProvider {
     signed: Transaction,
     options: { pollIntervalMs?: number; timeoutMs?: number } = {},
   ): Promise<Hash> {
+    this.debug('mkxbl tx', signed);
     const txHash = await this.sendTransaction(signed);
+    this.debug('mkxbl txHash', txHash);
     const txWithStatus = await this.waitForTransactionCommitted(txHash, options);
+    this.debug('mkxbl txWithStatus', txHash);
 
     if (!txWithStatus) throw new Error(`timeout for ${txHash}, the tx is : ${JSON.stringify(signed)}`);
 
