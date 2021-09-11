@@ -8,8 +8,8 @@ import { NoAvailableCellError } from '../../errors';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { nonNullable } from '../../utils';
-import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
 import { RecipientOptions } from '../MintSudtBuilder';
+import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from '../pw/AbstractPwSenderBuilder';
 import { MintRcUdtOptions } from './MintRcUdtBuilder';
 
@@ -176,10 +176,11 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     dataBuf.write(encoded.toString('hex'), 'hex');
     infoCell.setHexData(bytes.toHex(dataBuf));
 
+    const inputCells = [infoCell, ...senderCells, ...foundRecipientCells];
     const rawTx = new RawTransaction(
-      [infoCell, ...senderCells, ...foundRecipientCells],
+      inputCells,
       [infoCell, senderOutput, ...createdRecipientCells, ...foundRecipientCells],
-      this.getCellDeps(),
+      this.getCellDepsByCells(inputCells, [infoCell, senderOutput, ...createdRecipientCells, ...foundRecipientCells]),
     );
 
     const tx = new Transaction(rawTx, [

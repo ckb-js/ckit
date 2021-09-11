@@ -69,7 +69,7 @@ export class UnipassRedirectAdapter {
 
   constructor(options: Partial<AdapterConfig>) {
     this.config = {
-      host: options.host ?? 'https://unipass.xyz',
+      host: options.host ?? 'https://t.unipass.xyz',
       loginDataCacheKey: options.loginDataCacheKey ?? '__unipass__',
     };
   }

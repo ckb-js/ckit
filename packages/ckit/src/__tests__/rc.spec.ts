@@ -7,7 +7,7 @@ import {
   TransferCkbBuilder,
 } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
-import { RC_MODE, RCEthSigner, RcInternalSigner, RCLockSigner } from '../wallets/RcInternalSigner';
+import { RC_MODE, RcEthSigner, RcSecp256k1Signer, RCLockSigner } from '../wallets/RcInternalSigner';
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeysIndex = 0;
@@ -54,10 +54,10 @@ test('test rc udt lock', async () => {
   const provider = new TestProvider();
   await provider.init();
 
-  const issuerSigner = new RcInternalSigner(randomHexString(64), provider);
+  const issuerSigner = new RcSecp256k1Signer(randomHexString(64), provider);
 
   // genesis -> rc: 100M ckb
-  await provider.transferCkbFromGenesis(await issuerSigner.getAddress(), CkbAmount.fromCkb(1_000_000).toHex(), {
+  await provider.transferCkbFromGenesis(issuerSigner.getAddress(), CkbAmount.fromCkb(1_000_000).toHex(), {
     testPrivateKeysIndex,
   });
 
@@ -241,7 +241,7 @@ test('test eth rc signer', async () => {
   await provider.init();
 
   const genesisSigner = provider.getGenesisSigner(testPrivateKeysIndex);
-  const rcSigner = new RCEthSigner(randomHexString(64), provider);
+  const rcSigner = new RcEthSigner(randomHexString(64), provider);
   await provider.sendTxUntilCommitted(
     await genesisSigner.seal(
       await new TransferCkbBuilder(

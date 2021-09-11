@@ -64,15 +64,12 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
     const senderOutput = senderCells[0];
     senderOutput.capacity = senderCells.reduce((acc, cell) => acc.add(cell.capacity), new Amount('0', 0));
 
-    const tx = new Transaction(
-      new RawTransaction(
-        [...senderCells, ...recipientAcpCells],
-        [senderOutput, ...recipientAcpCells, ...recipientCreatedCells],
-        // TODO getDeps by all script
-        this.getCellDeps(),
-      ),
-      [this.getWitnessPlaceholder(this.sender)],
-    );
+    const inputCells = [...senderCells, ...recipientAcpCells];
+    const outputs = [senderOutput, ...recipientAcpCells, ...recipientCreatedCells];
+
+    const tx = new Transaction(new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs)), [
+      this.getWitnessPlaceholder(this.sender),
+    ]);
 
     const fee = TransferCkbPwBuilder.calcFee(tx);
     senderOutput.capacity = senderOutput.capacity.sub(createdCapacity).sub(injectedAcpCapacity).sub(fee);

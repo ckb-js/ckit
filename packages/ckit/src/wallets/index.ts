@@ -1,7 +1,7 @@
-import { RcInternalSigner } from './RcInternalSigner';
+import { RcSecp256k1Signer, RcEthSigner } from './RcInternalSigner';
 import { Secp256k1Signer } from './Secp256k1Wallet';
 
-export const internal = { RcInternalSigner, Secp256k1Signer };
+export const internal = { RcSecp256k1Signer, Secp256k1Signer, RcEthSigner };
 export { AcpPwLockWallet, NonAcpPwLockWallet } from './PwWallet';
 export * from './UnipassWallet';
 export { RcOwnerWallet, RcPwSigner } from './RcOwnerWallet';
