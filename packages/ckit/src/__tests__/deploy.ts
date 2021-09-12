@@ -43,6 +43,61 @@ export async function loadSecp256k1ScriptDep(provider: CkitProvider): Promise<Sc
   };
 }
 
+export async function deployWithTypeId(
+  provider: CkitProvider,
+  binary: Buffer,
+  privateKey: string,
+): Promise<ScriptConfig> {
+  let txSkeleton = TransactionSkeleton({ cellProvider: provider.asIndexerCellProvider() });
+
+  const secp256k1Config = provider.config.SCRIPTS.SECP256K1_BLAKE160;
+
+  const fromAddress = generateSecp256k1Blake160Address(key.privateKeyToBlake160(privateKey), {
+    config: provider.config,
+  });
+  const fromLockscript = parseAddress(fromAddress, { config: provider.config });
+
+  const [resolved] = await provider.collectCkbLiveCells(fromAddress, '0');
+  if (!resolved) throw new Error(`${fromAddress} has no live ckb`);
+
+  const typeId = provider.generateTypeIdScript({ previous_output: resolved.out_point, since: '0x0' }, '0x0');
+  const output: Cell = {
+    cell_output: {
+      capacity: '0x0',
+      lock: fromLockscript,
+      type: typeId,
+    },
+    data: bytesToHex(binary),
+  };
+  const cellCapacity = minimalCellCapacity(output);
+  output.cell_output.capacity = `0x${cellCapacity.toString(16)}`;
+  txSkeleton = txSkeleton.update('outputs', (outputs) => {
+    return outputs.push(output);
+  });
+
+  txSkeleton = await completeTx(txSkeleton, fromAddress);
+
+  txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
+    return cellDeps.clear();
+  });
+  txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
+    return cellDeps.push({
+      out_point: { tx_hash: secp256k1Config.TX_HASH, index: secp256k1Config.INDEX },
+      dep_type: secp256k1Config.DEP_TYPE,
+    });
+  });
+
+  const txHash = await signAndSendTransaction(provider, txSkeleton, privateKey);
+
+  return {
+    HASH_TYPE: 'type',
+    DEP_TYPE: 'code',
+    INDEX: '0x0',
+    TX_HASH: txHash,
+    CODE_HASH: utils.computeScriptHash(typeId),
+  };
+}
+
 async function deployScripts(
   provider: CkitProvider,
   scriptBins: Array<Buffer>,
