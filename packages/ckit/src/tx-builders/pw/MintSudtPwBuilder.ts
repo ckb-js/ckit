@@ -14,30 +14,37 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
   }
 
   async build(): Promise<Transaction> {
-    const udtType = this.provider.newSudtScript(this.issuerAddress);
+    const senderMintedUdtType = this.provider.newSudtScript(this.issuerAddress);
 
     // capacity provided by issuer
     const createdRecipientCells = this.options.recipients
       .filter((item) => item.capacityPolicy === 'createCell')
-      .map(
-        (item) =>
-          new Cell(
-            new Amount(String(BigInt(item.additionalCapacity || 0)), 0).add(new Amount(String(byteLenOfSudt()))),
-            Pw.toPwScript(this.provider.parseToScript(item.recipient)), // recipient lock
-            Pw.toPwScript(udtType), // issued sudt type
-            undefined,
-            new Amount(item.amount, 0).toUInt128LE(),
+      .map((item) => {
+        const recipientLockArgsBytesLen = (this.provider.parseToScript(item.recipient).args.length - 2) / 2;
+        return new Cell(
+          new Amount(String(BigInt(item.additionalCapacity || 0)), 0).add(
+            new Amount(String(byteLenOfSudt(recipientLockArgsBytesLen))),
           ),
-      );
+          Pw.toPwScript(this.provider.parseToScript(item.recipient)), // recipient lock
+          Pw.toPwScript(item.sudt ?? senderMintedUdtType), // issued sudt type
+          undefined,
+          new Amount(item.amount, 0).toUInt128LE(),
+        );
+      });
 
     // capacity provided by recipient
     const resolvedFindAcpCells = this.options.recipients.filter((item) => item.capacityPolicy === 'findAcp');
     const foundRecipientCells$ = from(resolvedFindAcpCells).pipe(
       // collect the udt cell from recipients, throw an error if no udt cell is found
       mergeMap(async (item) => {
-        const resolved = (await this.provider.collectUdtCells(item.recipient, udtType, '0'))[0];
+        const resolved = (
+          await this.provider.collectUdtCells(item.recipient, item.sudt ?? senderMintedUdtType, '0')
+        )[0];
         if (!resolved) {
-          throw new NoAvailableCellError({ lock: this.provider.parseToScript(item.recipient), type: udtType });
+          throw new NoAvailableCellError({
+            lock: this.provider.parseToScript(item.recipient),
+            type: senderMintedUdtType,
+          });
         }
 
         const cell = Pw.toPwCell(resolved);

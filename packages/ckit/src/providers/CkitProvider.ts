@@ -9,7 +9,13 @@ export interface CkitConfig extends ProviderConfig {
     SECP256K1_BLAKE160: ScriptConfig;
     ANYONE_CAN_PAY: ScriptConfig;
     UNIPASS: ScriptConfig;
+    /**
+     * @deprecated replace with rc-lock
+     */
     PW_NON_ANYONE_CAN_PAY: ScriptConfig;
+    /**
+     * @deprecated replace with rc-lock
+     */
     PW_ANYONE_CAN_PAY: ScriptConfig;
     RC_LOCK: ScriptConfig;
 
