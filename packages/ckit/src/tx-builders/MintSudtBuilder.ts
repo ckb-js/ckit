@@ -1,4 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
+import { CkbTypeScript } from '@ckitjs/base';
 import { Transaction } from '@lay2/pw-core';
 import { RecipientSameWithSenderError } from '../errors';
 import { CkitProvider } from '../providers';
@@ -16,6 +17,8 @@ type CapacityPolicy =
 export type RecipientOptions = {
   recipient: Address;
   amount: HexNumber;
+
+  sudt?: CkbTypeScript;
   /**
    * additional transfer CKBytes.
    * If the policy is `createCell`, the capacity required by the cell itself will NOT be counted in the
@@ -42,7 +45,7 @@ export class MintSudtBuilder extends AbstractTransactionBuilder {
   }
   async build(): Promise<Transaction> {
     const mintToSelf = this.options.recipients.some(
-      (item) => item.recipient === this.sender && item.capacityPolicy === 'findAcp',
+      (item) => item.recipient === this.sender && item.capacityPolicy !== 'createCell',
     );
     if (mintToSelf) throw new RecipientSameWithSenderError({ address: this.sender });
 
