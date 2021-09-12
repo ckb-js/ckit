@@ -27,7 +27,7 @@ export abstract class AbstractPwSenderBuilder extends Builder {
         Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
       ];
     }
-    if (key === 'UNIPASS') return getCellDeps();
+    if (key === 'UNIPASS') return getCellDeps(this.provider.config.PREFIX === 'ckb');
     if (key === 'PW_ANYONE_CAN_PAY') {
       return [
         Pw.toPwCellDep(this.provider.getCellDep('PW_ANYONE_CAN_PAY')),
