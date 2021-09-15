@@ -8,8 +8,8 @@
 | ----------- | -------------------------------------------------------------------- |
 | `code_hash` | `0x9f3aeaf2fc439549cbc870c653374943af96a0658bd6b51be8d8983183e6f52f` |
 | `hash_type` | `type`                                                               |
-| `tx_hash`   | `0x56ca53b2a733cc0725a656a433572d8f76d37051b1f2322a9e9d49f39e219c3f` |
-| `index`     | `0x0`                                                                |
+| `tx_hash`   | `0xaa8ab7e97ed6a268be5d7e26d63d115fa77230e51ae437fc532988dd0c3ce10a` |
+| `index`     | `0x1`                                                                |
 | `dep_type`  | `code`                                                               |
 
 - Aggron
@@ -18,7 +18,7 @@
 | ----------- | -------------------------------------------------------------------- |
 | `code_hash` | `0x79f90bb5e892d80dd213439eeab551120eb417678824f282b4ffb5f21bad2e1e` |
 | `hash_type` | `type`                                                               |
-| `tx_hash`   | `0xe563433a510dfae33252eeef81246e94a6638cdb13ff1a3dc3ac7ab8868b6b26` |
+| `tx_hash`   | `0xaa8ab7e97ed6a268be5d7e26d63d115fa77230e51ae437fc532988dd0c3ce10a` |
 | `index`     | `0x0`                                                                |
 | `dep_type`  | `code`                                                               |
 
@@ -39,10 +39,11 @@ const { RPC } = require('@ckb-lumos/rpc');
 const { Reader } = require('ckb-js-toolkit');
 
 // const RPC_URL = 'https://testnet.ckb.dev/rpc';
-// const TX_HASH = '0xe563433a510dfae33252eeef81246e94a6638cdb13ff1a3dc3ac7ab8868b6b26';
+// const TX_HASH = '0xaa8ab7e97ed6a268be5d7e26d63d115fa77230e51ae437fc532988dd0c3ce10a';
+// const OUTPUT_INDEX = 0;
 const RPC_URL = 'https://mainnet.ckb.dev/rpc';
-const TX_HASH = '0x56ca53b2a733cc0725a656a433572d8f76d37051b1f2322a9e9d49f39e219c3f';
-const OUTPUT_INDEX = 0;
+const TX_HASH = '0xaa8ab7e97ed6a268be5d7e26d63d115fa77230e51ae437fc532988dd0c3ce10a';
+const OUTPUT_INDEX = 1;
 const BINARY_PATH = '/path/to/build/rc_lock';
 
 

@@ -39,7 +39,7 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
   RC_LOCK: {
     CODE_HASH: '0x79f90bb5e892d80dd213439eeab551120eb417678824f282b4ffb5f21bad2e1e',
     HASH_TYPE: 'type',
-    TX_HASH: '0xe563433a510dfae33252eeef81246e94a6638cdb13ff1a3dc3ac7ab8868b6b26',
+    TX_HASH: '0x9154df4f7336402114d04495175b37390ce86a4906d2d4001cf02c3e6d97f39c',
     INDEX: '0x0',
     DEP_TYPE: 'code',
   },
