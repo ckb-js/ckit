@@ -56,7 +56,7 @@ export class Amount {
   humanize(options?: HumanizeOptions): string {
     const { decimalPlaces = Infinity, separator = true, decimals = 0 } = options ? options : {};
 
-    const valWithDecimals = this.raw.times(10 ** -decimals);
+    const valWithDecimals = this.raw.times(BN(10).pow(-decimals));
     const originDecimalPlaces = valWithDecimals.decimalPlaces();
 
     const rounded = valWithDecimals.decimalPlaces(Math.min(originDecimalPlaces, decimalPlaces), BigNumber.ROUND_FLOOR);
