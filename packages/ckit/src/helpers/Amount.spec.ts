@@ -26,6 +26,7 @@ test('test Amount', () => {
   expect(CkbAmount.fromCkb('1.12345678').humanize()).toBe('1.12345678');
   expect(CkbAmount.fromCkb(100_000_000).humanize()).toBe('100,000,000');
   expect(CkbAmount.fromCkb(1).minus(1).humanize()).toBe('0.99999999');
+  expect(Amount.from(0x174876e800).humanize({ decimals: 4 })).toBe('10,000,000');
 
   expect(CkbAmount.fromCkb(1).gt(CkbAmount.fromShannon(1))).toBe(true);
   expect(CkbAmount.fromCkb(1).gt(CkbAmount.fromShannon(1_00000000))).toBe(false);
