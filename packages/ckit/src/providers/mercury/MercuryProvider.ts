@@ -95,7 +95,7 @@ export class MercuryProvider extends AbstractProvider {
   }
 
   override sendTransaction(tx: Transaction): Promise<Hash> {
-    return this.rpc.send_transaction(tx);
+    return this.rpc.send_transaction(tx, 'passthrough');
   }
 
   async collectUdtCells(address: Address, udt: CkbTypeScript, minimalAmount: HexNumber): Promise<ResolvedOutpoint[]> {
