@@ -199,7 +199,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     const outputs = senderSudtOutputCells.concat(recipientSudtOutputCells).concat([capacityChangeCell]);
     const txWithSupplyCapacity = new Transaction(
       new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs)),
-      senderSudtInputCells.concat(supplyCapacityInputCells).map(() => this.getWitnessPlaceholder(this.sender)),
+      senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
     );
     const fee = Builder.calcFee(txWithSupplyCapacity, Number(this.provider.config.MIN_FEE_RATE));
     capacityChangeCell.capacity = capacityChangeCell.capacity
