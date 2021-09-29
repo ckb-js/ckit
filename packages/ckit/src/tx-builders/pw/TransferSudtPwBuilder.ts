@@ -13,8 +13,6 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
   }
 
   async build(): Promise<Transaction> {
-    let containCreateOption = false;
-
     const optionsGroupBySudt = new Map<string, RecipientOption[]>();
     this.options.recipients.forEach((options) => {
       const oldRecipientOptions = optionsGroupBySudt.get(options.sudt.args);
@@ -42,6 +40,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     const senderSudtOutputCells: Cell[] = [];
     const recipientSudtOutputCells: Cell[] = [];
 
+    // 1. handle sudt cells
     for (const item of optionsGroupBySudt) {
       let [, optionsOfSameSudt] = item;
       optionsOfSameSudt = this.deduplicateOptions(optionsOfSameSudt);
@@ -84,7 +83,6 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
             break;
           }
           case 'createCell': {
-            containCreateOption = true;
             const recipientSudtOutputCell = new Cell(
               new Amount('1').add(new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(option.recipient))))),
               Pw.toPwScript(this.provider.parseToScript(option.recipient)),
@@ -129,18 +127,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       senderSudtOutputCells.push(senderSudtOutputCell);
     }
 
-    // supply capacity from sudt cells prior if need create cell
-    if (containCreateOption) {
-      const baseSudtCellCapacity = new Amount('1').add(
-        new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(this.sender)))),
-      );
-      senderSudtOutputCells.forEach((cell) => {
-        if (cell.capacity.gt(baseSudtCellCapacity)) {
-          cell.capacity = baseSudtCellCapacity;
-        }
-      });
-    }
-
+    // 2. handle capaicty cells
     const senderSudtInputCellsCapacity = senderSudtInputCells.reduce(
       (sum, cell) => sum.add(cell.capacity),
       Amount.ZERO,
@@ -176,68 +163,51 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       Number(this.provider.config.MIN_FEE_RATE),
     );
 
-    const needSupplyCapacityToCreateCell =
-      containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
+    const needSupplyCapacity = feeWithoutSupplyCapacity.add(outputsContainedCapacity.sub(inputsContainedCapacity));
 
-    const senderSudtCellToPayFee = senderSudtOutputCells.find((cell) =>
+    const senderSudtCellToPayCapacity = senderSudtOutputCells.find((cell) =>
       cell.capacity
         .sub(new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(this.sender)))))
-        .gte(feeWithoutSupplyCapacity),
+        .gte(needSupplyCapacity),
     );
 
-    const needSupplyCapacityToFindAcp = !containCreateOption && !senderSudtCellToPayFee;
-
-    // build tx with extra capacity cell supplied
-    // needSupplyCapacityToCreateCell: supply (created cell capacity) + (tx fee) from (sender sudt cells) + (extra capacity cells)
-    // needSupplyCapacityToFindAcp: supply (tx fee) from (extra capacity cells)
-    if (needSupplyCapacityToCreateCell || needSupplyCapacityToFindAcp) {
-      const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
-      const outputsNeededCapacity = outputsContainedCapacity
-        // additional 61 ckb to ensure capacity is enough for change cell
-        .add(new Amount(String(byteLenOfCkbLiveCell(senderLockscriptArgsLen))))
-        // additional 1 ckb for tx fee, not all 1ckb will be paid,
-        // but the real fee will be calculated based on feeRate
-        .add(new Amount('1'));
-      const neededSupplyCapacity = outputsNeededCapacity.sub(inputsContainedCapacity);
-      const supplyCapacityLiveCells = await this.provider.collectCkbLiveCells(
-        this.sender,
-        neededSupplyCapacity.toHexString(),
-      );
-
-      const supplyCapacityInputCells = supplyCapacityLiveCells.map(Pw.toPwCell);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const capacityChangeCell = Pw.toPwCell(supplyCapacityLiveCells[0]!);
-      capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
-
-      const inputCells = senderSudtInputCells.concat(recipientSudtInputCells).concat(supplyCapacityInputCells);
-      const outputs = senderSudtOutputCells.concat(recipientSudtOutputCells).concat([capacityChangeCell]);
-      const txWithSupplyCapacity = new Transaction(
-        new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs)),
-        senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
-      );
-      const fee = Builder.calcFee(txWithSupplyCapacity, Number(this.provider.config.MIN_FEE_RATE));
-      capacityChangeCell.capacity = capacityChangeCell.capacity
-        .sub(fee)
-        .add(inputsContainedCapacity)
-        .sub(outputsContainedCapacity);
-
-      return txWithSupplyCapacity;
-    }
-
-    // build tx without extra capacity cell supplied
-    // supply created cell capacity and tx fee from sender sudt cells
-    if (containCreateOption) {
-      const changeCapacity = inputsContainedCapacity.sub(outputsContainedCapacity).sub(feeWithoutSupplyCapacity);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      senderSudtOutputCells[0]!.capacity = senderSudtOutputCells[0]!.capacity.add(changeCapacity);
+    if (senderSudtCellToPayCapacity) {
+      senderSudtCellToPayCapacity.capacity = senderSudtCellToPayCapacity.capacity.sub(needSupplyCapacity);
       return txWithoutSupplyCapacity;
     }
 
-    // build tx without extra capacity cell supplied
-    // supply tx fee from sender sudt cells
+    // build tx with extra capacity cell supplied
+    const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
+    const outputsNeededCapacity = outputsContainedCapacity
+      // additional 61 ckb to ensure capacity is enough for change cell
+      .add(new Amount(String(byteLenOfCkbLiveCell(senderLockscriptArgsLen))))
+      // additional 1 ckb for tx fee, not all 1ckb will be paid,
+      // but the real fee will be calculated based on feeRate
+      .add(new Amount('1'));
+    const needSearchCapacity = outputsNeededCapacity.sub(inputsContainedCapacity);
+    const supplyCapacityLiveCells = await this.provider.collectCkbLiveCells(
+      this.sender,
+      needSearchCapacity.toHexString(),
+    );
+
+    const supplyCapacityInputCells = supplyCapacityLiveCells.map(Pw.toPwCell);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    senderSudtCellToPayFee!.capacity = senderSudtCellToPayFee!.capacity.sub(feeWithoutSupplyCapacity);
-    return txWithoutSupplyCapacity;
+    const capacityChangeCell = Pw.toPwCell(supplyCapacityLiveCells[0]!);
+    capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
+
+    const inputCells = senderSudtInputCells.concat(recipientSudtInputCells).concat(supplyCapacityInputCells);
+    const outputs = senderSudtOutputCells.concat(recipientSudtOutputCells).concat([capacityChangeCell]);
+    const txWithSupplyCapacity = new Transaction(
+      new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs)),
+      senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
+    );
+    const fee = Builder.calcFee(txWithSupplyCapacity, Number(this.provider.config.MIN_FEE_RATE));
+    capacityChangeCell.capacity = capacityChangeCell.capacity
+      .sub(fee)
+      .add(inputsContainedCapacity)
+      .sub(outputsContainedCapacity);
+
+    return txWithSupplyCapacity;
   }
 
   getLockscriptArgsLength(address: string): number {
