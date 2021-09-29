@@ -163,9 +163,6 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       Number(this.provider.config.MIN_FEE_RATE),
     );
 
-    // const needSupplyCapacityToCreateCell =
-    //   containCreateOption && inputsContainedCapacity.lt(outputsContainedCapacity.add(feeWithoutSupplyCapacity));
-
     const needSupplyCapacity = feeWithoutSupplyCapacity.add(outputsContainedCapacity.sub(inputsContainedCapacity));
 
     const senderSudtCellToPayCapacity = senderSudtOutputCells.find((cell) =>
