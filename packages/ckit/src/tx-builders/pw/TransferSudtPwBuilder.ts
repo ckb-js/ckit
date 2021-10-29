@@ -24,6 +24,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
                 amount: options.amount,
                 sudt: options.sudt,
                 policy: options.policy,
+                additionalCapacity: options.additionalCapacity,
               },
             ]
           : oldRecipientOptions.concat({
@@ -31,6 +32,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
               amount: options.amount,
               sudt: options.sudt,
               policy: options.policy,
+              additionalCapacity: options.additionalCapacity,
             });
       optionsGroupBySudt.set(options.sudt.args, newRecipientOptions);
     });
@@ -68,7 +70,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
               recipientLiveSudtCell.output_data,
             );
             const recipientSudtOutputCell: Cell = new Cell(
-              new Amount(recipientLiveSudtCell.output.capacity, 0),
+              new Amount(recipientLiveSudtCell.output.capacity, 0).add(new Amount(option.additionalCapacity ?? '0', 0)),
               Pw.toPwScript(recipientLiveSudtCell.output.lock),
               recipientLiveSudtCell.output.type && Pw.toPwScript(recipientLiveSudtCell.output.type),
               undefined,
@@ -83,8 +85,13 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
             break;
           }
           case 'createCell': {
+            // defaults additional capacity to 1 CKB
+            option.additionalCapacity = option.additionalCapacity ?? (10 ** 8).toString();
+
             const recipientSudtOutputCell = new Cell(
-              new Amount('1').add(new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(option.recipient))))),
+              new Amount(option.additionalCapacity, 0).add(
+                new Amount(String(byteLenOfSudt(this.getLockscriptArgsLength(option.recipient)))),
+              ),
               Pw.toPwScript(this.provider.parseToScript(option.recipient)),
               Pw.toPwScript(sudtScript),
               undefined,
