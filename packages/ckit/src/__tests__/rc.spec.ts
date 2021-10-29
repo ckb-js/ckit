@@ -11,7 +11,7 @@ import { RC_MODE, RcEthSigner, RcSecp256k1Signer, RCLockSigner } from '../wallet
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeysIndex = 0;
-jest.setTimeout(120000);
+jest.setTimeout(60 * 1000 * 30);
 
 // TODO remove skip when rc-lock related modules are implemented
 test('test rc signer', async () => {
@@ -179,7 +179,6 @@ test('test rc with acp', async () => {
   // expect(rcSigner1Balance > 66.9 ckb).toBe(true)
   // expect(rcSigner2Balance  === 66 ckb).toBe(true)
 
-  jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
 
@@ -236,7 +235,6 @@ test('test rc with acp', async () => {
 });
 
 test('test eth rc signer', async () => {
-  jest.setTimeout(120000);
   const provider = new TestProvider();
   await provider.init();
 

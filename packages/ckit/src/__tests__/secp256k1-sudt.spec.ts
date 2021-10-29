@@ -3,7 +3,7 @@
 
 import { utils } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
-import { CkbAmount, Amount } from '../helpers';
+import { Amount, CkbAmount } from '../helpers';
 import {
   AcpTransferSudtBuilder,
   MintOptions,
@@ -17,7 +17,7 @@ import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { TestProvider } from './TestProvider';
 
 const testPrivateKeyIndex = 1;
-jest.setTimeout(600000);
+jest.setTimeout(60 * 1000 * 30);
 
 function eqAmount(a: string, b: string | number): void {
   expect(Amount.from(a).eq(b)).toBe(true);
@@ -495,6 +495,128 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   expect(CkbAmount.fromShannon(recipient1SudtCells[0]!.output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1))).toBe(
     true,
   );
+});
+
+test('transfer SUDT with additionalCapacity', async () => {
+  // genesis -> recipient1: 1000 CKB + 1000 UDT
+  //         -> recipient2: 0 CKB + 1000 UDT
+  //         -> recipient5: 0 CKB + 1000 UDT
+  // -----------------------------------------------
+  // recipient1 -> recipient2: (0 + 2) CKB + 1 UDT
+  //            -> recipient3: (142 + 10) CKB + 0 UDT
+  //            -> recipient4: (142 + 0) CKB + 1 UDT
+  //            -> recipient5: (0 + 2) CKB + 0 UDT
+
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesis = provider.getGenesisSigner(testPrivateKeyIndex);
+
+  const recipient1 = provider.generateAcpSigner();
+  const recipient2 = provider.generateAcpSigner();
+  const recipient3 = provider.generateAcpSigner();
+  const recipient4 = provider.generateAcpSigner();
+  const recipient5 = provider.generateAcpSigner();
+
+  const sudt = provider.newSudtScript(genesis.getAddress());
+
+  const mintTxBuilder = new MintSudtBuilder(
+    {
+      recipients: [
+        {
+          recipient: recipient1.getAddress(),
+          amount: '1000',
+          additionalCapacity: CkbAmount.fromCkb(1_000).toHex(),
+          capacityPolicy: 'createCell',
+        },
+        {
+          recipient: recipient2.getAddress(),
+          amount: '1000',
+          additionalCapacity: '0',
+          capacityPolicy: 'createCell',
+        },
+        {
+          recipient: recipient5.getAddress(),
+          amount: '1000',
+          additionalCapacity: '0',
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    provider,
+    genesis.getAddress(),
+  );
+
+  await provider.signAndSendTxUntilCommitted(genesis, mintTxBuilder);
+
+  let recipientCells1 = await provider.collectUdtCells(recipient1.getAddress(), sudt, '0x0');
+  let recipientCells2 = await provider.collectUdtCells(recipient2.getAddress(), sudt, '0x0');
+
+  expect(CkbAmount.fromShannon(recipientCells1[0]?.output.capacity ?? 0).eq(1_142_00000000n)).toBe(true);
+  expect(CkbAmount.fromShannon(recipientCells2[0]?.output.capacity ?? 0).eq(142_00000000n)).toBe(true);
+
+  const transferSudtBuilder = new AcpTransferSudtBuilder(
+    {
+      recipients: [
+        {
+          policy: 'findOrCreate',
+          additionalCapacity: CkbAmount.fromCkb(2).toHex(),
+          amount: '1',
+          recipient: recipient2.getAddress(),
+          sudt,
+        },
+        {
+          policy: 'findOrCreate',
+          additionalCapacity: CkbAmount.fromCkb(10).toHex(),
+          amount: '0',
+          recipient: recipient3.getAddress(),
+          sudt,
+        },
+        {
+          policy: 'findOrCreate',
+          additionalCapacity: CkbAmount.fromCkb(0).toHex(),
+          amount: '1',
+          recipient: recipient4.getAddress(),
+          sudt,
+        },
+        {
+          policy: 'findOrCreate',
+          additionalCapacity: CkbAmount.fromCkb(2).toHex(),
+          amount: '0',
+          recipient: recipient5.getAddress(),
+          sudt,
+        },
+      ],
+    },
+    provider,
+    recipient1.getAddress(),
+  );
+
+  await provider.signAndSendTxUntilCommitted(recipient1, transferSudtBuilder);
+
+  recipientCells1 = await provider.collectUdtCells(recipient1.getAddress(), sudt, '0x0');
+  recipientCells2 = await provider.collectUdtCells(recipient2.getAddress(), sudt, '0x0');
+
+  const recipientCells3 = await provider.collectUdtCells(recipient3.getAddress(), sudt, '0x0');
+  const recipientCells4 = await provider.collectUdtCells(recipient4.getAddress(), sudt, '0x0');
+  const recipientCells5 = await provider.collectUdtCells(recipient5.getAddress(), sudt, '0x0');
+
+  expect(recipientCells1).toHaveLength(1);
+  expect(recipientCells2).toHaveLength(1);
+
+  // 1142 - (0 + 2) - (142 + 10) - (142 + 0) - (0 + 2)
+  // recp1 - recp2  -   recp3    -  recp4    -  recp5
+  expect(CkbAmount.fromShannon(recipientCells1[0]?.output.capacity ?? 0).gte(843_99900000n)).toBe(true);
+  expect(CkbAmount.fromShannon(recipientCells2[0]?.output.capacity ?? 0).eq(144_00000000n)).toBe(true);
+  expect(CkbAmount.fromShannon(recipientCells3[0]?.output.capacity ?? 0).eq(152_00000000n)).toBe(true);
+  expect(CkbAmount.fromShannon(recipientCells4[0]?.output.capacity ?? 0).eq(142_00000000n)).toBe(true);
+  expect(CkbAmount.fromShannon(recipientCells5[0]?.output.capacity ?? 0).eq(144_00000000n)).toBe(true);
+
+  expect(Number(await provider.getUdtBalance(recipient1.getAddress(), sudt))).toBe(998);
+  expect(Number(await provider.getUdtBalance(recipient2.getAddress(), sudt))).toBe(1001);
+  expect(Number(await provider.getUdtBalance(recipient3.getAddress(), sudt))).toBe(0);
+  expect(Number(await provider.getUdtBalance(recipient4.getAddress(), sudt))).toBe(1);
+  expect(Number(await provider.getUdtBalance(recipient5.getAddress(), sudt))).toBe(1000);
 });
 
 // TODO impl testcase

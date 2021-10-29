@@ -6,7 +6,7 @@ import { TippyClient } from '@ckitjs/tippy-client';
 import { createDebugger, debug } from '@ckitjs/utils';
 import appRootPath from 'app-root-path';
 import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
-import { TransferCkbBuilder } from '../tx-builders';
+import { AbstractTransactionBuilder, TransferCkbBuilder } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { deployCkbScripts } from './deploy';
@@ -43,7 +43,7 @@ export class TestProvider extends CkitProvider {
     return this.#_assemberPrivateKey;
   }
 
-  getGenesisSigner(index: number): EntrySigner {
+  getGenesisSigner(index: number): Secp256k1Signer {
     return new Secp256k1Signer(nonNullable(this.testPrivateKeys[index]), this, this.newScript('SECP256K1_BLAKE160'));
   }
 
@@ -87,7 +87,7 @@ export class TestProvider extends CkitProvider {
     return txHash;
   }
 
-  generateAcpSigner(key: CkitConfigKeys = 'ANYONE_CAN_PAY'): EntrySigner {
+  generateAcpSigner(key: CkitConfigKeys = 'ANYONE_CAN_PAY'): Secp256k1Signer {
     return new Secp256k1Signer(randomHexString(64), this, this.newScript(key));
   }
 
@@ -108,6 +108,11 @@ export class TestProvider extends CkitProvider {
         ).build(),
       ),
     );
+  }
+
+  async signAndSendTxUntilCommitted(signer: EntrySigner, builder: AbstractTransactionBuilder): Promise<Hash> {
+    const unsigned = await builder.build();
+    return this.sendTxUntilCommitted(await signer.seal(unsigned));
   }
 }
 

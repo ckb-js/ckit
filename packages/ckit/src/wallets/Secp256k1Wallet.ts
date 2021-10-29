@@ -32,13 +32,11 @@ export class Secp256k1Signer extends AbstractSingleEntrySigner {
     this.#privateKey = privateKey;
   }
 
-  getAddress(): Promise<string> {
-    return Promise.resolve(
-      this.provider.parseToAddress({
-        ...this.lockConfig,
-        args: Secp256k1Signer.privateKeyToBlake160(this.#privateKey),
-      }),
-    );
+  getAddress(): string {
+    return this.provider.parseToAddress({
+      ...this.lockConfig,
+      args: Secp256k1Signer.privateKeyToBlake160(this.#privateKey),
+    });
   }
 
   signMessage(message: HexString): Promise<HexString> {
