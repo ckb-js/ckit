@@ -497,15 +497,15 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   );
 });
 
-test('transfer SUDT with additionalCapacity', async () => {
-  // genesis -> recipient1: 1000 CKB + 1000 UDT
-  //         -> recipient2: 0 CKB + 1000 UDT
-  //         -> recipient5: 0 CKB + 1000 UDT
+test('transfer SUDT with additionalCapacity and create capacity', async () => {
+  // genesis -> recipient1: 1000 UDT(1000 CKB)
+  //         -> recipient2: 1000 UDT(0 CKB)
+  //         -> recipient5: 1000 UDT(0 CKB)
   // -----------------------------------------------
-  // recipient1 -> recipient2: (0 + 2) CKB + 1 UDT
-  //            -> recipient3: (142 + 10) CKB + 0 UDT
-  //            -> recipient4: (142 + 0) CKB + 1 UDT
-  //            -> recipient5: (0 + 2) CKB + 0 UDT
+  // recipient1 -> recipient2: 1 UDT(2 CKB)
+  //            -> recipient3: 0 UDT(142 + 10CKB) | + 100 CKB(createCapacity)
+  //            -> recipient4: 1 UDT(142 + 0CKB)
+  //            -> recipient5: 0 UDT(0 + 2CKB)
 
   const provider = new TestProvider();
   await provider.init();
@@ -571,6 +571,7 @@ test('transfer SUDT with additionalCapacity', async () => {
           amount: '0',
           recipient: recipient3.getAddress(),
           sudt,
+          createCapacity: CkbAmount.fromCkb(100).toHex(),
         },
         {
           policy: 'findOrCreate',
@@ -604,11 +605,15 @@ test('transfer SUDT with additionalCapacity', async () => {
   expect(recipientCells1).toHaveLength(1);
   expect(recipientCells2).toHaveLength(1);
 
-  // 1142 - (0 + 2) - (142 + 10) - (142 + 0) - (0 + 2)
-  // recp1 - recp2  -   recp3    -  recp4    -  recp5
-  expect(CkbAmount.fromShannon(recipientCells1[0]?.output.capacity ?? 0).gte(843_99900000n)).toBe(true);
+  const createdRecipientCells3 = await provider.collectCkbLiveCells(recipient3.getAddress(), '0x0');
+  expect(createdRecipientCells3).toHaveLength(1);
+
+  // 1142 - (0 + 2) - (142 + 10 + 100) - (142 + 0) - (0 + 2)
+  // recp1 - recp2  -       recp3      -  recp4    -  recp5
+  expect(CkbAmount.fromShannon(recipientCells1[0]?.output.capacity ?? 0).gte(743_99900000n)).toBe(true);
   expect(CkbAmount.fromShannon(recipientCells2[0]?.output.capacity ?? 0).eq(144_00000000n)).toBe(true);
   expect(CkbAmount.fromShannon(recipientCells3[0]?.output.capacity ?? 0).eq(152_00000000n)).toBe(true);
+  expect(CkbAmount.fromShannon(createdRecipientCells3[0]?.output.capacity ?? 0).eq(100_00000000n)).toBe(true);
   expect(CkbAmount.fromShannon(recipientCells4[0]?.output.capacity ?? 0).eq(142_00000000n)).toBe(true);
   expect(CkbAmount.fromShannon(recipientCells5[0]?.output.capacity ?? 0).eq(144_00000000n)).toBe(true);
 

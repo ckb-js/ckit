@@ -11,9 +11,16 @@ export interface RecipientOption {
   readonly sudt: CkbTypeScript;
   amount: HexNumber;
   policy: 'findAcp' | 'createCell' | 'findOrCreate';
-  // defaults to 1 CKB when createCell
-  //             0 CKB when findAcp
+  /**
+   * add additional capacity on the output sudt cell
+   * defaults to 1 CKB when createCell, and 0 CKB when findAcp
+   */
   additionalCapacity?: HexNumber;
+
+  /**
+   * the transfer creates a lock-only cell at the same time with createCapacity
+   */
+  createCapacity?: HexNumber;
 }
 
 export interface TransferSudtOptions {

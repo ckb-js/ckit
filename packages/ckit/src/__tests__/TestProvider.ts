@@ -1,12 +1,12 @@
 import fs from 'fs';
-import { Address, Hash, HexNumber, HexString, Transaction } from '@ckb-lumos/base';
+import { Address, Hash, HexNumber, HexString, Script, Transaction } from '@ckb-lumos/base';
 import { predefined } from '@ckb-lumos/config-manager';
 import { EntrySigner } from '@ckitjs/base';
 import { TippyClient } from '@ckitjs/tippy-client';
 import { createDebugger, debug } from '@ckitjs/utils';
 import appRootPath from 'app-root-path';
 import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
-import { AbstractTransactionBuilder, TransferCkbBuilder } from '../tx-builders';
+import { AbstractTransactionBuilder, MintOptions, MintSudtBuilder, TransferCkbBuilder } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { deployCkbScripts } from './deploy';
@@ -108,6 +108,21 @@ export class TestProvider extends CkitProvider {
         ).build(),
       ),
     );
+  }
+
+  async mintSudtFromGenesis(
+    options: MintOptions,
+    config: { testPrivateKeysIndex?: number } = {},
+  ): Promise<{ sudt: Script; txHash: Hash }> {
+    const { testPrivateKeysIndex = 0 } = config;
+
+    const signer = this.getGenesisSigner(testPrivateKeysIndex);
+    const unsigned = new MintSudtBuilder(options, this, signer.getAddress());
+
+    return {
+      sudt: this.newSudtScript(signer.getAddress()),
+      txHash: await this.signAndSendTxUntilCommitted(signer, unsigned),
+    };
   }
 
   async signAndSendTxUntilCommitted(signer: EntrySigner, builder: AbstractTransactionBuilder): Promise<Hash> {
