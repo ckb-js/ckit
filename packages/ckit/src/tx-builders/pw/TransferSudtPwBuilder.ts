@@ -3,7 +3,7 @@ import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-cor
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { boom } from '../../utils';
-import { TransferSudtOptions, RecipientOption } from '../AcpTransferSudtBuilder';
+import { RecipientOption, TransferSudtOptions } from '../AcpTransferSudtBuilder';
 import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
@@ -25,6 +25,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
                 sudt: options.sudt,
                 policy: options.policy,
                 additionalCapacity: options.additionalCapacity,
+                createCapacity: options.createCapacity,
               },
             ]
           : oldRecipientOptions.concat({
@@ -33,6 +34,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
               sudt: options.sudt,
               policy: options.policy,
               additionalCapacity: options.additionalCapacity,
+              createCapacity: options.createCapacity,
             });
       optionsGroupBySudt.set(options.sudt.args, newRecipientOptions);
     });
@@ -41,6 +43,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     const recipientSudtInputCells: Cell[] = [];
     const senderSudtOutputCells: Cell[] = [];
     const recipientSudtOutputCells: Cell[] = [];
+    const recipientCreateOutputCells: Cell[] = [];
 
     // 1. handle sudt cells
     for (const item of optionsGroupBySudt) {
@@ -101,6 +104,15 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
             break;
           }
         }
+
+        if (option.createCapacity) {
+          recipientCreateOutputCells.push(
+            new Cell(
+              new Amount(option.createCapacity, 0),
+              Pw.toPwScript(this.provider.parseToScript(option.recipient)),
+            ),
+          );
+        }
       }
 
       // build sudt cells of sender
@@ -134,7 +146,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       senderSudtOutputCells.push(senderSudtOutputCell);
     }
 
-    // 2. handle capaicty cells
+    // 2. handle capacity cells
     const senderSudtInputCellsCapacity = senderSudtInputCells.reduce(
       (sum, cell) => sum.add(cell.capacity),
       Amount.ZERO,
@@ -151,13 +163,20 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       (sum, cell) => sum.add(cell.capacity),
       Amount.ZERO,
     );
+    const recipientCreateOutputCellsCapacity = recipientCreateOutputCells.reduce(
+      (sum, cell) => sum.add(cell.capacity),
+      Amount.ZERO,
+    );
+
     const inputsContainedCapacity = recipientSudtInputCellsCapacity.add(senderSudtInputCellsCapacity);
-    const outputsContainedCapacity = recipientSudtOutputCellsCapacity.add(senderSudtOutputCellsCapacity);
+    const outputsContainedCapacity = recipientSudtOutputCellsCapacity
+      .add(senderSudtOutputCellsCapacity)
+      .add(recipientCreateOutputCellsCapacity);
 
     const txWithoutSupplyCapacity = new Transaction(
       new RawTransaction(
         senderSudtInputCells.concat(recipientSudtInputCells),
-        senderSudtOutputCells.concat(recipientSudtOutputCells),
+        senderSudtOutputCells.concat(recipientSudtOutputCells).concat(recipientCreateOutputCells),
         this.getCellDepsByCells(
           senderSudtInputCells.concat(recipientSudtInputCells),
           senderSudtOutputCells.concat(recipientSudtOutputCells),
@@ -203,7 +222,10 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     capacityChangeCell.capacity = supplyCapacityInputCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
 
     const inputCells = senderSudtInputCells.concat(recipientSudtInputCells).concat(supplyCapacityInputCells);
-    const outputs = senderSudtOutputCells.concat(recipientSudtOutputCells).concat([capacityChangeCell]);
+    const outputs = senderSudtOutputCells
+      .concat(recipientSudtOutputCells)
+      .concat(recipientCreateOutputCells)
+      .concat([capacityChangeCell]);
     const txWithSupplyCapacity = new Transaction(
       new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs)),
       senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
