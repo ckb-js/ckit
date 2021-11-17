@@ -27,7 +27,7 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
     INDEX: '0x',
     DEP_TYPE: 'code',
   },
-  // TODO replace me when deployed
+
   UNIPASS: {
     INDEX: '0x0',
     TX_HASH: '0x1a04142a2a745fb3b7e0e9b61241676c1c94ad8cdacb36f223661130a23fb007',
@@ -36,8 +36,6 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
     HASH_TYPE: 'type',
   },
 
-  // TODO deploy the rc lock to test chain
-  //  the config here is fake
   RC_LOCK: {
     CODE_HASH: '0x9f3aeaf2fc439549cbc870c653374943af96a0658bd6b51be8d8983183e6f52f',
     HASH_TYPE: 'type',

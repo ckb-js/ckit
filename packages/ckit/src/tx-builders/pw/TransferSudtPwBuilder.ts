@@ -1,4 +1,5 @@
 import { Address } from '@ckb-lumos/base';
+import { debug } from '@ckitjs/utils';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
@@ -63,6 +64,8 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
         }
         switch (option.policy) {
           case 'findAcp': {
+            if (option.createCapacity) debug(`WARN: “createCapacity” cannot use with “findAcp” policy`);
+
             const recipientLiveSudtCell = (await this.provider.collectUdtCells(option.recipient, sudtScript, '0'))[0];
             if (!recipientLiveSudtCell) boom(`recipient ${option.recipient} has no cell to carry the udt`);
             const recipientSudtInputCell: Cell = new Cell(
@@ -88,6 +91,15 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
             break;
           }
           case 'createCell': {
+            if (option.createCapacity) {
+              recipientCreateOutputCells.push(
+                new Cell(
+                  new Amount(option.createCapacity, 0),
+                  Pw.toPwScript(this.provider.parseToScript(option.recipient)),
+                ),
+              );
+            }
+
             // defaults additional capacity to 1 CKB
             option.additionalCapacity = option.additionalCapacity ?? (10 ** 8).toString();
 
@@ -103,15 +115,6 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
             recipientSudtOutputCells.push(recipientSudtOutputCell);
             break;
           }
-        }
-
-        if (option.createCapacity) {
-          recipientCreateOutputCells.push(
-            new Cell(
-              new Amount(option.createCapacity, 0),
-              Pw.toPwScript(this.provider.parseToScript(option.recipient)),
-            ),
-          );
         }
       }
 

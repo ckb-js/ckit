@@ -624,6 +624,123 @@ test('transfer SUDT with additionalCapacity and create capacity', async () => {
   expect(Number(await provider.getUdtBalance(recipient5.getAddress(), sudt))).toBe(1000);
 });
 
+test('transfer CKB and sudt at same time', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const recipient1 = provider.generateAcpSigner();
+  const recipient2 = provider.generateAcpSigner();
+
+  const { sudt } = await provider.mintSudtFromGenesis(
+    {
+      recipients: [
+        {
+          recipient: recipient1.getAddress(),
+          amount: '1000',
+          additionalCapacity: CkbAmount.fromCkb(10000).toHex(),
+          capacityPolicy: 'createCell',
+        },
+        {
+          recipient: recipient2.getAddress(),
+          amount: '100',
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    { testPrivateKeysIndex: testPrivateKeyIndex },
+  );
+
+  expect(await provider.collectUdtCells(recipient1.getAddress(), sudt, '0')).toHaveLength(1);
+  expect(await provider.collectUdtCells(recipient2.getAddress(), sudt, '0')).toHaveLength(1);
+
+  await provider.signAndSendTxUntilCommitted(
+    recipient1,
+    new AcpTransferSudtBuilder(
+      {
+        recipients: [
+          {
+            recipient: recipient2.getAddress(),
+            amount: '1',
+            createCapacity: CkbAmount.fromCkb(143).toHex(),
+            policy: 'findAcp',
+            sudt,
+          },
+        ],
+      },
+      provider,
+      recipient1.getAddress(),
+    ),
+  );
+});
+
+test('transfer CKB with split cell and sudt with acp', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const genesis = provider.getGenesisSigner(testPrivateKeyIndex);
+  const recipient1 = provider.generateAcpSigner();
+  const recipient2 = provider.generateAcpSigner();
+
+  const { sudt } = await provider.mintSudtFromGenesis(
+    {
+      recipients: [
+        {
+          recipient: recipient1.getAddress(),
+          amount: '1000',
+          additionalCapacity: CkbAmount.fromCkb(10000).toHex(),
+          capacityPolicy: 'createCell',
+        },
+        {
+          recipient: recipient2.getAddress(),
+          amount: '100',
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    { testPrivateKeysIndex: testPrivateKeyIndex },
+  );
+
+  expect(await provider.collectUdtCells(recipient1.getAddress(), sudt, '0')).toHaveLength(1);
+  expect(await provider.collectUdtCells(recipient2.getAddress(), sudt, '0')).toHaveLength(1);
+
+  await provider.signAndSendTxUntilCommitted(
+    recipient1,
+    new AcpTransferSudtBuilder(
+      {
+        recipients: [
+          {
+            recipient: genesis.getAddress(),
+            amount: '1',
+            policy: 'createCell',
+            sudt,
+          },
+        ],
+      },
+      provider,
+      recipient1.getAddress(),
+    ),
+  );
+
+  await provider.signAndSendTxUntilCommitted(
+    genesis,
+    new AcpTransferSudtBuilder(
+      {
+        recipients: [
+          {
+            recipient: recipient2.getAddress(),
+            sudt,
+            createCapacity: CkbAmount.fromCkb(1000).toHex(),
+            amount: '1',
+            policy: 'findAcp',
+          },
+        ],
+      },
+      provider,
+      genesis.getAddress(),
+    ),
+  );
+});
+
 // TODO impl testcase
 test.skip('test duplicate options', async () => {
   return;
