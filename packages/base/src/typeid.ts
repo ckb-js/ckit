@@ -13,10 +13,19 @@ function toArrayBuffer(buf: Uint8Array) {
   return ab;
 }
 
-function toBigUInt64LE(num: HexString | number | bigint) {
-  num = BigInt(num);
+function toBigUInt64LE(num: HexString | number | bigint): ArrayBuffer {
   const buf = toBuffer('', 8);
-  buf.writeBigUInt64LE(num);
+
+  if (typeof num === 'bigint') {
+    buf.writeBigUInt64LE(num);
+  } else if (Number.isSafeInteger(Number(num))) {
+    num = Number(num);
+    buf.writeUInt32LE(num & 0xffffffff, 0);
+    buf.writeUInt32LE((num >>> 32) & 0xffffffff, 4);
+  } else {
+    throw new Error(`invalid input ${num}`);
+  }
+
   return toArrayBuffer(buf);
 }
 

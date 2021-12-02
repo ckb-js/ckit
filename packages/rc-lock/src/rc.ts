@@ -1,5 +1,14 @@
 import { Hash, HexNumber, HexString, Script, utils } from '@ckb-lumos/base';
-import { createField, createFixedStruct, Field, formatByteLike, toBuffer, U128LE, U8 } from '@ckitjs/easy-byte';
+import {
+  createField,
+  createFixedStruct,
+  Field,
+  formatByteLike,
+  toBuffer,
+  U128LE,
+  U128LEJSBI,
+  U8,
+} from '@ckitjs/easy-byte';
 import { MercuryClient, SearchKey, ResolvedOutpoint } from '@ckitjs/mercury-client';
 import { bytes } from '@ckitjs/utils';
 import { Reader } from 'ckb-js-toolkit';
@@ -30,10 +39,22 @@ export const RcIdentityLockArgs = createFixedStruct()
 
 export const RcSupplyLockArgs = RcIdentityLockArgs.field('type_id_hash', Bytes(32));
 
+export const OmniIdentityLockArgs = RcIdentityLockArgs;
+export const OmniSupplyLockArgs = RcSupplyLockArgs;
+
+/**
+ * @deprecated please migrate to {@link OmniSupplyOutputData}
+ */
 export const RcSupplyOutputData = createFixedStruct()
   .field('version', U8)
   .field('current_supply', U128LE)
   .field('max_supply', U128LE)
+  .field('sudt_script_hash', Bytes(32));
+
+export const OmniSupplyOutputData = createFixedStruct()
+  .field('version', U8)
+  .field('current_supply', U128LEJSBI)
+  .field('max_supply', U128LEJSBI)
   .field('sudt_script_hash', Bytes(32));
 
 /**
@@ -94,8 +115,8 @@ export interface RcHelperConfig {
 }
 
 export function convertToSudtSupplyInfo(outputData: HexString): SudtSupplyInfo {
-  const { current_supply, max_supply, version } = RcSupplyOutputData.decode(toBuffer(outputData));
-  const fixedDataLen = RcSupplyOutputData.fields.reduce((acc, field) => acc + field[1].byteWidth, 0);
+  const { current_supply, max_supply, version } = OmniSupplyOutputData.decode(toBuffer(outputData));
+  const fixedDataLen = OmniSupplyOutputData.fields.reduce((acc, field) => acc + field[1].byteWidth, 0);
   const udtInfo = new UdtInfo(new Reader(bytes.toHex(outputData.slice(2 /*0x*/ + fixedDataLen * 2))));
 
   return {

@@ -27,7 +27,7 @@ export interface ResolvedOutpoint {
   tx_index: HexNumber;
 }
 
-interface GetPayloadResponse {
+interface GetCellsResponse {
   last_cursor: HexString;
   objects: ResolvedOutpoint[];
 }
@@ -35,6 +35,11 @@ interface GetPayloadResponse {
 export interface GetTipResponse {
   block_hash: Hash;
   block_number: HexNumber;
+}
+
+interface GetTransactionResponse {
+  last_cursor: HexString;
+  objects: ResolvedOutpoint[];
 }
 
 export class MercuryClient {
@@ -45,7 +50,7 @@ export class MercuryClient {
     this.client = new Client(new RequestManager([transport]));
   }
 
-  get_cells(payload: GetCellsPayload): Promise<GetPayloadResponse> {
+  get_cells(payload: GetCellsPayload): Promise<GetCellsResponse> {
     const { search_key, order = 'asc', limit = '0x3e8' /*1_000*/, after_cursor } = payload;
     return this.client.request({
       method: 'get_cells',
@@ -55,5 +60,9 @@ export class MercuryClient {
 
   get_tip(): Promise<GetTipResponse> {
     return this.client.request({ method: 'get_tip' });
+  }
+
+  get_transactions(): Promise<GetTransactionResponse> {
+    return this.client.request({ method: 'get_transactions', params: [] });
   }
 }

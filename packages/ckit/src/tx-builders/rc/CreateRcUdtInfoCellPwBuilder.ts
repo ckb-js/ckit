@@ -1,9 +1,10 @@
 import { utils } from '@ckb-lumos/base';
 import { formatByteLike } from '@ckitjs/easy-byte/dist';
-import { SerializeUdtInfo, RcSupplyOutputData } from '@ckitjs/rc-lock';
+import { SerializeUdtInfo, OmniSupplyOutputData } from '@ckitjs/rc-lock';
 import { bytes, invariant } from '@ckitjs/utils';
 import { Amount, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
+import JSBI from 'jsbi';
 import { CkbAmount } from '../../helpers';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
@@ -68,10 +69,10 @@ export class CreateRcUdtInfoCellPwBuilder extends AbstractPwSenderBuilder {
       undefined,
       bytes.concat(
         formatByteLike(
-          RcSupplyOutputData.encode({
+          OmniSupplyOutputData.encode({
             version: 0,
-            current_supply: 0n,
-            max_supply: BigInt(sudtInfo.maxSupply),
+            current_supply: JSBI.BigInt(0),
+            max_supply: JSBI.BigInt(sudtInfo.maxSupply),
             sudt_script_hash: utils.computeScriptHash(provider.newSudtScript(Pw.fromPwScript(rcLockScript))),
           }),
         ),

@@ -1,5 +1,6 @@
 // TODO replace with safe-buffer
 import { Buffer } from 'buffer';
+import JSBI from 'jsbi';
 import { formatByteLike } from './utils';
 
 function createReader<T>(fnName: keyof Buffer): (buf: Buffer, offset?: number) => T {
@@ -97,10 +98,10 @@ function bigIntReader(byteSize: number, le?: boolean, signed?: boolean): Reader<
     const val = BigInt(byteString);
     if (!signed) return val;
 
-    const signMask = 1n << BigInt(byteSize * 8 - 1);
-    const valueMask = signMask - 1n;
+    const signMask = BigInt(1) << BigInt(byteSize * 8 - 1);
+    const valueMask = signMask - BigInt(1);
 
-    if ((signMask & val) === 0n) return val;
+    if ((signMask & val) === BigInt(0)) return val;
     return (valueMask & val) - signMask;
   };
 }
@@ -108,9 +109,21 @@ function bigIntReader(byteSize: number, le?: boolean, signed?: boolean): Reader<
 function bigIntWriter(byteSize: number, le?: boolean, signed?: boolean): Writer<bigint> {
   return function (buf: Buffer, input: bigint, offset = 0) {
     let val = input;
-    if (signed && val < 0n) val = (1n << BigInt(byteSize * 8)) + val;
+    if (signed && val < BigInt(0)) val = (BigInt(1) << BigInt(byteSize * 8)) + val;
 
     const byteString = formatByteLike(val.toString(16), { byteSize, convertEndian: le });
+    buf.write(byteString, offset, 'hex');
+  };
+}
+
+function jsbiReader(byteSize: number, le?: boolean): Reader<JSBI> {
+  return (buf, offset = 0) =>
+    JSBI.BigInt(formatByteLike(buf.slice(offset, offset + byteSize), { byteSize, convertEndian: le, pad0x: true }));
+}
+
+function jsbiWriter(byteSize: number, le?: boolean): Writer<JSBI> {
+  return (buf, input, offset = 0) => {
+    const byteString = formatByteLike(input.toString(16), { byteSize, convertEndian: le });
     buf.write(byteString, offset, 'hex');
   };
 }
@@ -137,6 +150,11 @@ export const I128LE = createField<bigint>(16, bigIntReader(16, true, true), bigI
 export const I128BE = createField<bigint>(16, bigIntReader(16, false, true), bigIntWriter(16, false, true));
 export const U128LE = createField<bigint>(16, bigIntReader(16, true, false), bigIntWriter(16, true, false));
 export const U128BE = createField<bigint>(16, bigIntReader(16, false, false), bigIntWriter(16, false, false));
+
+export const U64LEJSBI = createField<JSBI>(8, jsbiReader(8, true), jsbiWriter(8, true));
+export const U64BEJSBI = createField<JSBI>(8, jsbiReader(8, false), jsbiWriter(8, false));
+export const U128LEJSBI = createField<JSBI>(16, jsbiReader(16, true), jsbiWriter(16, true));
+export const U128BEJSBI = createField<JSBI>(16, jsbiReader(16, false), jsbiWriter(16, false));
 
 /**
  * Create a coder for a fixed-length byte

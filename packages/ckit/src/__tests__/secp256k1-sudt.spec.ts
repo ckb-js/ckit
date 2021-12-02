@@ -354,24 +354,24 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   const recipient1Signer = provider.generateAcpSigner();
   const recipient2Signer = provider.generateAcpSigner();
   const recipient3Signer = provider.generateAcpSigner();
-  const recipient1Address = await recipient1Signer.getAddress();
-  const recipient2Address = await recipient2Signer.getAddress();
-  const recipient3Address = await recipient3Signer.getAddress();
-  const testUdt = provider.newSudtScript(await issuerSigner.getAddress());
+  const recipient1Address = recipient1Signer.getAddress();
+  const recipient2Address = recipient2Signer.getAddress();
+  const recipient3Address = recipient3Signer.getAddress();
+  const testUdt = provider.newSudtScript(issuerSigner.getAddress());
 
   const beforeBalance0 = await provider.getUdtBalance(recipient1Address, testUdt);
 
   eqAmount(beforeBalance0, 0);
 
   // transfer ckb to recipient2Address
-  debug(`start transfer %o`, { from: await issuerSigner.getAddress(), to: recipient2Address });
+  debug(`start transfer %o`, { from: issuerSigner.getAddress(), to: recipient2Address });
   const unsignedTransferCkbTx = await new TransferCkbBuilder(
     { recipients: [{ recipient: recipient2Address, amount: '1000000000000', capacityPolicy: 'createCell' }] },
     provider,
-    await issuerSigner.getAddress(),
+    issuerSigner.getAddress(),
   ).build();
   const signed = await issuerSigner.seal(unsignedTransferCkbTx);
-  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed, { timeoutMs: 360000 });
+  const transferCkbTxHash = await provider.sendTxUntilCommitted(signed);
   debug(`end transfer ckb, %s`, transferCkbTxHash);
 
   const recipients: MintOptions['recipients'] = [

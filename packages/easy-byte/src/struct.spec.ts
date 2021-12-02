@@ -1,4 +1,18 @@
-import { createFixedStruct, U64LE, U8, U128LE, Field, U128BE, I128LE, I128BE } from './struct';
+import JSBI from 'jsbi';
+import {
+  createFixedStruct,
+  U64LE,
+  U8,
+  U128LE,
+  Field,
+  U128BE,
+  I128LE,
+  I128BE,
+  U64LEJSBI,
+  U128LEJSBI,
+  U128BEJSBI,
+  U64BEJSBI,
+} from './struct';
 
 function testReadAndWrite<T>(field: Field<T>, buffer: Buffer, x: T) {
   expect(field.read(buffer)).toEqual(x);
@@ -39,4 +53,26 @@ test('encoding and decoding should be correct', () => {
 
   const decoded = messageStruct.decode(bytes);
   expect(decoded).toEqual(struct);
+});
+
+test('encoding and decoding jsbi field', () => {
+  const codec = createFixedStruct()
+    .field('jsbi64le', U64LEJSBI)
+    .field('jsbi64be', U64BEJSBI)
+    .field('jsbi128le', U128LEJSBI)
+    .field('jsbi128be', U128BEJSBI);
+
+  const encoded = codec.encode({
+    jsbi64le: JSBI.BigInt('0x0102'),
+    jsbi64be: JSBI.BigInt('0x0102'),
+    jsbi128le: JSBI.BigInt('0x0102'),
+    jsbi128be: JSBI.BigInt('0x0102'),
+  });
+
+  expect(
+    Buffer.from(
+      '020100000000000000000000000001020201000000000000000000000000000000000000000000000000000000000102',
+      'hex',
+    ),
+  ).toEqual(encoded);
 });

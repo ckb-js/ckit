@@ -3,6 +3,7 @@ import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-cor
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { MintOptions } from '..';
 import { NoAvailableCellError } from '../../errors';
+import { BN } from '../../helpers';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
@@ -22,7 +23,7 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
       .map((item) => {
         const recipientLockArgsBytesLen = (this.provider.parseToScript(item.recipient).args.length - 2) / 2;
         return new Cell(
-          new Amount(String(BigInt(item.additionalCapacity || 0)), 0).add(
+          new Amount(String(BN(item.additionalCapacity || 0)), 0).add(
             new Amount(String(byteLenOfSudt(recipientLockArgsBytesLen))),
           ),
           Pw.toPwScript(this.provider.parseToScript(item.recipient)), // recipient lock
