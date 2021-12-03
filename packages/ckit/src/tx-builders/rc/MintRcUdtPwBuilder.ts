@@ -1,7 +1,8 @@
 import { formatByteLike, toBuffer } from '@ckitjs/easy-byte';
-import { RcIdentityLockArgs, RcSupplyLockArgs, RcSupplyLockHelper, RcSupplyOutputData } from '@ckitjs/rc-lock';
+import { OmniSupplyOutputData, RcIdentityLockArgs, RcSupplyLockArgs, RcSupplyLockHelper } from '@ckitjs/rc-lock';
 import { bytes } from '@ckitjs/utils';
 import { Amount, Builder, Cell, RawTransaction, Transaction } from '@lay2/pw-core';
+import JSBI from 'jsbi';
 import { groupBy, map, partition } from 'lodash';
 import { from, lastValueFrom, mergeMap, toArray } from 'rxjs';
 import { NoAvailableCellError } from '../../errors';
@@ -104,7 +105,7 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
       .map(
         (item) =>
           new Cell(
-            new Amount(String(BigInt(item.additionalCapacity || 0)), 0).add(new Amount(String(byteLenOfSudt()))),
+            new Amount(String(item.additionalCapacity || 0), 0).add(new Amount(String(byteLenOfSudt()))),
             Pw.toPwScript(this.provider.parseToScript(item.recipient)), // recipient lock
             Pw.toPwScript(udtType), // issued sudt type
             undefined,
@@ -166,12 +167,15 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     senderOutput.capacity = senderCells.reduce((sum, inputCell) => sum.add(inputCell.capacity), Amount.ZERO);
 
     // modify current_supply
-    const mintedSudtAmount = this.options.recipients.reduce((acc, recipient) => BigInt(recipient.amount) + acc, 0n);
+    const mintedSudtAmount = this.options.recipients.reduce(
+      (acc, recipient) => JSBI.add(acc, JSBI.BigInt(recipient.amount)),
+      JSBI.BigInt(0),
+    );
     const dataBuf = toBuffer(infoCell.getHexData());
-    const decoded = RcSupplyOutputData.decode(dataBuf);
-    const encoded = RcSupplyOutputData.encode({
+    const decoded = OmniSupplyOutputData.decode(dataBuf);
+    const encoded = OmniSupplyOutputData.encode({
       ...decoded,
-      current_supply: decoded.current_supply + mintedSudtAmount,
+      current_supply: JSBI.add(decoded.current_supply, mintedSudtAmount),
     });
     dataBuf.write(encoded.toString('hex'), 'hex');
     infoCell.setHexData(bytes.toHex(dataBuf));

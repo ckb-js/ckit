@@ -6,7 +6,7 @@ export type HumanizeOptions = { decimalPlaces?: number; separator?: boolean; dec
 type AmountValue = BigNumber.Value | bigint;
 type AmountLike = AmountValue | Amount;
 
-function BN(val: AmountValue | Amount): BigNumber {
+export function BN(val: AmountValue | Amount): BigNumber {
   if (typeof val === 'bigint') return new BigNumber(String(val));
   if (Amount.checkIsAmount(val)) return new BigNumber(String(val));
   return new BigNumber(val);
@@ -35,7 +35,7 @@ export class Amount {
   static from(value: AmountValue, decimals = 0): Amount {
     if (decimals < 0 || !Number.isInteger(decimals)) boom('The decimal not valid');
 
-    if (typeof value === 'bigint') return new Amount(BN(value * 10n ** BigInt(decimals)));
+    if (typeof value === 'bigint') return new Amount(BN(value * BigInt(10) ** BigInt(decimals)));
     if (!decimals) return new Amount(BN(value));
 
     return new Amount(BN(value).times(BN(10).pow(decimals)));

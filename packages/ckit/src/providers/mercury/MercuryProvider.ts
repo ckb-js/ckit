@@ -2,17 +2,17 @@ import { Address, ChainInfo, Hash, HexNumber, Transaction, TxPoolInfo } from '@c
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
 import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
-import { bytes } from '@ckitjs/utils';
 import { toBigUInt128LE } from '@lay2/pw-core';
+import { BigNumber } from 'bignumber.js';
 import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
 import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';
-import { Amount } from '../../helpers';
+import { Amount, BN } from '../../helpers';
 import { asyncSleep } from '../../utils';
 import { MercuryCellProvider } from './IndexerCellProvider';
 
 type CellsAccumulator = {
   cells: ResolvedOutpoint[];
-  amount: bigint;
+  amount: BigNumber;
 };
 
 export class MercuryProvider extends AbstractProvider {
@@ -48,16 +48,18 @@ export class MercuryProvider extends AbstractProvider {
       scan(
         (acc, next) => ({
           cells: acc.cells.concat(next),
-          amount: acc.amount + BigInt(next.output.capacity),
+          amount: BN(acc.amount).plus(BN(next.output.capacity)),
         }),
-        { amount: 0n, cells: [] } as CellsAccumulator,
+        { amount: BN(0), cells: [] } as CellsAccumulator,
       ),
-      takeWhile((acc) => acc.amount < BigInt(minimalCapacity), true),
+      takeWhile((acc) => BN(acc.amount).lt(BN(minimalCapacity)), true),
     );
 
-    const acc = await lastValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
+    const acc = await lastValueFrom<CellsAccumulator, CellsAccumulator>(cells$, {
+      defaultValue: { amount: BN(0), cells: [] },
+    });
 
-    if (acc.amount < BigInt(minimalCapacity)) {
+    if (acc.amount.lt(BN(minimalCapacity))) {
       throw new NoEnoughCkbError({ lock, expected: minimalCapacity, actual: Amount.from(acc.amount).toHex() });
     }
 
@@ -79,11 +81,11 @@ export class MercuryProvider extends AbstractProvider {
       takeWhile((res) => res.objects.length > 0),
       concatMap((res) => res.objects),
       filter((cell) => cell.output.type == null),
-      reduce((balance, cell) => balance + BigInt(cell.output.capacity), 0n),
+      reduce((balance, cell) => balance.plus(BN(cell.output.capacity)), BN(0)),
     );
 
-    const balance = await lastValueFrom(balance$, { defaultValue: '0x0' });
-    return bytes.toHex(balance);
+    const balance = await lastValueFrom(balance$, { defaultValue: BN(0) });
+    return '0x' + balance.toString(16);
   }
 
   override getTxPoolInfo(): Promise<TxPoolInfo> {
@@ -109,16 +111,18 @@ export class MercuryProvider extends AbstractProvider {
       scan(
         (acc, resolvedCell) => ({
           cells: acc.cells.concat(resolvedCell),
-          amount: acc.amount + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))),
+          amount: BN(acc.amount).plus(BN(toBigUInt128LE(resolvedCell.output_data.slice(0, 34)))),
         }),
-        { amount: 0n, cells: [] } as CellsAccumulator,
+        { amount: BN(0), cells: [] } as CellsAccumulator,
       ),
-      takeWhile((acc) => acc.amount < BigInt(minimalAmount), true), // inclusive last to ensure cells are enough
+      takeWhile((acc) => BN(acc.amount).lt(minimalAmount), true), // inclusive last to ensure cells are enough
     );
 
-    const acc = await lastValueFrom(cells$, { defaultValue: { amount: 0n, cells: [] } });
+    const acc = await lastValueFrom<CellsAccumulator, CellsAccumulator>(cells$, {
+      defaultValue: { amount: BN(0), cells: [] },
+    });
 
-    if (acc.amount < BigInt(minimalAmount)) {
+    if (BN(acc.amount).lt(minimalAmount)) {
       throw new NoEnoughUdtError({ lock, expected: minimalAmount, actual: Amount.from(acc.amount).toHex() });
     }
 
@@ -136,10 +140,10 @@ export class MercuryProvider extends AbstractProvider {
       expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
       takeWhile((res) => res.objects.length > 0),
       concatMap((res) => res.objects),
-      reduce((acc, resolvedCell) => acc + BigInt(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))), 0n),
+      reduce((acc, resolvedCell) => BN(acc).plus(toBigUInt128LE(resolvedCell.output_data.slice(0, 34))), BN(0)),
     );
 
-    return lastValueFrom(balance$, { defaultValue: 0n }).then((x) => bytes.toHex(x));
+    return lastValueFrom(balance$, { defaultValue: BN(0) }).then((x) => '0x' + x.toString(16));
   }
 
   async waitForTransactionCommitted(

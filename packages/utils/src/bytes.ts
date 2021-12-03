@@ -1,11 +1,21 @@
+import JSBI from 'jsbi';
+
 // hex string without 0x
 type ByteString = string;
 
 // string starts with 0x
 type HexString = string;
 
-export type CanConvertToHex = Buffer | ByteString | HexString | number | bigint;
+type NumberLike = Pick<number, 'toString'>;
 
+export type CanConvertToHex = Buffer | ByteString | HexString | number | bigint | NumberLike;
+
+function isNumberLike(x: { toString?: unknown }): x is NumberLike {
+  if (typeof x === 'number') return true;
+  if (x === null || x === undefined) return false;
+
+  return typeof x?.toString === 'function';
+}
 /**
  * concat byte-like into a hex string
  *
@@ -22,11 +32,11 @@ export function concat(...hexes: CanConvertToHex[]): HexString {
  * @param x
  */
 function padToEven(x: CanConvertToHex): ByteString {
-  x = rm0x(toHex(x));
+  let result = rm0x(toHex(x));
 
-  if (x.length % 2 !== 0) x = '0' + x;
+  if (result.length % 2 !== 0) result = '0' + x;
 
-  return x;
+  return result;
 }
 
 export function rm0x(hexStringLike: string): HexString {
@@ -52,6 +62,10 @@ export function toHex(x: CanConvertToHex): HexString {
 
   if (Buffer.isBuffer(x)) {
     return '0x' + x.toString('hex');
+  }
+
+  if (isNumberLike(x)) {
+    return '0x' + JSBI.BigInt(x).toString(16);
   }
 
   throw new Error(`Cannot parse ${x} to a hex string`);
