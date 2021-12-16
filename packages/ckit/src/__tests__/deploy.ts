@@ -177,6 +177,10 @@ async function deployScripts(
 
     // TODO refactor needed, split it into the deploy script and predefined script
     UNIPASS: predefined.Aggron.SCRIPTS.UNIPASS,
+
+    // TODO refactor needed, split it into the deploy script and predefined script
+    //  now the cheque is a placeholder, we need to add the real cheque
+    CHEQUE: predefined.Aggron.SCRIPTS.CHEQUE,
   };
 }
 
