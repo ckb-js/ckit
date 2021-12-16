@@ -44,6 +44,10 @@ export abstract class AbstractPwSenderBuilder extends Builder {
       return [Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160'))];
     }
 
+    if (key === 'CHEQUE') {
+      return [Pw.toPwCellDep(this.provider.getCellDep('CHEQUE'))];
+    }
+
     return [];
   }
 
