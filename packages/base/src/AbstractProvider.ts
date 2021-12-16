@@ -1,5 +1,6 @@
 import {
   Address,
+  Cell,
   CellDep,
   ChainInfo,
   Hash,
@@ -120,6 +121,17 @@ export abstract class AbstractProvider implements Provider {
 
   abstract getTxPoolInfo(): Promise<TxPoolInfo>;
   abstract getChainInfo(): Promise<ChainInfo>;
+  /**
+   * @deprecated please migrate to {@link collectLockOnlyCells}
+   * @param lock
+   * @param capacity
+   */
   abstract collectCkbLiveCells(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+  /**
+   *
+   * @param lock
+   * @param capacity
+   */
+  abstract collectLockOnlyCells(lock: Address, capacity: HexNumber): Promise<Cell[]>;
   abstract sendTransaction(tx: Transaction): Promise<Hash>;
 }
