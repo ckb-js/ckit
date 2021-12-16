@@ -1,5 +1,4 @@
 import { Address, HexNumber, utils } from '@ckb-lumos/base';
-import { minimalCellCapacity } from '@ckb-lumos/helpers';
 import {
   Amount,
   Builder,
@@ -13,7 +12,7 @@ import { CkbTypeScript } from '..';
 import { Pw } from '../helpers/pw';
 import { CkitProvider } from '../providers';
 import { asserts } from '../utils';
-import { byteLenOfCkbLiveCell, byteLenOfSudt } from './builder-utils';
+import { byteLenOfChequeCell, byteLenOfLockOnlyCell, byteLenOfSudt, occupiedShannon } from './builder-utils';
 import { AbstractPwSenderBuilder } from './pw/AbstractPwSenderBuilder';
 
 interface ChequeDepositOptions {
@@ -57,17 +56,12 @@ export class ChequeDepositBuilder extends AbstractPwSenderBuilder {
     const receiverLock = this.provider.parseToScript(receiver);
     const senderLock = this.provider.parseToScript(sender);
 
-    const receiverLockHash = utils.computeScriptHash(receiverLock).slice(-40);
-    const senderLockHash = utils.computeScriptHash(senderLock).slice(-40);
+    const receiverLockHash = utils.computeScriptHash(receiverLock).slice(2, 42);
+    const senderLockHash = utils.computeScriptHash(senderLock).slice(2, 42);
 
     const chequeLock = this.provider.newScript('CHEQUE', `0x${receiverLockHash}${senderLockHash}`);
 
-    const chequeOccupied =
-      '0x' +
-      minimalCellCapacity({
-        data: toBigUInt128LE(amount),
-        cell_output: { capacity: '0x0', lock: chequeLock, type: sudt },
-      }).toString(16);
+    const chequeOccupied = occupiedShannon(byteLenOfChequeCell());
 
     const chequeCell = Pw.toPwCell({
       data: toBigUInt128LE(amount),
@@ -79,7 +73,7 @@ export class ChequeDepositBuilder extends AbstractPwSenderBuilder {
       // but the real fee will be calculated based on feeRate
       .add(new Amount('1'))
       // capacity for change cell
-      .add(new Amount(byteLenOfCkbLiveCell(hexDataOccupiedBytes(senderLock.args)).toString()));
+      .add(new Amount(byteLenOfLockOnlyCell(hexDataOccupiedBytes(senderLock.args)).toString()));
 
     const collectedSudtCells = (await this.provider.collectUdtCells(this.options.sender, sudt, amount)).map(
       Pw.toPwCell,

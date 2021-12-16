@@ -1,4 +1,4 @@
-import { Address, ChainInfo, Hash, HexNumber, Transaction, TxPoolInfo } from '@ckb-lumos/base';
+import { Address, Cell, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
 import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
@@ -14,6 +14,15 @@ type CellsAccumulator = {
   cells: ResolvedOutpoint[];
   amount: BigNumber;
 };
+
+function toCell(resolved: ResolvedOutpoint): Cell {
+  return {
+    cell_output: resolved.output,
+    data: resolved.output_data,
+    block_number: resolved.block_number,
+    out_point: resolved.out_point,
+  };
+}
 
 export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;
@@ -32,6 +41,12 @@ export class MercuryProvider extends AbstractProvider {
     else this.rpc = new RPC(ckbRpc);
   }
 
+  /**
+   * @deprecated please migrate to {@link collectLockOnlyCells}
+   * @param address
+   * @param minimalCapacity
+   * @returns
+   */
   override async collectCkbLiveCells(address: Address, minimalCapacity: HexNumber): Promise<ResolvedOutpoint[]> {
     const lock = this.parseToScript(address);
     const searchKey: SearchKey = {
@@ -64,6 +79,32 @@ export class MercuryProvider extends AbstractProvider {
     }
 
     return acc.cells;
+  }
+
+  override async collectLockOnlyCells(lock: Address | Script, capacity: HexNumber): Promise<Cell[]> {
+    const result = await this.collectCkbLiveCells(
+      typeof lock === 'string' ? lock : this.parseToAddress(lock),
+      capacity,
+    );
+
+    return result.map((resolved) => ({
+      cell_output: resolved.output,
+      data: resolved.output_data,
+      block_number: resolved.block_number,
+      out_point: resolved.out_point,
+    }));
+  }
+
+  collectCells({ searchKey }: { searchKey: SearchKey }, takeWhile_: (cell: Cell[]) => boolean): Promise<Cell[]> {
+    const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
+      expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
+      takeWhile((res) => res.objects.length > 0),
+      concatMap((res) => res.objects.map(toCell)),
+      scan((acc, next) => acc.concat(next), [] as Cell[]),
+      takeWhile((acc) => takeWhile_(acc)),
+    );
+
+    return lastValueFrom(cells$, { defaultValue: [] });
   }
 
   /**

@@ -5,7 +5,7 @@ import { NoAvailableCellError } from '../../errors';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { TransferCkbOptions } from '../TransferCkbBuilder';
-import { byteLenOfCkbLiveCell } from '../builder-utils';
+import { byteLenOfLockOnlyCell } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
 export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
@@ -49,7 +49,7 @@ export class TransferCkbPwBuilder extends AbstractPwSenderBuilder {
       injectedAcpCapacity
         .add(createdCapacity)
         // 61 ckb to ensure change cell capacity is enough
-        .add(new Amount(String(byteLenOfCkbLiveCell())))
+        .add(new Amount(String(byteLenOfLockOnlyCell())))
         // additional 1 ckb for tx fee, not all 1ckb will be paid,
         // but the real fee will be calculated based on feeRate
         .add(new Amount('1'))

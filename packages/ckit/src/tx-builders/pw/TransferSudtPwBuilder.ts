@@ -5,7 +5,7 @@ import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { boom } from '../../utils';
 import { RecipientOption, TransferSudtOptions } from '../AcpTransferSudtBuilder';
-import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
+import { byteLenOfLockOnlyCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
 export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
@@ -209,7 +209,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     const senderLockscriptArgsLen = this.getLockscriptArgsLength(this.sender);
     const outputsNeededCapacity = outputsContainedCapacity
       // additional 61 ckb to ensure capacity is enough for change cell
-      .add(new Amount(String(byteLenOfCkbLiveCell(senderLockscriptArgsLen))))
+      .add(new Amount(String(byteLenOfLockOnlyCell(senderLockscriptArgsLen))))
       // additional 1 ckb for tx fee, not all 1ckb will be paid,
       // but the real fee will be calculated based on feeRate
       .add(new Amount('1'));

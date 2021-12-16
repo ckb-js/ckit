@@ -10,7 +10,7 @@ import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
 import { nonNullable } from '../../utils';
 import { RecipientOptions } from '../MintSudtBuilder';
-import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
+import { byteLenOfLockOnlyCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from '../pw/AbstractPwSenderBuilder';
 import { MintRcUdtOptions } from './MintRcUdtBuilder';
 
@@ -149,7 +149,7 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
       // findAcp policy needed additional capacity
       .add(foundRecipientCellsAdditionalCapacity)
       // additional rc-lock script occupied ckb to ensure capacity is enough for change cell
-      .add(new Amount(String(byteLenOfCkbLiveCell(RcIdentityLockArgs.byteWidth))))
+      .add(new Amount(String(byteLenOfLockOnlyCell(RcIdentityLockArgs.byteWidth))))
       // additional 1 ckb for tx fee, not all 1ckb will be paid,
       // but the real fee will be calculated based on feeRate
       .add(new Amount('1'));

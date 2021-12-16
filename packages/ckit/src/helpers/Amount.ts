@@ -6,6 +6,8 @@ export type HumanizeOptions = { decimalPlaces?: number; separator?: boolean; dec
 type AmountValue = BigNumber.Value | bigint;
 type AmountLike = AmountValue | Amount;
 
+export { BigNumber };
+
 export function BN(val: AmountValue | Amount): BigNumber {
   if (typeof val === 'bigint') return new BigNumber(String(val));
   if (Amount.checkIsAmount(val)) return new BigNumber(String(val));
