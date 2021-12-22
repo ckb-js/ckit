@@ -24,18 +24,18 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     const { sender, receiver, sudt } = this.options;
     const provider = this.provider;
 
-    const senderLock = this.provider.parseToScript(sender);
-    const receiverLock = this.provider.parseToScript(receiver);
+    const senderLock = provider.parseToScript(sender);
+    const receiverLock = provider.parseToScript(receiver);
 
     const searchKey: SearchKey = {
-      script: this.provider.newScript(
+      script: provider.newScript(
         'CHEQUE',
         `0x${utils.computeScriptHash(receiverLock).slice(2, 42)}${utils.computeScriptHash(senderLock).slice(2, 42)}`,
       ),
       ...(sudt ? { filter: { script: sudt } } : {}),
       script_type: 'lock',
     };
-    const unwithdrawnCells = await this.provider.collectCells({ searchKey }, (cells) => cells.length <= 1000);
+    const unwithdrawnCells = await provider.collectCells({ searchKey }, (cells) => cells.length <= 1000);
 
     let withdrawnChangeCapacity = BN(0);
     let extraNeededCapacity = BN(0);
@@ -63,7 +63,7 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
       withdrawnChangeCell.cell_output.capacity = bytes.toHex(withdrawnChangeCapacity);
     }
 
-    const inputCapacityCells = await this.provider.collectLockOnlyCells(
+    const inputCapacityCells = await provider.collectLockOnlyCells(
       senderLock,
       new Amount(bytes.toHex(extraNeededCapacity), 0)
         .add(new Amount('1'))
@@ -108,7 +108,7 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
 
     const tx = new Transaction(rawTx, [this.getWitnessPlaceholder(sender)]);
 
-    const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
+    const fee = Builder.calcFee(tx, Number(provider.config.MIN_FEE_RATE));
     changeCell.capacity = changeCell.capacity.sub(fee).sub(new Amount(bytes.toHex(extraNeededCapacity), 0));
 
     return tx;
