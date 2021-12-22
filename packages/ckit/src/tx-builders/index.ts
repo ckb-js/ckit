@@ -5,3 +5,4 @@ export * from './MintSudtBuilder';
 export * from './rc';
 export * from './ChequeDepositBuilder';
 export * from './ChequeClaimBuilder';
+export * from './ChequeWithdrawBuilder';
