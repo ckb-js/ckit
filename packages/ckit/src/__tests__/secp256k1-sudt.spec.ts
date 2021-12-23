@@ -816,7 +816,6 @@ test('deposit sudt cheque and claim it', async () => {
   const claimTx = await provider.waitForTransactionCommitted(claimTxHash);
   expect(claimTx != null).toBe(true);
 
-  let receiverSudtCells = await provider.collectUdtCells(receiver.getAddress(), sudt, '0x0');
   eqAmount(await provider.getUdtBalance(receiver.getAddress(), sudt), 500);
 });
 
