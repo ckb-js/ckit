@@ -39,7 +39,7 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
 
     const currEpoch = await provider.rpc.get_current_epoch();
     const validEpoch = Number(currEpoch.number) - 6;
-    let validWithdrawCells: Cell[] = [];
+    const validWithdrawCells: Cell[] = [];
     for (const cell of unwithdrawnCells) {
       const cellEpoch = Number(
         '0x' + (await provider.rpc.get_block_by_number(cell.block_number!, '0x2'))?.header.epoch!.substring(9),
