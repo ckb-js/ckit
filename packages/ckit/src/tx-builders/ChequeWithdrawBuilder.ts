@@ -35,7 +35,13 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
       ...(sudt ? { filter: { script: sudt } } : {}),
       script_type: 'lock',
     };
-    const unwithdrawnCells = await provider.collectCells({ searchKey }, (cells) => cells.length <= 1000);
+    let unwithdrawnCells = await provider.collectCells({ searchKey }, (cells) => cells.length <= 1000);
+    const chainInfo = await provider.getChainInfo();
+    const validEpoch = Number(chainInfo.epoch) - 6;
+    unwithdrawnCells = await unwithdrawnCells.filter(
+      async (cell) => Number((await provider.rpc.get_block(cell.block_hash!))?.header.epoch) <= validEpoch,
+    );
+    if (unwithdrawnCells.length === 0) throw new Error('No valid cheque to withdraw');
 
     let withdrawnChangeCapacity = BN(0);
     let extraNeededCapacity = BN(0);
