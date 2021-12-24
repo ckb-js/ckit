@@ -12,6 +12,7 @@ import {
   TransferCkbOptions,
   ChequeDepositBuilder,
   ChequeClaimBuilder,
+  ChequeWithdrawBuilder,
 } from '../tx-builders';
 import { randomHexString } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/PwWallet';
@@ -817,6 +818,54 @@ test('deposit sudt cheque and claim it', async () => {
   expect(claimTx != null).toBe(true);
 
   eqAmount(await provider.getUdtBalance(receiver.getAddress(), sudt), 500);
+});
+
+// test this case with Tippy
+test.skip('test withdraw cheque', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const sender = provider.getGenesisSigner(0);
+  const receiver = provider.getGenesisSigner(1);
+
+  const sudt = provider.newSudtScript(sender.getAddress());
+
+  const mintTxBuilder = new MintSudtBuilder(
+    {
+      recipients: [
+        { amount: '1000', recipient: sender.getAddress(), additionalCapacity: '0', capacityPolicy: 'createCell' },
+      ],
+    },
+    provider,
+    sender.getAddress(),
+  );
+  await provider.signAndSendTxUntilCommitted(sender, mintTxBuilder);
+
+  const chequeDepositBuilder = new ChequeDepositBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      amount: '500',
+      sudt: sudt,
+      skipCheck: true,
+    },
+    provider,
+  );
+  const unsignedDepositTx = await sender.seal(await chequeDepositBuilder.build());
+  await provider.sendTransaction(unsignedDepositTx);
+
+  // Edit ckb-miner.toml to adjust the mining speed.
+  // After 6 epochs, run the following code.
+  const chequeWithdrawBuilder = new ChequeWithdrawBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      sudt: sudt,
+    },
+    provider,
+  );
+  const unsignedWithdrawTx = await sender.seal(await chequeWithdrawBuilder.build());
+  await provider.sendTransaction(unsignedWithdrawTx);
 });
 
 // TODO impl testcase
