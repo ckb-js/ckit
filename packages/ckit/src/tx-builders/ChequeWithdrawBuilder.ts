@@ -37,9 +37,20 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     };
     const unwithdrawnCells = await provider.collectCells({ searchKey }, (cells) => cells.length <= 1000);
 
+    const currEpoch = await provider.rpc.get_current_epoch();
+    const validEpoch = Number(currEpoch.number) - 6;
+    const validWithdrawCells: Cell[] = [];
+    for (const cell of unwithdrawnCells) {
+      const cellEpoch = Number(
+        '0x' + (await provider.rpc.get_block_by_number(cell.block_number!, '0x2'))?.header.epoch!.substring(9),
+      );
+      if (cellEpoch < validEpoch) validWithdrawCells.push(cell);
+    }
+    if (validWithdrawCells.length === 0) throw new Error('No valid cheque to withdraw');
+
     let withdrawnChangeCapacity = BN(0);
     let extraNeededCapacity = BN(0);
-    const withdrawnSudtCells = unwithdrawnCells.map(function (cell) {
+    const withdrawnSudtCells = validWithdrawCells.map(function (cell) {
       const sudtCell = { ...cell, cell_output: { ...cell.cell_output, lock: senderLock } };
       const sudtCapacity = bytes.toHex(minimalCellCapacity(sudtCell));
 
@@ -84,11 +95,11 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     });
 
     const rawTx = new RawTransaction(
-      [...inputCapacityCells.map(Pw.toPwCell), ...unwithdrawnCells.map(Pw.toPwCell)],
+      [...inputCapacityCells.map(Pw.toPwCell), ...validWithdrawCells.map(Pw.toPwCell)],
       [...withdrawnSudtCells.map(Pw.toPwCell), Pw.toPwCell(withdrawnChangeCell), changeCell],
 
       this.getCellDepsByCells(
-        [...inputCapacityCells.map(Pw.toPwCell), ...unwithdrawnCells.map(Pw.toPwCell)],
+        [...inputCapacityCells.map(Pw.toPwCell), ...validWithdrawCells.map(Pw.toPwCell)],
         [...withdrawnSudtCells.map(Pw.toPwCell), Pw.toPwCell(withdrawnChangeCell), changeCell],
       ),
     );
