@@ -24,21 +24,46 @@ function toCell(resolved: ResolvedOutpoint): Cell {
   };
 }
 
+interface BatchRequest {
+  method: string;
+  params: unknown[];
+}
+
 export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;
   readonly rpc: RPC;
+  readonly rpcUrl: string;
 
   constructor(
-    mercuryRpc: MercuryClient | string = 'http://127.0.0.1:8116',
-    ckbRpc: RPC | string = 'http://127.0.0.1:8114',
+    mercuryRpc: string = 'http://127.0.0.1:8116',
+    ckbRpc: string = 'http://127.0.0.1:8114',
   ) {
     super();
 
-    if (mercuryRpc instanceof MercuryClient) this.mercury = mercuryRpc;
-    else this.mercury = new MercuryClient(mercuryRpc);
+    this.mercury = new MercuryClient(mercuryRpc);
+    this.rpc = new RPC(ckbRpc);
+    this.rpcUrl = ckbRpc;
+  }
 
-    if (ckbRpc instanceof RPC) this.rpc = ckbRpc;
-    else this.rpc = new RPC(ckbRpc);
+  async batchRequestCkb(request: BatchRequest): Promise<any[]> {
+    const batch = [];
+    for (let i = 0; i < request.params.length; i++) {
+      batch.push({
+        "id": 42,
+        "jsonrpc": "2.0",
+        "method": request.method,
+        "params": [request.params[i]]
+      })
+    }
+    const res = await fetch(this.rpcUrl, {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(batch)
+    })
+
+    return await res.json();
   }
 
   /**

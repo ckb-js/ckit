@@ -40,11 +40,14 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     const currEpoch = await provider.rpc.get_current_epoch();
     const validEpoch = Number(currEpoch.number) - 6;
     const validWithdrawCells: Cell[] = [];
+    const reqParams = [];
     for (const cell of unwithdrawnCells) {
-      const cellEpoch = Number(
-        '0x' + (await provider.rpc.get_block_by_number(cell.block_number!, '0x2'))?.header.epoch!.substring(9),
-      );
-      if (cellEpoch < validEpoch) validWithdrawCells.push(cell);
+      reqParams.push(cell.block_number);
+    }
+    const result = await this.provider.batchRequestCkb({method: "get_block_by_number", params: reqParams});
+    for (let i = 0; i < result.length; i++) {
+      const epoch = Number('0x' + result[i].result.header.epoch.substring(9));
+      if (epoch < validEpoch) validWithdrawCells.push(unwithdrawnCells[i]!);
     }
     if (validWithdrawCells.length === 0) throw new Error('No valid cheque to withdraw');
 
