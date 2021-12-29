@@ -34,10 +34,7 @@ export class MercuryProvider extends AbstractProvider {
   readonly rpc: RPC;
   readonly rpcUrl: string;
 
-  constructor(
-    mercuryRpc: string = 'http://127.0.0.1:8116',
-    ckbRpc: string = 'http://127.0.0.1:8114',
-  ) {
+  constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114') {
     super();
 
     this.mercury = new MercuryClient(mercuryRpc);
@@ -45,23 +42,24 @@ export class MercuryProvider extends AbstractProvider {
     this.rpcUrl = ckbRpc;
   }
 
-  async batchRequestCkb(request: BatchRequest): Promise<any[]> {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  async batchRequestCkb(request: BatchRequest): Promise<any> {
     const batch = [];
     for (let i = 0; i < request.params.length; i++) {
       batch.push({
-        "id": 42,
-        "jsonrpc": "2.0",
-        "method": request.method,
-        "params": [request.params[i]]
-      })
+        id: 42,
+        jsonrpc: '2.0',
+        method: request.method,
+        params: [request.params[i]],
+      });
     }
     const res = await fetch(this.rpcUrl, {
-      method: "post",
+      method: 'post',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(batch)
-    })
+      body: JSON.stringify(batch),
+    });
 
     return await res.json();
   }

@@ -44,7 +44,7 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     for (const cell of unwithdrawnCells) {
       reqParams.push(cell.block_number);
     }
-    const result = await this.provider.batchRequestCkb({method: "get_block_by_number", params: reqParams});
+    const result = await this.provider.batchRequestCkb({ method: 'get_block_by_number', params: reqParams });
     for (let i = 0; i < result.length; i++) {
       const epoch = Number('0x' + result[i].result.header.epoch.substring(9));
       if (epoch < validEpoch) validWithdrawCells.push(unwithdrawnCells[i]!);
