@@ -868,7 +868,7 @@ test.skip('test withdraw cheque', async () => {
   );
   await provider.signAndSendTxUntilCommitted(issuer, ckbTransferBuilder);
 
-  const chequeDepositBuilder = new ChequeDepositBuilder(
+  const chequeDepositBuilder1 = new ChequeDepositBuilder(
     {
       receiver: receiver.getAddress(),
       sender: sender.getAddress(),
@@ -878,17 +878,33 @@ test.skip('test withdraw cheque', async () => {
     },
     provider,
   );
-  const unsignedDepositTx = await sender.seal(await chequeDepositBuilder.build());
-  const depositTxHash = await provider.sendTransaction(unsignedDepositTx);
-  const depositTx = await provider.waitForTransactionCommitted(depositTxHash);
-  expect(depositTx != null).toBe(true);
+  const unsignedDepositTx1 = await sender.seal(await chequeDepositBuilder1.build());
+  const depositTxHash1 = await provider.sendTransaction(unsignedDepositTx1);
+  const depositTx1 = await provider.waitForTransactionCommitted(depositTxHash1);
+  expect(depositTx1 != null).toBe(true);
   eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 500);
+
+  const chequeDepositBuilder2 = new ChequeDepositBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      amount: '200',
+      sudt: sudt,
+      skipCheck: true,
+    },
+    provider,
+  );
+  const unsignedDepositTx2 = await sender.seal(await chequeDepositBuilder2.build());
+  const depositTxHash2 = await provider.sendTransaction(unsignedDepositTx2);
+  const depositTx2 = await provider.waitForTransactionCommitted(depositTxHash2);
+  expect(depositTx2 != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 300);
 
   // wait for 6 epoch to withdraw cheque cells
   const start = Date.now();
   const depositEpoch = Number((await provider.rpc.get_current_epoch()).number);
   const pollIntervalMs = 1000,
-    timeoutMs = 50000;
+    timeoutMs = 60000;
   while (Date.now() - start <= timeoutMs) {
     const epoch = Number((await provider.rpc.get_current_epoch()).number);
     if (epoch - depositEpoch > 6) {

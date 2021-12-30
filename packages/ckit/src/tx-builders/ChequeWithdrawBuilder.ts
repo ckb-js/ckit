@@ -1,4 +1,4 @@
-import { Address, utils, since, Cell } from '@ckb-lumos/base';
+import { Address, utils, since, Cell, Header } from '@ckb-lumos/base';
 import { SearchKey } from '@ckitjs/mercury-client';
 import { Amount, Builder, RawTransaction, Transaction, CellInput } from '@lay2/pw-core';
 import { CkbTypeScript, CkitProvider } from '..';
@@ -13,6 +13,12 @@ export interface ChequeWithdrawOptions {
   sender: Address;
   receiver: Address;
   sudt?: CkbTypeScript;
+}
+
+interface rpcResult {
+  jsonrpc: string;
+  id: Number;
+  result: Header;
 }
 
 export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
@@ -40,13 +46,13 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     const currEpoch = await provider.rpc.get_current_epoch();
     const validEpoch = Number(currEpoch.number) - 6;
     const validWithdrawCells: Cell[] = [];
-    const reqParams = [];
+    const req = [];
     for (const cell of unwithdrawnCells) {
-      reqParams.push(cell.block_number);
+      req.push({ method: 'get_header_by_number', params: cell.block_number });
     }
-    const result = await this.provider.batchRequestCkb({ method: 'get_block_by_number', params: reqParams });
+    const result = await this.provider.batchRequestCkb<rpcResult>(req);
     for (let i = 0; i < result.length; i++) {
-      const epoch = Number('0x' + result[i].result.header.epoch.substring(9));
+      const epoch = Number('0x' + result[i]!.result.epoch.substring(9));
       if (epoch < validEpoch) validWithdrawCells.push(unwithdrawnCells[i]!);
     }
     if (validWithdrawCells.length === 0) throw new Error('No valid cheque to withdraw');

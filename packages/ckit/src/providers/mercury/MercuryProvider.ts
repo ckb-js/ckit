@@ -26,7 +26,7 @@ function toCell(resolved: ResolvedOutpoint): Cell {
 
 interface BatchRequest {
   method: string;
-  params: unknown[];
+  params: unknown;
 }
 
 export class MercuryProvider extends AbstractProvider {
@@ -42,15 +42,14 @@ export class MercuryProvider extends AbstractProvider {
     this.rpcUrl = ckbRpc;
   }
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  async batchRequestCkb(request: BatchRequest): Promise<any> {
+  async batchRequestCkb<T>(request: BatchRequest[]): Promise<T[]> {
     const batch = [];
-    for (let i = 0; i < request.params.length; i++) {
+    for (let i = 0; i < request.length; i++) {
       batch.push({
-        id: 42,
+        id: i,
         jsonrpc: '2.0',
-        method: request.method,
-        params: [request.params[i]],
+        method: request[i]!.method,
+        params: [request[i]!.params],
       });
     }
     const res = await fetch(this.rpcUrl, {
