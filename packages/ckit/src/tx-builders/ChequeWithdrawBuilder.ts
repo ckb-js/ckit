@@ -17,7 +17,7 @@ export interface ChequeWithdrawOptions {
 
 interface rpcResult {
   jsonrpc: string;
-  id: Number;
+  id: number;
   result: Header;
 }
 
