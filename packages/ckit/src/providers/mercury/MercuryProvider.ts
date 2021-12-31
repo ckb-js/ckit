@@ -4,12 +4,12 @@ import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base'
 import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { BigNumber } from 'bignumber.js';
+import fetch from 'isomorphic-fetch';
 import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
 import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';
 import { Amount, BN } from '../../helpers';
-import { asyncSleep } from '../../utils';
+import { asyncSleep, nonNullable } from '../../utils';
 import { MercuryCellProvider } from './IndexerCellProvider';
-import fetch from 'isomorphic-fetch';
 
 type CellsAccumulator = {
   cells: ResolvedOutpoint[];
@@ -49,8 +49,8 @@ export class MercuryProvider extends AbstractProvider {
       batch.push({
         id: i,
         jsonrpc: '2.0',
-        method: request[i]!.method,
-        params: [request[i]!.params],
+        method: nonNullable(request[i]).method,
+        params: [nonNullable(request[i]).params],
       });
     }
     const response = await fetch(this.rpcUrl, {

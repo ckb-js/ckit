@@ -14,7 +14,7 @@ import {
   ChequeClaimBuilder,
   ChequeWithdrawBuilder,
 } from '../tx-builders';
-import { randomHexString, asyncSleep } from '../utils';
+import { randomHexString, asyncSleep, nonNullable } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/PwWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { TestProvider } from './TestProvider';
@@ -96,7 +96,7 @@ test('test mint and transfer sudt with secp256k1', async () => {
   expect(mintTx != null).toBe(true);
 
   eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 0);
-  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), recipients[1]!.amount);
+  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), nonNullable(recipients[1]).amount);
 
   // recipient1 -> recipient0
   const signer = new Secp256k1Signer(recipientPrivKey1, provider, {
@@ -402,7 +402,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   expect(mintTx != null).toBe(true);
 
   eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 0);
-  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), recipients[1]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), nonNullable(recipients[1]).amount);
 
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
     {
@@ -468,7 +468,7 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
 
   expect(mintTx != null).toBe(true);
 
-  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), recipients[0]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), nonNullable(recipients[0]).amount);
   eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 0);
 
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
@@ -495,9 +495,9 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
   const recipient1SudtCells = await provider.collectUdtCells(recipient1Address, testUdt, '1');
   expect(recipient1SudtCells.length).toBe(1);
-  expect(CkbAmount.fromShannon(recipient1SudtCells[0]!.output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1))).toBe(
-    true,
-  );
+  expect(
+    CkbAmount.fromShannon(nonNullable(recipient1SudtCells[0]).output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1)),
+  ).toBe(true);
 });
 
 test('transfer SUDT with additionalCapacity and create capacity', async () => {
