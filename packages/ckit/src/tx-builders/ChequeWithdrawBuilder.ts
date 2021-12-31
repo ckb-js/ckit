@@ -1,13 +1,14 @@
 import { Address, utils, since, Cell, Header } from '@ckb-lumos/base';
+import { minimalCellCapacity } from '@ckb-lumos/helpers';
 import { SearchKey } from '@ckitjs/mercury-client';
+import { bytes } from '@ckitjs/utils';
 import { Amount, Builder, RawTransaction, Transaction, CellInput } from '@lay2/pw-core';
 import { CkbTypeScript, CkitProvider } from '..';
-import { AbstractPwSenderBuilder } from './pw/AbstractPwSenderBuilder';
-import { byteLenOfHexData, byteLenOfLockOnlyCell, mergeLockOnlyCells } from './builder-utils';
-import { Pw } from '../helpers/pw';
 import { BN } from '../helpers';
-import { bytes } from '@ckitjs/utils';
-import { minimalCellCapacity } from '@ckb-lumos/helpers';
+import { Pw } from '../helpers/pw';
+import { nonNullable } from '../utils';
+import { byteLenOfHexData, byteLenOfLockOnlyCell, mergeLockOnlyCells } from './builder-utils';
+import { AbstractPwSenderBuilder } from './pw/AbstractPwSenderBuilder';
 
 export interface ChequeWithdrawOptions {
   sender: Address;
@@ -46,8 +47,8 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     }
     const result = await this.provider.batchRequestCkb<Header>(req);
     for (let i = 0; i < result.length; i++) {
-      const epoch = Number('0x' + result[i]!.epoch.substring(9));
-      if (epoch < validEpoch) validWithdrawCells.push(unwithdrawnCells[i]!);
+      const epoch = Number('0x' + nonNullable(result[i]).epoch.substring(9));
+      if (epoch < validEpoch) validWithdrawCells.push(nonNullable(unwithdrawnCells[i]));
     }
     if (validWithdrawCells.length === 0) throw new Error('No valid cheque to withdraw');
 
@@ -107,7 +108,7 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
       ),
     );
     rawTx.inputs = rawTx.inputCells.map<CellInput>(function (cell) {
-      const cellInput = cell.toCellInput()!;
+      const cellInput = nonNullable(cell.toCellInput());
       const script = {
         code_hash: cell.lock.codeHash,
         hash_type: cell.lock.hashType,
