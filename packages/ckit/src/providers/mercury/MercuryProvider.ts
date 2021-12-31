@@ -9,6 +9,7 @@ import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';
 import { Amount, BN } from '../../helpers';
 import { asyncSleep } from '../../utils';
 import { MercuryCellProvider } from './IndexerCellProvider';
+import fetch from 'isomorphic-fetch';
 
 type CellsAccumulator = {
   cells: ResolvedOutpoint[];
@@ -52,7 +53,7 @@ export class MercuryProvider extends AbstractProvider {
         params: [request[i]!.params],
       });
     }
-    const res = await fetch(this.rpcUrl, {
+    const response = await fetch(this.rpcUrl, {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +61,15 @@ export class MercuryProvider extends AbstractProvider {
       body: JSON.stringify(batch),
     });
 
-    return await res.json();
+    const results = await response.json();
+    const res = [];
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      if (result.error) throw new Error(result.error);
+      res.push(result.result as T);
+    }
+
+    return res;
   }
 
   /**

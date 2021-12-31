@@ -15,12 +15,6 @@ export interface ChequeWithdrawOptions {
   sudt?: CkbTypeScript;
 }
 
-interface rpcResult {
-  jsonrpc: string;
-  id: number;
-  result: Header;
-}
-
 export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
   constructor(private options: ChequeWithdrawOptions, provider: CkitProvider) {
     super(provider);
@@ -50,9 +44,9 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
     for (const cell of unwithdrawnCells) {
       req.push({ method: 'get_header_by_number', params: cell.block_number });
     }
-    const result = await this.provider.batchRequestCkb<rpcResult>(req);
+    const result = await this.provider.batchRequestCkb<Header>(req);
     for (let i = 0; i < result.length; i++) {
-      const epoch = Number('0x' + result[i]!.result.epoch.substring(9));
+      const epoch = Number('0x' + result[i]!.epoch.substring(9));
       if (epoch < validEpoch) validWithdrawCells.push(unwithdrawnCells[i]!);
     }
     if (validWithdrawCells.length === 0) throw new Error('No valid cheque to withdraw');

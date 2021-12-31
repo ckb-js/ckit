@@ -904,7 +904,7 @@ test.skip('test withdraw cheque', async () => {
   const start = Date.now();
   const depositEpoch = Number((await provider.rpc.get_current_epoch()).number);
   const pollIntervalMs = 1000,
-    timeoutMs = 60000;
+    timeoutMs = 120000;
   while (Date.now() - start <= timeoutMs) {
     const epoch = Number((await provider.rpc.get_current_epoch()).number);
     if (epoch - depositEpoch > 6) {
