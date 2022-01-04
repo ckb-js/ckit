@@ -18,6 +18,7 @@ export interface CkitConfig extends ProviderConfig {
      */
     PW_ANYONE_CAN_PAY: ScriptConfig;
     RC_LOCK: ScriptConfig;
+    CHEQUE: ScriptConfig;
 
     // type
     SUDT: ScriptConfig;
@@ -70,5 +71,12 @@ export class CkitProvider extends MercuryProvider {
     if (!dep) throw new Error(`cannot find the ${configKey} script config, maybe init failed`);
 
     return dep;
+  }
+
+  isTemplateOf(key: CkitConfigKeys, scriptLice: Script | Address): boolean {
+    const script = typeof scriptLice === 'string' ? this.parseToScript(scriptLice) : scriptLice;
+    const scriptConfig = this.getScriptConfig(key);
+
+    return scriptConfig.CODE_HASH === script.code_hash && scriptConfig.HASH_TYPE === script.hash_type;
   }
 }

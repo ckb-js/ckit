@@ -10,8 +10,11 @@ import {
   MintSudtBuilder,
   TransferCkbBuilder,
   TransferCkbOptions,
+  ChequeDepositBuilder,
+  ChequeClaimBuilder,
+  ChequeWithdrawBuilder,
 } from '../tx-builders';
-import { randomHexString } from '../utils';
+import { randomHexString, asyncSleep, nonNullable } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/PwWallet';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
 import { TestProvider } from './TestProvider';
@@ -87,13 +90,13 @@ test('test mint and transfer sudt with secp256k1', async () => {
   ];
 
   const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
-  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTxHash = await provider.sendTransaction(await issuerSigner.seal(unsigned));
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
   expect(mintTx != null).toBe(true);
 
   eqAmount(await provider.getUdtBalance(recipientAddr0, testUdt), 0);
-  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), recipients[1]!.amount);
+  eqAmount(await provider.getUdtBalance(recipientAddr1, testUdt), nonNullable(recipients[1]).amount);
 
   // recipient1 -> recipient0
   const signer = new Secp256k1Signer(recipientPrivKey1, provider, {
@@ -399,7 +402,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   expect(mintTx != null).toBe(true);
 
   eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), 0);
-  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), recipients[1]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), nonNullable(recipients[1]).amount);
 
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
     {
@@ -460,12 +463,12 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   ];
 
   const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
-  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTxHash = await provider.sendTransaction(await issuerSigner.seal(unsigned));
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
   expect(mintTx != null).toBe(true);
 
-  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), recipients[0]!.amount);
+  eqAmount(await provider.getUdtBalance(recipient1Address, testUdt), nonNullable(recipients[0]).amount);
   eqAmount(await provider.getUdtBalance(recipient2Address, testUdt), 0);
 
   const unsignedTransferTx = await new AcpTransferSudtBuilder(
@@ -492,9 +495,9 @@ test('test create_cell_transfer_sudt without extra capacity supply', async () =>
   eqAmount(await provider.getUdtBalance(recipient3Address, testUdt), 1);
   const recipient1SudtCells = await provider.collectUdtCells(recipient1Address, testUdt, '1');
   expect(recipient1SudtCells.length).toBe(1);
-  expect(CkbAmount.fromShannon(recipient1SudtCells[0]!.output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1))).toBe(
-    true,
-  );
+  expect(
+    CkbAmount.fromShannon(nonNullable(recipient1SudtCells[0]).output.capacity).gt(CkbAmount.fromCkb(10142 - 143 - 1)),
+  ).toBe(true);
 });
 
 test('transfer SUDT with additionalCapacity and create capacity', async () => {
@@ -739,6 +742,190 @@ test('transfer CKB with split cell and sudt with acp', async () => {
       genesis.getAddress(),
     ),
   );
+});
+
+test('deposit sudt cheque and claim it', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const issuer = provider.getGenesisSigner(testPrivateKeyIndex);
+  const sender = provider.generateAcpSigner('SECP256K1_BLAKE160');
+  const receiver = provider.generateAcpSigner('SECP256K1_BLAKE160');
+
+  const sudt = provider.newSudtScript(issuer.getAddress());
+
+  const mintTxBuilder = new MintSudtBuilder(
+    {
+      recipients: [
+        { amount: '1000', recipient: sender.getAddress(), additionalCapacity: '0', capacityPolicy: 'createCell' },
+      ],
+    },
+    provider,
+    issuer.getAddress(),
+  );
+  await provider.signAndSendTxUntilCommitted(issuer, mintTxBuilder);
+
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 1000);
+
+  const ckbTransferBuilder = new TransferCkbBuilder(
+    {
+      recipients: [
+        {
+          recipient: sender.getAddress(),
+          amount: '1000000000000',
+          capacityPolicy: 'createCell',
+        },
+        {
+          recipient: receiver.getAddress(),
+          amount: '1000000000000',
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    provider,
+    await issuer.getAddress(),
+  );
+  await provider.signAndSendTxUntilCommitted(issuer, ckbTransferBuilder);
+
+  const chequeDepositBuilder = new ChequeDepositBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      amount: '500',
+      sudt: sudt,
+      skipCheck: true,
+    },
+    provider,
+  );
+  const unsignedDepositTx = await sender.seal(await chequeDepositBuilder.build());
+  const depositTxHash = await provider.sendTransaction(unsignedDepositTx);
+  const depositTx = await provider.waitForTransactionCommitted(depositTxHash);
+  expect(depositTx != null).toBe(true);
+
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 500);
+
+  const chequeClaimBuilder = new ChequeClaimBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      sudt: sudt,
+    },
+    provider,
+  );
+  const unsignedClaimTx = await receiver.seal(await chequeClaimBuilder.build());
+  const claimTxHash = await provider.sendTransaction(unsignedClaimTx);
+  const claimTx = await provider.waitForTransactionCommitted(claimTxHash);
+  expect(claimTx != null).toBe(true);
+
+  eqAmount(await provider.getUdtBalance(receiver.getAddress(), sudt), 500);
+});
+
+/**
+ * Using Tippy to test this case.
+ * Before testing, modify the value in the [miner.workers] section of the ckb-miner.toml file
+ * in $HOME/.config/Tippy/chain-number/ to 1 to improve the mining speed
+ */
+test.skip('test withdraw cheque', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const issuer = provider.getGenesisSigner(testPrivateKeyIndex);
+  const sender = provider.generateAcpSigner('SECP256K1_BLAKE160');
+  const receiver = provider.generateAcpSigner('SECP256K1_BLAKE160');
+
+  const sudt = provider.newSudtScript(issuer.getAddress());
+
+  const mintTxBuilder = new MintSudtBuilder(
+    {
+      recipients: [
+        { amount: '1000', recipient: sender.getAddress(), additionalCapacity: '0', capacityPolicy: 'createCell' },
+      ],
+    },
+    provider,
+    issuer.getAddress(),
+  );
+  await provider.signAndSendTxUntilCommitted(issuer, mintTxBuilder);
+
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 1000);
+
+  const ckbTransferBuilder = new TransferCkbBuilder(
+    {
+      recipients: [
+        {
+          recipient: sender.getAddress(),
+          amount: '1000000000000',
+          capacityPolicy: 'createCell',
+        },
+        {
+          recipient: receiver.getAddress(),
+          amount: '1000000000000',
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    provider,
+    await issuer.getAddress(),
+  );
+  await provider.signAndSendTxUntilCommitted(issuer, ckbTransferBuilder);
+
+  const chequeDepositBuilder1 = new ChequeDepositBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      amount: '500',
+      sudt: sudt,
+      skipCheck: true,
+    },
+    provider,
+  );
+  const unsignedDepositTx1 = await sender.seal(await chequeDepositBuilder1.build());
+  const depositTxHash1 = await provider.sendTransaction(unsignedDepositTx1);
+  const depositTx1 = await provider.waitForTransactionCommitted(depositTxHash1);
+  expect(depositTx1 != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 500);
+
+  const chequeDepositBuilder2 = new ChequeDepositBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      amount: '200',
+      sudt: sudt,
+      skipCheck: true,
+    },
+    provider,
+  );
+  const unsignedDepositTx2 = await sender.seal(await chequeDepositBuilder2.build());
+  const depositTxHash2 = await provider.sendTransaction(unsignedDepositTx2);
+  const depositTx2 = await provider.waitForTransactionCommitted(depositTxHash2);
+  expect(depositTx2 != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 300);
+
+  // wait for 6 epoch to withdraw cheque cells
+  const start = Date.now();
+  const depositEpoch = Number((await provider.rpc.get_current_epoch()).number);
+  const pollIntervalMs = 1000,
+    timeoutMs = 120000;
+  while (Date.now() - start <= timeoutMs) {
+    const epoch = Number((await provider.rpc.get_current_epoch()).number);
+    if (epoch - depositEpoch > 6) {
+      break;
+    }
+    await asyncSleep(pollIntervalMs);
+  }
+
+  const chequeWithdrawBuilder = new ChequeWithdrawBuilder(
+    {
+      receiver: receiver.getAddress(),
+      sender: sender.getAddress(),
+      sudt: sudt,
+    },
+    provider,
+  );
+  const unsignedWithdrawTx = await sender.seal(await chequeWithdrawBuilder.build());
+  const withdrawTxHash = await provider.sendTransaction(unsignedWithdrawTx);
+  const withdrawTx = await provider.waitForTransactionCommitted(withdrawTxHash);
+  expect(withdrawTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(sender.getAddress(), sudt), 1000);
 });
 
 // TODO impl testcase

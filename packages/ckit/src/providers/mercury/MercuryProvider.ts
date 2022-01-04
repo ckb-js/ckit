@@ -1,13 +1,14 @@
-import { Address, ChainInfo, Hash, HexNumber, Transaction, TxPoolInfo } from '@ckb-lumos/base';
+import { Address, Cell, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
 import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { BigNumber } from 'bignumber.js';
+import fetch from 'isomorphic-fetch';
 import { concatMap, expand, filter, from, lastValueFrom, reduce, scan, takeWhile } from 'rxjs';
 import { NoEnoughCkbError, NoEnoughUdtError } from '../../errors';
 import { Amount, BN } from '../../helpers';
-import { asyncSleep } from '../../utils';
+import { asyncSleep, nonNullable } from '../../utils';
 import { MercuryCellProvider } from './IndexerCellProvider';
 
 type CellsAccumulator = {
@@ -15,23 +16,68 @@ type CellsAccumulator = {
   amount: BigNumber;
 };
 
+function toCell(resolved: ResolvedOutpoint): Cell {
+  return {
+    cell_output: resolved.output,
+    data: resolved.output_data,
+    block_number: resolved.block_number,
+    out_point: resolved.out_point,
+  };
+}
+
+interface BatchRequest {
+  method: string;
+  params: unknown;
+}
+
 export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;
   readonly rpc: RPC;
+  readonly rpcUrl: string;
 
-  constructor(
-    mercuryRpc: MercuryClient | string = 'http://127.0.0.1:8116',
-    ckbRpc: RPC | string = 'http://127.0.0.1:8114',
-  ) {
+  constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114') {
     super();
 
-    if (mercuryRpc instanceof MercuryClient) this.mercury = mercuryRpc;
-    else this.mercury = new MercuryClient(mercuryRpc);
-
-    if (ckbRpc instanceof RPC) this.rpc = ckbRpc;
-    else this.rpc = new RPC(ckbRpc);
+    this.mercury = new MercuryClient(mercuryRpc);
+    this.rpc = new RPC(ckbRpc);
+    this.rpcUrl = ckbRpc;
   }
 
+  async batchRequestCkb<T>(request: BatchRequest[]): Promise<T[]> {
+    const batch = [];
+    for (let i = 0; i < request.length; i++) {
+      batch.push({
+        id: i,
+        jsonrpc: '2.0',
+        method: nonNullable(request[i]).method,
+        params: [nonNullable(request[i]).params],
+      });
+    }
+    const response = await fetch(this.rpcUrl, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(batch),
+    });
+
+    const results = await response.json();
+    const res = [];
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      if (result.error) throw new Error(result.error);
+      res.push(result.result as T);
+    }
+
+    return res;
+  }
+
+  /**
+   * @deprecated please migrate to {@link collectLockOnlyCells}
+   * @param address
+   * @param minimalCapacity
+   * @returns
+   */
   override async collectCkbLiveCells(address: Address, minimalCapacity: HexNumber): Promise<ResolvedOutpoint[]> {
     const lock = this.parseToScript(address);
     const searchKey: SearchKey = {
@@ -64,6 +110,32 @@ export class MercuryProvider extends AbstractProvider {
     }
 
     return acc.cells;
+  }
+
+  override async collectLockOnlyCells(lock: Address | Script, capacity: HexNumber): Promise<Cell[]> {
+    const result = await this.collectCkbLiveCells(
+      typeof lock === 'string' ? lock : this.parseToAddress(lock),
+      capacity,
+    );
+
+    return result.map((resolved) => ({
+      cell_output: resolved.output,
+      data: resolved.output_data,
+      block_number: resolved.block_number,
+      out_point: resolved.out_point,
+    }));
+  }
+
+  collectCells({ searchKey }: { searchKey: SearchKey }, takeWhile_: (cell: Cell[]) => boolean): Promise<Cell[]> {
+    const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
+      expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
+      takeWhile((res) => res.objects.length > 0),
+      concatMap((res) => res.objects.map(toCell)),
+      scan((acc, next) => acc.concat(next), [] as Cell[]),
+      takeWhile((acc) => takeWhile_(acc)),
+    );
+
+    return lastValueFrom(cells$, { defaultValue: [] });
   }
 
   /**

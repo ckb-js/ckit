@@ -43,4 +43,12 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
     INDEX: '0x0',
     DEP_TYPE: 'code',
   },
+
+  CHEQUE: {
+    CODE_HASH: '0x60d5f39efce409c587cb9ea359cefdead650ca128f0bd9cb3855348f98c70d5b',
+    HASH_TYPE: 'type',
+    TX_HASH: '0x7f96858be0a9d584b4a9ea190e0420835156a6010a5fde15ffcdc9d9c721ccab',
+    INDEX: '0x0',
+    DEP_TYPE: 'dep_group',
+  },
 };

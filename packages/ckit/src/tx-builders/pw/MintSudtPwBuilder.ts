@@ -6,7 +6,7 @@ import { NoAvailableCellError } from '../../errors';
 import { BN } from '../../helpers';
 import { Pw } from '../../helpers/pw';
 import { CkitProvider } from '../../providers';
-import { byteLenOfCkbLiveCell, byteLenOfSudt } from '../builder-utils';
+import { byteLenOfLockOnlyCell, byteLenOfSudt } from '../builder-utils';
 import { AbstractPwSenderBuilder } from './AbstractPwSenderBuilder';
 
 export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
@@ -70,7 +70,7 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
     const neededCapacityFromIssuer = createdRecipientCellsCapacity
       .add(foundRecipientCellsAdditionalCapacity)
       // additional 61 ckb to ensure capacity is enough for change cell
-      .add(new Amount(String(byteLenOfCkbLiveCell())))
+      .add(new Amount(String(byteLenOfLockOnlyCell())))
       // additional 1 ckb for tx fee, not all 1ckb will be paid,
       // but the real fee will be calculated based on feeRate
       .add(new Amount('1'));
