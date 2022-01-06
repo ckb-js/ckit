@@ -11,11 +11,11 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
-    "@ckb-lumos/base": "^0.16.0",
-    "@ckb-lumos/config-manager": "^0.16.0",
-    "@ckb-lumos/hd": "^0.16.0",
-    "@ckb-lumos/helpers": "^0.16.0",
-    "@ckb-lumos/rpc": "^0.16.0",
+    "@ckb-lumos/base": "^0.17.0-rc6",
+    "@ckb-lumos/config-manager": "^0.17.0-rc6",
+    "@ckb-lumos/hd": "^0.17.0-rc6",
+    "@ckb-lumos/helpers": "^0.17.0-rc6",
+    "@ckb-lumos/rpc": "^0.17.0-rc6",
     "@ckitjs/base": "*",
     "@ckitjs/easy-byte": "*",
     "@ckitjs/mercury-client": "*",
@@ -30,7 +30,7 @@
     "rxjs": "^7.3.0"
   },
   "devDependencies": {
-    "@ckb-lumos/common-scripts": "^0.16.0",
+    "@ckb-lumos/common-scripts": "^0.17.0-rc6",
     "@ckitjs/tippy-client": "*",
     "@nervosnetwork/ckb-sdk-core": "^0.43.0",
     "@types/app-root-path": "^1.2.4",
