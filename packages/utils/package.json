@@ -1,6 +1,6 @@
 {
   "name": "@ckitjs/utils",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "dist",
   "license": "MIT",
   "scripts": {
@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@types/debug": "^4.1.7",
-    "tiny-invariant": "^1.1.0",
-    "debug": "^4.3.3"
+    "debug": "^4.3.3",
+    "tiny-invariant": "^1.1.0"
   },
   "peerDependencies": {
     "jsbi": "4.1.0"

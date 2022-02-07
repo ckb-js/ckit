@@ -1,7 +1,10 @@
 {
-  "version": "0.0.0",
+  "version": "0.1.0",
   "npmClient": "yarn",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "useWorkspaces": true,
   "command": {
     "publish": {
