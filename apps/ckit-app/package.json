@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
-    "@ckitjs/base": "*",
-    "@ckitjs/ckit": "*",
-    "@ckitjs/utils": "*",
+    "@ckitjs/base": "0.0.0",
+    "@ckitjs/ckit": "0.0.0",
+    "@ckitjs/utils": "0.0.0",
     "@rehooks/local-storage": "2.4.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",

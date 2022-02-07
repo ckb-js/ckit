@@ -11,7 +11,9 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
-    "tiny-invariant": "^1.1.0"
+    "@types/debug": "^4.1.7",
+    "tiny-invariant": "^1.1.0",
+    "debug": "^4.3.3"
   },
   "peerDependencies": {
     "jsbi": "4.1.0"
