@@ -8,7 +8,7 @@ import {
   helpers,
 } from '@ckitjs/ckit';
 
-const { RcInternalSigner } = internal;
+const { RcSecp256k1Signer: RcInternalSigner } = internal;
 
 const privateKey = '0x9cb72bc1f96926f8386111266d76f2e9ca8c1f0614b0ddd7fbad1abc90f23c8e';
 
