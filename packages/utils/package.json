@@ -1,6 +1,6 @@
 {
   "name": "@ckitjs/utils",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "dist",
   "license": "MIT",
   "scripts": {
@@ -11,6 +11,8 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
+    "@types/debug": "^4.1.7",
+    "debug": "^4.3.3",
     "tiny-invariant": "^1.1.0"
   },
   "peerDependencies": {

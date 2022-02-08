@@ -1,6 +1,6 @@
 {
   "name": "@ckitjs/rc-lock",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "dist",
   "license": "MIT",
   "scripts": {
@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@ckb-lumos/base": "^0.17.0-rc8",
-    "@ckitjs/easy-byte": "*",
-    "@ckitjs/mercury-client": "*",
-    "@ckitjs/utils": "*",
+    "@ckitjs/easy-byte": "0.1.0",
+    "@ckitjs/mercury-client": "0.1.0",
+    "@ckitjs/utils": "0.1.0",
     "ckb-js-toolkit": "^0.10.2",
     "rxjs": "^7.3.0"
   }
