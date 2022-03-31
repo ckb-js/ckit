@@ -1,12 +1,12 @@
 {
   "name": "ckit-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
-    "@ckitjs/base": "0.1.0",
-    "@ckitjs/ckit": "0.1.0",
-    "@ckitjs/utils": "0.1.0",
+    "@ckitjs/base": "0.2.0",
+    "@ckitjs/ckit": "0.2.0",
+    "@ckitjs/utils": "0.2.0",
     "@rehooks/local-storage": "2.4.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
