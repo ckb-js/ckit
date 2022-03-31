@@ -12,8 +12,8 @@ import {
   Transaction,
   TxPoolInfo,
 } from '@ckb-lumos/base';
-import { predefined, Config as LumosConfig, ScriptConfig } from '@ckb-lumos/config-manager';
-import { generateAddress, parseAddress } from '@ckb-lumos/helpers';
+import { Config as LumosConfig, predefined, ScriptConfig } from '@ckb-lumos/config-manager';
+import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { generateTypeIdScript } from './typeid';
 import { Provider, ResolvedOutpoint } from './';
 
@@ -107,7 +107,13 @@ export abstract class AbstractProvider implements Provider {
     this.initialized = true;
   }
 
-  parseToAddress(script: Script): Address {
+  /**
+   * parse a script to address, defaults to parse to CKB2019 address
+   * @param script
+   * @param options
+   */
+  parseToAddress(script: Script, options?: { version: 'CKB2019' | 'CKB2021' }): Address {
+    if (options?.version === 'CKB2021') return encodeToAddress(script, { config: this.config });
     return generateAddress(script, { config: this.config });
   }
 
