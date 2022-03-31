@@ -11,8 +11,8 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
-    "@ckb-lumos/base": "^0.17.0-rc8",
-    "@ckb-lumos/config-manager": "^0.17.0-rc8",
+    "@ckb-lumos/base": "^0.17.0-rc9",
+    "@ckb-lumos/config-manager": "^0.17.0-rc9",
     "@ckitjs/utils": "0.1.0",
     "eventemitter3": "^4.0.7"
   }
