@@ -11,7 +11,7 @@
     "watch": "yarn run build:js --watch & yarn run build:types --watch"
   },
   "dependencies": {
-    "@ckb-lumos/base": "^0.17.0-rc8",
+    "@ckb-lumos/base": "^0.17.0-rc9",
     "@ckitjs/easy-byte": "0.1.0",
     "@ckitjs/mercury-client": "0.1.0",
     "@ckitjs/utils": "0.1.0",

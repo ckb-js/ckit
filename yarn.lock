@@ -1469,13 +1469,13 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@ckb-lumos/base@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/base/-/base-0.17.0-rc8.tgz#7f7490a2e028f609aeb3f96fb400a7836df9a187"
-  integrity sha512-SN/GAxJfO59mF2mcJId2kBEbcQldJ7cIGm4Yf2nC7BmXkc8x+95BpZCWSSQ8EGcGJoWzcOTRlE71s06aUxx5+g==
+"@ckb-lumos/base@0.17.0-rc9", "@ckb-lumos/base@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/base/-/base-0.17.0-rc9.tgz#3ee4f63713fd26682f0fa0ec880b85ed010c4642"
+  integrity sha512-r57fDCOfjJD/oh8NKDg5L97zDsO1nNOipCA2koQW7dpL96SIPVo2aYK/iANM6LZW9lty1zrqVZU+GyZM4ow4hw==
   dependencies:
     "@ckb-lumos/bi" "^0.17.0-rc8"
-    "@ckb-lumos/toolkit" "^0.17.0-rc8"
+    "@ckb-lumos/toolkit" "0.17.0-rc9"
     "@types/lodash.isequal" "^4.5.5"
     blake2b "^2.1.3"
     js-xxhash "^1.0.4"
@@ -1488,66 +1488,66 @@
   dependencies:
     jsbi "^4.1.0"
 
-"@ckb-lumos/common-scripts@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/common-scripts/-/common-scripts-0.17.0-rc8.tgz#210cb47aed0e3722f8dbe2b434651e9496a05b43"
-  integrity sha512-E1daOyQ6WzI0vtWI2WwPBjl+9kG8RP3MPo2KgCmaroBbgTYwEQ27SCZqRzdBLlitEuIE7wGtIWAMY8QZ92NetQ==
+"@ckb-lumos/common-scripts@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/common-scripts/-/common-scripts-0.17.0-rc9.tgz#d30ccc02fa37c66fd2e60aa85e42020604628ad0"
+  integrity sha512-tAMw1/wyV7RJ9Db+quLyg7PQuzdBBLDN56QVDOe7aM2yTPbPxvmcgE4b71jXcRQFMbYA2RwI33z+hUdQV1SjQA==
   dependencies:
-    "@ckb-lumos/base" "^0.17.0-rc8"
+    "@ckb-lumos/base" "0.17.0-rc9"
     "@ckb-lumos/bi" "^0.17.0-rc8"
-    "@ckb-lumos/config-manager" "^0.17.0-rc8"
-    "@ckb-lumos/helpers" "^0.17.0-rc8"
-    "@ckb-lumos/rpc" "^0.17.0-rc8"
-    "@ckb-lumos/toolkit" "^0.17.0-rc8"
+    "@ckb-lumos/config-manager" "0.17.0-rc9"
+    "@ckb-lumos/helpers" "0.17.0-rc9"
+    "@ckb-lumos/rpc" "0.17.0-rc9"
+    "@ckb-lumos/toolkit" "0.17.0-rc9"
     immutable "^4.0.0-rc.12"
 
-"@ckb-lumos/config-manager@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/config-manager/-/config-manager-0.17.0-rc8.tgz#2e68335bd718d98273540091a2c46d4ae0296c7f"
-  integrity sha512-+CL1FvKq+KvhncE8Xzq8ahP4gtBvCOBHBfhX1DT42uxlIr9n5LGNT9pbb6RWWnCEqn0lC9cMsVn47TclFWWPeQ==
+"@ckb-lumos/config-manager@0.17.0-rc9", "@ckb-lumos/config-manager@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/config-manager/-/config-manager-0.17.0-rc9.tgz#9456c3cf7e99f71addd0ade6cc84dca3ddf374b3"
+  integrity sha512-V6YSk6c1XU4M+4WUoZzdYCtyblAMPuTyO4d6mbmkuAS3f49XId81YKB6YmQ6Xltj/LoxTEl0w+Zkz0ojZVxz1w==
   dependencies:
-    "@ckb-lumos/base" "^0.17.0-rc8"
+    "@ckb-lumos/base" "0.17.0-rc9"
     "@ckb-lumos/bi" "^0.17.0-rc8"
     "@types/deep-freeze-strict" "^1.1.0"
     deep-freeze-strict "^1.1.1"
 
-"@ckb-lumos/hd@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/hd/-/hd-0.17.0-rc8.tgz#8141ccbfabd833f183014929ac48c0337ac95418"
-  integrity sha512-qIy5q72Ofwa7OIUErf/mLEWrVr45iVzQJPKyybZiJ6D/lBa3b25xT4t4alw5OrpgRuw4FeQTcn8/dLLj7U4ByQ==
+"@ckb-lumos/hd@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/hd/-/hd-0.17.0-rc9.tgz#d237c8c86131c98d176dad1ca2edfccef7250404"
+  integrity sha512-zGxqu7+NON6EZm4z0rafhJPU4IvtLu1LbTx8UB/AIzn7o0K2c0ZN/xsSTHQoH5RkXCEp4QRH9pl/z9kBJgn3iw==
   dependencies:
-    "@ckb-lumos/base" "^0.17.0-rc8"
+    "@ckb-lumos/base" "0.17.0-rc9"
     "@ckb-lumos/bi" "^0.17.0-rc8"
     bn.js "^5.1.3"
     elliptic "^6.5.4"
     sha3 "^2.1.3"
     uuid "^8.3.0"
 
-"@ckb-lumos/helpers@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/helpers/-/helpers-0.17.0-rc8.tgz#b909e57fe0d8e38d2b1e25b5800b0153bace1b1c"
-  integrity sha512-nUwdLTui7X+MIN7UjuYOWAoNFnJKFt6GiyO+6e731ze87+m3gLsIfsu5EhZmSJhtp/4pgEwgmY4sEBCkAeRWvQ==
+"@ckb-lumos/helpers@0.17.0-rc9", "@ckb-lumos/helpers@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/helpers/-/helpers-0.17.0-rc9.tgz#25f57e422dfaaf16958bc37e0242036787e6f068"
+  integrity sha512-5BuJZVn/UBMqEW26TKj3hpOnqDjFFaKpdENDbtxt2tmdC+IzXLJVKXqXJd6uNzkF6rkTwyyLqV8GZbVR0aIV7w==
   dependencies:
-    "@ckb-lumos/base" "^0.17.0-rc8"
+    "@ckb-lumos/base" "0.17.0-rc9"
     "@ckb-lumos/bi" "^0.17.0-rc8"
-    "@ckb-lumos/config-manager" "^0.17.0-rc8"
-    "@ckb-lumos/toolkit" "^0.17.0-rc8"
-    bech32 "^1.1.4"
+    "@ckb-lumos/config-manager" "0.17.0-rc9"
+    "@ckb-lumos/toolkit" "0.17.0-rc9"
+    bech32 "^2.0.0"
     immutable "^4.0.0-rc.12"
 
-"@ckb-lumos/rpc@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/rpc/-/rpc-0.17.0-rc8.tgz#06d71d913ac4a04af5d0bc36cb77813152945112"
-  integrity sha512-eu8wO8Kl0Fk2btko0jf/EaHiZXB/LrEFlnXovxQnDLg9MkR1zA6lGOWHaJxFXWeoOtdOcOmcsee2Tg6XLUga4w==
+"@ckb-lumos/rpc@0.17.0-rc9", "@ckb-lumos/rpc@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/rpc/-/rpc-0.17.0-rc9.tgz#992c86a2bd7f4625c455482814f856fe6d5e8dae"
+  integrity sha512-Fn844B+om2x08ttxnQgoj0T8V40hM8phZzqw/wypSejUCXEPbzVdJmYNwnswHyWNFygWTIicNplj29jBEzZiVg==
   dependencies:
-    "@ckb-lumos/base" "^0.17.0-rc8"
+    "@ckb-lumos/base" "0.17.0-rc9"
     "@ckb-lumos/bi" "^0.17.0-rc8"
-    "@ckb-lumos/toolkit" "^0.17.0-rc8"
+    "@ckb-lumos/toolkit" "0.17.0-rc9"
 
-"@ckb-lumos/toolkit@^0.17.0-rc8":
-  version "0.17.0-rc8"
-  resolved "https://registry.yarnpkg.com/@ckb-lumos/toolkit/-/toolkit-0.17.0-rc8.tgz#66ecd2d7cc97384db10c329d3f3b768158eab3ba"
-  integrity sha512-xrIfUWq2J8bYAGmwTpSa4aavP705lyMTl6ErHvAT83K5rzgIONeM1dRKlVSJpwBOgrFKi9qbzEgsLU/GUm1QYw==
+"@ckb-lumos/toolkit@0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/toolkit/-/toolkit-0.17.0-rc9.tgz#8484d5eb7ef00053f9f061749d6a452ea70157ff"
+  integrity sha512-ZT/fL1Wp6R/1iBvfx1iWKbdMsr67PsE/U0eWh55zvp9bDjRXsBuM0F7d3PVyBTKZjnIkn/FLwo5+tmaLTaGrjg==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -4679,6 +4679,11 @@ bech32@^1.1.4:
   resolved "https://registry.yarnpkg.com/bech32/-/bech32-1.1.4.tgz#e38c9f37bf179b8eb16ae3a772b40c356d4832e9"
   integrity sha512-s0IrSOzLlbvX7yp4WBfPITzpAU8sqQcpsmwXDiKwrG4r491vwCO/XpejasRNl0piBMe/DvP4Tz0mIS/X1DPJBQ==
 
+bech32@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/bech32/-/bech32-2.0.0.tgz#078d3686535075c8c79709f054b1b226a133b355"
+  integrity sha512-LcknSilhIGatDAsY1ak2I8VtGaHNhgMSYVxFrGLXv+xLHytaKZKcaUJJUE7qmBr7h33o5YQwP55pMI0xmkpJwg==
+
 before-after-hook@^2.2.0:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/before-after-hook/-/before-after-hook-2.2.2.tgz#a6e8ca41028d90ee2c24222f201c90956091613e"
@@ -5223,9 +5228,9 @@ caniuse-api@^3.0.0:
     lodash.uniq "^4.5.0"
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000981, caniuse-lite@^1.0.30001109, caniuse-lite@^1.0.30001125, caniuse-lite@^1.0.30001219:
-  version "1.0.30001245"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001245.tgz#45b941bbd833cb0fa53861ff2bae746b3c6ca5d4"
-  integrity sha512-768fM9j1PKXpOCKws6eTo3RHmvTUsG9UrpT4WoREFeZgJBTi4/X9g565azS/rVUGtqb8nt7FjLeF5u4kukERnA==
+  version "1.0.30001322"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001322.tgz"
+  integrity sha512-neRmrmIrCGuMnxGSoh+x7zYtQFFgnSY2jaomjU56sCkTA6JINqQrxutF459JpWcWRajvoyn95sOXq4Pqrnyjew==
 
 capture-exit@^2.0.0:
   version "2.0.0"
