@@ -11,27 +11,23 @@ import {
   Transaction,
   TxPoolInfo,
 } from '@ckb-lumos/base';
-import { Indexer } from '@ckb-lumos/ckb-indexer';
 import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { RPC } from '@ckb-lumos/rpc';
-import { CellOutPointProvider, KnownCellOutPointProvider } from './CellOutPointProvider';
-import { ProviderConfig, InitOptions } from './ProviderTypes';
+import { LatestOutPointProvider } from './CellOutPointProvider';
 import { generateTypeIdScript } from './typeid';
-import { Provider, ResolvedOutpoint } from './';
+import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint } from './';
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
   private _config: ProviderConfig | undefined;
   readonly rpc: RPC;
   readonly rpcUrl: string;
-  readonly indexer;
   readonly indexerUrl: string;
 
   constructor(ckbRpc = 'http://127.0.0.1:8114', indexerUrl = 'http://127.0.0.1:8116') {
     this.rpc = new RPC(ckbRpc);
     this.rpcUrl = ckbRpc;
-    this.indexer = new Indexer(indexerUrl, ckbRpc);
     this.indexerUrl = indexerUrl;
   }
 
@@ -63,7 +59,10 @@ export abstract class AbstractProvider implements Provider {
     return generateTypeIdScript(input, outputIndex);
   }
 
-  async getCellDep(configKey: string, fetchLatest = false): Promise<CellDep | undefined> {
+  async getCellDep(
+    configKey: string,
+    depOutPointProvider = new LatestOutPointProvider(this.config, this.indexerUrl),
+  ): Promise<CellDep | undefined> {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
 
@@ -77,13 +76,7 @@ export abstract class AbstractProvider implements Provider {
     } else {
       const typeScript = depCellStatus.cell?.output.type;
       if (!typeScript) return undefined;
-      let cellOutPointProvider: CellOutPointProvider;
-      if (!fetchLatest) {
-        cellOutPointProvider = new KnownCellOutPointProvider(this.rpcUrl, this.indexerUrl, this.config);
-      } else {
-        cellOutPointProvider = new KnownCellOutPointProvider(this.rpcUrl, this.indexerUrl, this.config);
-      }
-      const outPoint = await cellOutPointProvider.getOutPointByType(typeScript);
+      const outPoint = await depOutPointProvider.getOutPointByType(typeScript);
       if (!outPoint) return undefined;
       return {
         dep_type: scriptConfig.DEP_TYPE,

@@ -1,5 +1,4 @@
 import { Address, Cell, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
-import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
 import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
@@ -34,7 +33,7 @@ export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;
 
   constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114') {
-    super(ckbRpc);
+    super(ckbRpc, mercuryRpc);
     this.mercury = new MercuryClient(mercuryRpc);
   }
 

@@ -8,9 +8,11 @@ import {
   HexString,
   Script,
   Address,
+  Hexadecimal,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Cell,
 } from '@ckb-lumos/base';
+import { Config as LumosConfig, ScriptConfigs } from '@ckb-lumos/config-manager';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -84,6 +86,15 @@ export interface Provider {
   parseToAddress(script: Script): string;
 }
 
+export type OptionalConfig = {
+  MIN_FEE_RATE: Hexadecimal;
+  FUTURE_SCRIPTS?: ScriptConfigs;
+};
+export type ProviderConfig = LumosConfig & OptionalConfig;
+export type InitOptions<T extends LumosConfig = LumosConfig> = Omit<T, keyof OptionalConfig> & Partial<OptionalConfig>;
+export type OutPointOpt = OutPoint | undefined;
+export type PromisableOutPointOpt = Promise<OutPointOpt> | OutPointOpt;
+
 export { ScriptManager } from './ScriptManager';
-export { AbstractProvider, ProviderConfig, InitOptions } from './AbstractProvider';
+export { AbstractProvider } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
