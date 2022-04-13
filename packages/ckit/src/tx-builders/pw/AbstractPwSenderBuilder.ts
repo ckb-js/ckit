@@ -2,7 +2,7 @@ import { Address, Script } from '@ckb-lumos/base';
 import { SerializeRcLockWitnessLock } from '@ckitjs/rc-lock';
 import { Builder, Cell, CellDep, WitnessArgs } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
-import { uniqWith } from 'lodash';
+import { uniqWith, flatMap } from 'lodash';
 import { Pw } from '../../helpers/pw';
 import { CkitConfigKeys, CkitProvider } from '../../providers';
 import { boom } from '../../utils';
@@ -13,45 +13,45 @@ export abstract class AbstractPwSenderBuilder extends Builder {
     super(Number(provider.config.MIN_FEE_RATE));
   }
 
-  protected getCellDepByKey(key: CkitConfigKeys): CellDep[] {
+  protected async getCellDepByKey(key: CkitConfigKeys): Promise<CellDep[]> {
     if (key === 'RC_LOCK') {
       return [
-        Pw.toPwCellDep(this.provider.getCellDep('RC_LOCK')),
-        Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
+        Pw.toPwCellDep(await this.provider.getCellDep('RC_LOCK')),
+        Pw.toPwCellDep(await this.provider.getCellDep('SECP256K1_BLAKE160')),
       ];
     }
-    if (key === 'SUDT') return [Pw.toPwCellDep(this.provider.getCellDep('SUDT'))];
+    if (key === 'SUDT') return [Pw.toPwCellDep(await this.provider.getCellDep('SUDT'))];
     if (key === 'ANYONE_CAN_PAY') {
       return [
-        Pw.toPwCellDep(this.provider.getCellDep('ANYONE_CAN_PAY')),
-        Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
+        Pw.toPwCellDep(await this.provider.getCellDep('ANYONE_CAN_PAY')),
+        Pw.toPwCellDep(await this.provider.getCellDep('SECP256K1_BLAKE160')),
       ];
     }
     if (key === 'UNIPASS') return getCellDeps(this.provider.config.PREFIX === 'ckb');
     if (key === 'PW_ANYONE_CAN_PAY') {
       return [
-        Pw.toPwCellDep(this.provider.getCellDep('PW_ANYONE_CAN_PAY')),
-        Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
+        Pw.toPwCellDep(await this.provider.getCellDep('PW_ANYONE_CAN_PAY')),
+        Pw.toPwCellDep(await this.provider.getCellDep('SECP256K1_BLAKE160')),
       ];
     }
     if (key === 'PW_NON_ANYONE_CAN_PAY') {
       return [
-        Pw.toPwCellDep(this.provider.getCellDep('PW_NON_ANYONE_CAN_PAY')),
-        Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160')),
+        Pw.toPwCellDep(await this.provider.getCellDep('PW_NON_ANYONE_CAN_PAY')),
+        Pw.toPwCellDep(await this.provider.getCellDep('SECP256K1_BLAKE160')),
       ];
     }
     if (key === 'SECP256K1_BLAKE160') {
-      return [Pw.toPwCellDep(this.provider.getCellDep('SECP256K1_BLAKE160'))];
+      return [Pw.toPwCellDep(await this.provider.getCellDep('SECP256K1_BLAKE160'))];
     }
 
     if (key === 'CHEQUE') {
-      return [Pw.toPwCellDep(this.provider.getCellDep('CHEQUE'))];
+      return [Pw.toPwCellDep(await this.provider.getCellDep('CHEQUE'))];
     }
 
     return [];
   }
 
-  private getCellDepByScript(script: Script): CellDep[] {
+  private async getCellDepByScript(script: Script): Promise<CellDep[]> {
     // typeid script has no deps
     if (script.code_hash === '0x00000000000000000000000000000000000000000000000000545950455f4944') return [];
 
@@ -67,17 +67,16 @@ export abstract class AbstractPwSenderBuilder extends Builder {
     const key = keyToTemplate();
     if (!key) throw new Error(`Unknown script, code_hash: ${script.code_hash}, hash_type: ${script.hash_type}`);
 
-    return this.getCellDepByKey(key);
+    return await this.getCellDepByKey(key);
   }
 
-  private getCellDeps(scripts: Script[] = []): CellDep[] {
-    return uniqWith(
-      scripts.flatMap((script) => this.getCellDepByScript(script)),
-      (dep1, dep2) => dep1.sameWith(dep2),
-    );
+  private async getCellDeps(scripts: Script[] = []): Promise<CellDep[]> {
+    const promises: Promise<CellDep[]>[] = scripts.map((script) => this.getCellDepByScript(script));
+    const resolved = await Promise.all(promises);
+    return uniqWith(flatMap(resolved), (dep1, dep2) => dep1.sameWith(dep2));
   }
 
-  protected getCellDepsByCells(inputCells: Cell[], outputCells: Cell[]): CellDep[] {
+  protected async getCellDepsByCells(inputCells: Cell[], outputCells: Cell[]): Promise<CellDep[]> {
     const inputLockAndTypeScripts = inputCells.flatMap<Script>((cell) =>
       cell.type
         ? [cell.lock.serializeJson() as Script, cell.type.serializeJson() as Script]
@@ -88,7 +87,7 @@ export abstract class AbstractPwSenderBuilder extends Builder {
       cell.type ? [cell.type.serializeJson() as Script] : [],
     );
 
-    return this.getCellDeps(inputLockAndTypeScripts.concat(outputTypeScripts));
+    return await this.getCellDeps(inputLockAndTypeScripts.concat(outputTypeScripts));
   }
 
   // TODO refactor to ConfigManager

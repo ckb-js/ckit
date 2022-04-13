@@ -66,8 +66,8 @@ export class CkitProvider extends MercuryProvider {
     return this.newScript('SUDT', issuerLockHash);
   }
 
-  override getCellDep(configKey: CkitConfigKeys): CellDep {
-    const dep = super.getCellDep(configKey);
+  override async getCellDep(configKey: CkitConfigKeys): Promise<CellDep> {
+    const dep = await super.getCellDep(configKey);
     if (!dep) throw new Error(`cannot find the ${configKey} script config, maybe init failed`);
 
     return dep;

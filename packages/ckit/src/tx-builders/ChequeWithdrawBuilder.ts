@@ -102,7 +102,7 @@ export class ChequeWithdrawBuilder extends AbstractPwSenderBuilder {
       [...inputCapacityCells.map(Pw.toPwCell), ...validWithdrawCells.map(Pw.toPwCell)],
       [...withdrawnSudtCells.map(Pw.toPwCell), Pw.toPwCell(withdrawnChangeCell), changeCell],
 
-      this.getCellDepsByCells(
+      await this.getCellDepsByCells(
         [...inputCapacityCells.map(Pw.toPwCell), ...validWithdrawCells.map(Pw.toPwCell)],
         [...withdrawnSudtCells.map(Pw.toPwCell), Pw.toPwCell(withdrawnChangeCell), changeCell],
       ),

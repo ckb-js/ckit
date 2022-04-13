@@ -4,7 +4,6 @@ import {
   CellDep,
   ChainInfo,
   Hash,
-  Hexadecimal,
   HexNumber,
   HexString,
   Input,
@@ -12,20 +11,29 @@ import {
   Transaction,
   TxPoolInfo,
 } from '@ckb-lumos/base';
-import { Config as LumosConfig, predefined, ScriptConfig } from '@ckb-lumos/config-manager';
+import { Indexer } from '@ckb-lumos/ckb-indexer';
+import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
+import { RPC } from '@ckb-lumos/rpc';
+import { CellOutPointProvider, KnownCellOutPointProvider } from './CellOutPointProvider';
+import { ProviderConfig, InitOptions } from './ProviderTypes';
 import { generateTypeIdScript } from './typeid';
 import { Provider, ResolvedOutpoint } from './';
-
-type OptionalConfig = {
-  MIN_FEE_RATE: Hexadecimal;
-};
-export type ProviderConfig = LumosConfig & OptionalConfig;
-export type InitOptions<T extends LumosConfig = LumosConfig> = Omit<T, keyof OptionalConfig> & Partial<OptionalConfig>;
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
   private _config: ProviderConfig | undefined;
+  readonly rpc: RPC;
+  readonly rpcUrl: string;
+  readonly indexer;
+  readonly indexerUrl: string;
+
+  constructor(ckbRpc = 'http://127.0.0.1:8114', indexerUrl = 'http://127.0.0.1:8116') {
+    this.rpc = new RPC(ckbRpc);
+    this.rpcUrl = ckbRpc;
+    this.indexer = new Indexer(indexerUrl, ckbRpc);
+    this.indexerUrl = indexerUrl;
+  }
 
   get config(): ProviderConfig {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');
@@ -55,14 +63,33 @@ export abstract class AbstractProvider implements Provider {
     return generateTypeIdScript(input, outputIndex);
   }
 
-  getCellDep(configKey: string): CellDep | undefined {
+  async getCellDep(configKey: string, fetchLatest = false): Promise<CellDep | undefined> {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
 
-    return {
-      dep_type: scriptConfig.DEP_TYPE,
-      out_point: { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX },
-    };
+    const outPoint = { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX };
+    const depCellStatus = await this.rpc.get_live_cell(outPoint, false);
+    if (depCellStatus.status === 'live') {
+      return {
+        dep_type: scriptConfig.DEP_TYPE,
+        out_point: outPoint,
+      };
+    } else {
+      const typeScript = depCellStatus.cell?.output.type;
+      if (!typeScript) return undefined;
+      let cellOutPointProvider: CellOutPointProvider;
+      if (!fetchLatest) {
+        cellOutPointProvider = new KnownCellOutPointProvider(this.rpcUrl, this.indexerUrl, this.config);
+      } else {
+        cellOutPointProvider = new KnownCellOutPointProvider(this.rpcUrl, this.indexerUrl, this.config);
+      }
+      const outPoint = await cellOutPointProvider.getOutPointByType(typeScript);
+      if (!outPoint) return undefined;
+      return {
+        dep_type: scriptConfig.DEP_TYPE,
+        out_point: outPoint,
+      };
+    }
   }
 
   findCellDepByAddress(address: Address): CellDep | undefined {

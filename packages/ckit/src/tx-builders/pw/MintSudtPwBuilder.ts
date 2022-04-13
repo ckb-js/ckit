@@ -88,7 +88,7 @@ export class NonAcpPwMintBuilder extends AbstractPwSenderBuilder {
 
     const inputCells = [...issuerCells, ...foundRecipientCells];
     const outputs = [issuerOutput, ...createdRecipientCells, ...foundRecipientCells];
-    const rawTx = new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs));
+    const rawTx = new RawTransaction(inputCells, outputs, await this.getCellDepsByCells(inputCells, outputs));
 
     const tx = new Transaction(rawTx, [this.getWitnessPlaceholder(this.issuerAddress)]);
     const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));

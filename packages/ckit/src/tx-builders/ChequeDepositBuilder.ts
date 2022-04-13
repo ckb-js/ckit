@@ -127,7 +127,7 @@ export class ChequeDepositBuilder extends AbstractPwSenderBuilder {
     const outputCells = [chequeCell, sudtChangeCell, capacityChangeCell];
 
     const tx = new Transaction(
-      new RawTransaction(inputCells, outputCells, this.getCellDepsByCells(inputCells, outputCells)),
+      new RawTransaction(inputCells, outputCells, await this.getCellDepsByCells(inputCells, outputCells)),
       [this.getWitnessPlaceholder(sender)],
     );
 

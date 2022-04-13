@@ -32,15 +32,10 @@ interface BatchRequest {
 
 export class MercuryProvider extends AbstractProvider {
   readonly mercury: MercuryClient;
-  readonly rpc: RPC;
-  readonly rpcUrl: string;
 
   constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114') {
-    super();
-
+    super(ckbRpc);
     this.mercury = new MercuryClient(mercuryRpc);
-    this.rpc = new RPC(ckbRpc);
-    this.rpcUrl = ckbRpc;
   }
 
   async batchRequestCkb<T>(request: BatchRequest[]): Promise<T[]> {

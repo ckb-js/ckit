@@ -184,7 +184,12 @@ export class MintRcUdtPwBuilder extends AbstractPwSenderBuilder {
     const rawTx = new RawTransaction(
       inputCells,
       [infoCell, senderOutput, ...createdRecipientCells, ...foundRecipientCells],
-      this.getCellDepsByCells(inputCells, [infoCell, senderOutput, ...createdRecipientCells, ...foundRecipientCells]),
+      await this.getCellDepsByCells(inputCells, [
+        infoCell,
+        senderOutput,
+        ...createdRecipientCells,
+        ...foundRecipientCells,
+      ]),
     );
 
     const tx = new Transaction(rawTx, [

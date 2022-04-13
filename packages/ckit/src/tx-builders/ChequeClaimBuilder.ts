@@ -73,7 +73,7 @@ export class ChequeClaimBuilder extends AbstractPwSenderBuilder {
         [...inputCapacityCells.map(Pw.toPwCell), ...unclaimedCells.map(Pw.toPwCell)],
         [...claimedEmptyChequeCell.map(Pw.toPwCell), Pw.toPwCell(claimedSudtCell), changeCell],
 
-        this.getCellDepsByCells(
+        await this.getCellDepsByCells(
           [...inputCapacityCells.map(Pw.toPwCell), ...unclaimedCells.map(Pw.toPwCell)],
           [...claimedEmptyChequeCell.map(Pw.toPwCell), Pw.toPwCell(claimedSudtCell), changeCell],
         ),
