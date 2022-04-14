@@ -1,7 +1,7 @@
-/* eslint-disable */
-import { CellOutPointProvider } from '@ckitjs/base';
-import { ProviderConfig, OutPointOpt, PromisableOutPointOpt } from '@ckitjs/base';
-import { StaticFutureOutPointProvider } from './CellOutPointProvider';
+import { OutPoint } from '@ckb-lumos/base';
+import { ProviderConfig } from '@ckitjs/base';
+
+import { StaticFutureOutPointProvider } from '../CellOutPointProvider';
 
 const config = {
   lumosConfig: {
@@ -36,8 +36,8 @@ const config = {
         DEP_TYPE: 'code',
       },
       RC_LOCK: {
-        CODE_HASH: '0x1bf147d1c95a5ad51016bd426c33f364257e685af54df26fc69ec40e3ae267d1',
-        HASH_TYPE: 'data',
+        CODE_HASH: '0xb91e81f5f817e901c4a3bca9e108417dbcc2e34ebf720d24327a1a97a3e22ad8',
+        HASH_TYPE: 'type',
         TX_HASH: '0x4af8a7cb36cf8f3665ecc03e8c1da8dcc975a782d44e0b9168ce06d98fc591c5',
         INDEX: '0x4',
         DEP_TYPE: 'code',
@@ -64,11 +64,47 @@ const config = {
         HASH_TYPE: 'type',
       },
     },
+    FUTURE_SCRIPTS: {
+      RC_LOCK: {
+        CODE_HASH: '0xb91e81f5f817e901c4a3bca9e108417dbcc2e34ebf720d24327a1a97a3e22ad8',
+        HASH_TYPE: 'type',
+        TX_HASH: 'FUTURE_RC_LOCK_TX_HASH',
+        INDEX: '0x1',
+        DEP_TYPE: 'code',
+      },
+    },
     MIN_FEE_RATE: '0x3e8',
   },
 };
 test('test the dummy wallet', async () => {
-  const staticFutureOutPointProvider = new StaticFutureOutPointProvider(config.lumosConfig as ProviderConfig, '');
-            
-  expect(staticFutureOutPointProvider).toBe(false);
+  const staticFutureOutPointProvider = new StaticFutureOutPointProvider(config.lumosConfig as ProviderConfig);
+  const mockRpc = jest.fn();
+  mockRpc.mockReturnValue({
+    cell: {
+      data: null,
+      output: {
+        capacity: '0x984a47d2d00',
+        lock: {
+          args: '0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7',
+          code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+          hash_type: 'type',
+        },
+        type: {
+          args: '0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7',
+          code_hash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
+          hash_type: 'type',
+        },
+      },
+    },
+    status: 'dead',
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  staticFutureOutPointProvider.rpc.get_live_cell = mockRpc as any;
+  const originalOutPoint: OutPoint = {
+    tx_hash: config.lumosConfig.SCRIPTS.RC_LOCK.TX_HASH,
+    index: config.lumosConfig.SCRIPTS.RC_LOCK.INDEX,
+  };
+  const newOutPoint = await staticFutureOutPointProvider.getOutPointByOriginalOutPoint(originalOutPoint);
+
+  expect(newOutPoint).toStrictEqual({ index: '0x1', tx_hash: 'FUTURE_RC_LOCK_TX_HASH' });
 });

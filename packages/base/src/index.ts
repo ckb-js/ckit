@@ -96,7 +96,7 @@ export type OutPointOpt = OutPoint | undefined;
 export type PromisableOutPointOpt = Promise<OutPointOpt> | OutPointOpt;
 
 export interface CellOutPointProvider {
-  getOutPointByType(originalOutPoint: OutPoint): PromisableOutPointOpt;
+  getOutPointByOriginalOutPoint(originalOutPoint: OutPoint): PromisableOutPointOpt;
 }
 
 export { ScriptManager } from './ScriptManager';

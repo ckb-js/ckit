@@ -62,7 +62,7 @@ export abstract class AbstractProvider implements Provider {
       };
     }
 
-    const newOutPoint = await this.depOutPointProvider.getOutPointByType(outPoint);
+    const newOutPoint = await this.depOutPointProvider.getOutPointByOriginalOutPoint(outPoint);
     if (!newOutPoint) return undefined;
     return {
       dep_type: scriptConfig.DEP_TYPE,

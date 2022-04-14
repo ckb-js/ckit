@@ -1,20 +1,20 @@
-import { OutPoint } from '@ckb-lumos/base';
+import { OutPoint, utils } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { ProviderConfig, OutPointOpt, PromisableOutPointOpt, CellOutPointProvider } from '@ckitjs/base';
 import { MercuryClient } from '.';
 
 abstract class BaseCellOutPointProvider implements CellOutPointProvider {
-  readonly config: ProviderConfig;
-  readonly rpc: RPC;
-  readonly rpcUrl: string;
+  config: ProviderConfig;
+  rpc: RPC;
+  rpcUrl: string;
 
-  constructor(config: ProviderConfig, rpcUrl: string) {
+  constructor(config: ProviderConfig, rpcUrl = 'http://127.0.0.1:8114') {
     this.config = config;
     this.rpcUrl = rpcUrl;
     this.rpc = new RPC(rpcUrl);
   }
 
-  abstract getOutPointByType(originalOutPoint: OutPoint): PromisableOutPointOpt;
+  abstract getOutPointByOriginalOutPoint(originalOutPoint: OutPoint): PromisableOutPointOpt;
 }
 
 export class LatestOutPointProvider extends BaseCellOutPointProvider {
@@ -25,7 +25,7 @@ export class LatestOutPointProvider extends BaseCellOutPointProvider {
     this.mercuryClient = new MercuryClient(indexerUrl);
   }
 
-  async getOutPointByType(originalOutPoint: OutPoint): Promise<OutPointOpt> {
+  async getOutPointByOriginalOutPoint(originalOutPoint: OutPoint): Promise<OutPointOpt> {
     const depCellStatus = await this.rpc.get_live_cell(originalOutPoint, false);
     if (depCellStatus.status === 'live') {
       return originalOutPoint;
@@ -44,7 +44,7 @@ export class LatestOutPointProvider extends BaseCellOutPointProvider {
 }
 
 export class StaticFutureOutPointProvider extends BaseCellOutPointProvider {
-  async getOutPointByType(originalOutPoint: OutPoint): Promise<OutPointOpt> {
+  async getOutPointByOriginalOutPoint(originalOutPoint: OutPoint): Promise<OutPointOpt> {
     const depCellStatus = await this.rpc.get_live_cell(originalOutPoint, false);
     if (depCellStatus.status === 'live') {
       return originalOutPoint;
@@ -54,11 +54,12 @@ export class StaticFutureOutPointProvider extends BaseCellOutPointProvider {
 
     const futureScripts = this.config.FUTURE_SCRIPTS;
     if (!futureScripts) return undefined;
-    const scriptConfigs = Object.values(this.config.SCRIPTS);
+    const scriptConfigs = Object.values(futureScripts);
     const index = scriptConfigs.findIndex(
-      (scriptConfig) => scriptConfig?.CODE_HASH === type.code_hash && scriptConfig?.HASH_TYPE === type.hash_type,
+      (scriptConfig) =>
+        scriptConfig?.CODE_HASH === utils.computeScriptHash(type) && scriptConfig?.HASH_TYPE === type.hash_type,
     );
-    const found = futureScripts[index];
+    const found = scriptConfigs[index];
     if (!found) return undefined;
     return { tx_hash: found.TX_HASH, index: found.INDEX };
   }
