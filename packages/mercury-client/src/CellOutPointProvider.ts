@@ -30,12 +30,15 @@ export class LatestOutPointProvider extends BaseCellOutPointProvider {
     if (depCellStatus.status === 'live') {
       return originalOutPoint;
     }
-    const type = depCellStatus.cell?.output.type;
-    if (!type) return undefined;
+
+    const liveCellTx = await this.rpc.get_transaction(originalOutPoint.tx_hash);
+    const type = liveCellTx?.transaction.outputs[Number(originalOutPoint.index)]?.type;
+    if (type === undefined) return undefined;
 
     const { objects: cells } = await this.mercuryClient.get_cells({
       search_key: { script: type, script_type: 'type' },
     });
+
     if (cells[0]) {
       return cells[0].out_point;
     }

@@ -49,6 +49,43 @@ test('test rc signer', async () => {
   expect(CkbAmount.fromShannon(received).eq(CkbAmount.fromCkb(100))).toBe(true);
 });
 
+test('should upgraded rc lock pass', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+  const upgradeDeployment = await provider.upgradeScript('rc_lock_new', 'RC_LOCK');
+  await provider.waitForTransactionCommitted(upgradeDeployment.TX_HASH);
+
+  const rcSigner = new RCLockSigner(randomHexString(64), provider);
+
+  // genesis -> rc: 100M ckb
+  await provider.transferCkbFromGenesis(await rcSigner.getAddress(), CkbAmount.fromCkb(1000000).toHex(), {
+    testPrivateKeysIndex,
+  });
+
+  const recipient = provider.generateAcpSigner();
+
+  await provider.sendTxUntilCommitted(
+    await rcSigner.seal(
+      await new TransferCkbBuilder(
+        {
+          recipients: [
+            {
+              recipient: await recipient.getAddress(),
+              capacityPolicy: 'createCell',
+              amount: CkbAmount.fromCkb(100).toHex(),
+            },
+          ],
+        },
+        provider,
+        await rcSigner.getAddress(),
+      ).build(),
+    ),
+  );
+
+  const received = await provider.getCkbLiveCellsBalance(await recipient.getAddress());
+  expect(CkbAmount.fromShannon(received).eq(CkbAmount.fromCkb(100))).toBe(true);
+});
+
 // TODO remove skip when rc-lock related modules are implemented
 test('test rc udt lock', async () => {
   const provider = new TestProvider();

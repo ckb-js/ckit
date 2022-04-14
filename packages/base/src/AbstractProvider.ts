@@ -66,7 +66,7 @@ export abstract class AbstractProvider implements Provider {
     if (!newOutPoint) return undefined;
     return {
       dep_type: scriptConfig.DEP_TYPE,
-      out_point: outPoint,
+      out_point: newOutPoint,
     };
   }
 
