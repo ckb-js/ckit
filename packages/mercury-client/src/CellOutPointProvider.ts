@@ -1,10 +1,6 @@
 import { Script } from '@ckb-lumos/base';
-import { MercuryClient } from './../../mercury-client/src/index';
-import { ProviderConfig, OutPointOpt, PromisableOutPointOpt } from '.';
-
-export interface CellOutPointProvider {
-  getOutPointByType(type: Script): PromisableOutPointOpt;
-}
+import { ProviderConfig, OutPointOpt, PromisableOutPointOpt, CellOutPointProvider } from '@ckitjs/base';
+import { MercuryClient } from '.';
 
 abstract class BaseCellOutPointProvider implements CellOutPointProvider {
   readonly config: ProviderConfig;

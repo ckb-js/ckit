@@ -66,3 +66,5 @@ export class MercuryClient {
     return this.client.request({ method: 'get_transactions', params: [] });
   }
 }
+
+export * from './CellOutPointProvider';

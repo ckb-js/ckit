@@ -1,4 +1,4 @@
-import { Address, CellDep, Script, utils } from '@ckb-lumos/base';
+import { Address, Script, utils } from '@ckb-lumos/base';
 import { ScriptConfig } from '@ckb-lumos/config-manager';
 import { ProviderConfig, InitOptions } from '@ckitjs/base';
 import { MercuryProvider } from './mercury/MercuryProvider';
@@ -64,13 +64,6 @@ export class CkitProvider extends MercuryProvider {
         : utils.computeScriptHash(issuer);
 
     return this.newScript('SUDT', issuerLockHash);
-  }
-
-  override async getCellDep(configKey: CkitConfigKeys): Promise<CellDep> {
-    const dep = await super.getCellDep(configKey);
-    if (!dep) throw new Error(`cannot find the ${configKey} script config, maybe init failed`);
-
-    return dep;
   }
 
   isTemplateOf(key: CkitConfigKeys, scriptLice: Script | Address): boolean {

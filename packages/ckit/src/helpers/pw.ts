@@ -26,7 +26,9 @@ function fromPwCellDep(x: PwCellDep): LumosCellDep {
   };
 }
 
-function toPwCellDep(x: LumosCellDep): PwCellDep {
+function toPwCellDep(x: LumosCellDep | undefined): PwCellDep {
+  if (x === undefined) throw new Error("Can't convert undefined to PwCellDep");
+
   return new PwCellDep(
     x.dep_type === 'dep_group' ? PwDepType.depGroup : PwDepType.code,
     new PwOutPoint(x.out_point.tx_hash, x.out_point.index),

@@ -14,9 +14,8 @@ import {
 import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { RPC } from '@ckb-lumos/rpc';
-import { LatestOutPointProvider } from './CellOutPointProvider';
 import { generateTypeIdScript } from './typeid';
-import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint } from './';
+import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint, CellOutPointProvider } from './';
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
@@ -59,14 +58,18 @@ export abstract class AbstractProvider implements Provider {
     return generateTypeIdScript(input, outputIndex);
   }
 
-  async getCellDep(
-    configKey: string,
-    depOutPointProvider = new LatestOutPointProvider(this.config, this.indexerUrl),
-  ): Promise<CellDep | undefined> {
+  async getCellDep(configKey: string, depOutPointProvider?: CellOutPointProvider): Promise<CellDep | undefined> {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
 
     const outPoint = { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX };
+    if (!depOutPointProvider) {
+      return {
+        dep_type: scriptConfig.DEP_TYPE,
+        out_point: outPoint,
+      };
+    }
+
     const depCellStatus = await this.rpc.get_live_cell(outPoint, false);
     if (depCellStatus.status === 'live') {
       return {

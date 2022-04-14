@@ -95,6 +95,10 @@ export type InitOptions<T extends LumosConfig = LumosConfig> = Omit<T, keyof Opt
 export type OutPointOpt = OutPoint | undefined;
 export type PromisableOutPointOpt = Promise<OutPointOpt> | OutPointOpt;
 
+export interface CellOutPointProvider {
+  getOutPointByType(type: Script): PromisableOutPointOpt;
+}
+
 export { ScriptManager } from './ScriptManager';
 export { AbstractProvider } from './AbstractProvider';
 export { AbstractWallet } from './AbstractWallet';
