@@ -68,6 +68,7 @@ export class TestProvider extends CkitProvider {
     const config: CkitConfig = {
       PREFIX: 'ckt',
       SCRIPTS: scripts,
+      FUTURE_SCRIPTS: {},
       MIN_FEE_RATE: (await this.getTxPoolInfo()).min_fee_rate,
     };
     fs.writeFileSync(deployedCachePath, JSON.stringify({ lumosConfig: config }, null, 2));

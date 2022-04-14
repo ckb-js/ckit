@@ -19,8 +19,8 @@ import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint, CellOutPointPr
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
   private _config: ProviderConfig | undefined;
-  abstract readonly depOutPointProvider: CellOutPointProvider;
-  abstract readonly upgradableContracts: Array<string>;
+  abstract depOutPointProvider: CellOutPointProvider | undefined;
+  abstract upgradableContracts: Array<string> | undefined;
 
   get config(): ProviderConfig {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');
@@ -55,7 +55,7 @@ export abstract class AbstractProvider implements Provider {
     if (!scriptConfig) return undefined;
 
     const outPoint = { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX };
-    if (!this.depOutPointProvider || !this.upgradableContracts.includes(configKey)) {
+    if (!this.depOutPointProvider || !this.upgradableContracts?.includes(configKey)) {
       return {
         dep_type: scriptConfig.DEP_TYPE,
         out_point: outPoint,
@@ -105,8 +105,8 @@ export abstract class AbstractProvider implements Provider {
       const txPoolInfo = await this.getTxPoolInfo();
 
       this._config = isMainnet
-        ? { ...predefined.LINA, MIN_FEE_RATE: txPoolInfo.min_fee_rate }
-        : { ...predefined.AGGRON4, MIN_FEE_RATE: txPoolInfo.min_fee_rate };
+        ? { ...predefined.LINA, MIN_FEE_RATE: txPoolInfo.min_fee_rate, FUTURE_SCRIPTS: {} }
+        : { ...predefined.AGGRON4, MIN_FEE_RATE: txPoolInfo.min_fee_rate, FUTURE_SCRIPTS: {} };
     }
 
     this.initialized = true;
