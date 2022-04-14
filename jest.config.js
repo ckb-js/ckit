@@ -2,7 +2,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['packages'],
-  testMatch: ['<rootDir>/**/*.spec.ts'],
+  testMatch: ['<rootDir>/**/CellOutPointProvider.spec.ts'],
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.build.json',
