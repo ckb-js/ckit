@@ -1,6 +1,7 @@
 import { Address, Cell, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
-import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
-import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
+import { RPC } from '@ckb-lumos/rpc';
+import { AbstractProvider, CellOutPointProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
+import { LatestOutPointProvider, MercuryClient, SearchKey } from '@ckitjs/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { BigNumber } from 'bignumber.js';
 import fetch from 'isomorphic-fetch';
@@ -29,12 +30,31 @@ interface BatchRequest {
   params: unknown;
 }
 
-export class MercuryProvider extends AbstractProvider {
-  readonly mercury: MercuryClient;
+type OutPointProviderConfig = [CellOutPointProvider, Array<string>];
 
-  constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114') {
-    super(ckbRpc, mercuryRpc);
+export class MercuryProvider extends AbstractProvider {
+  readonly depOutPointProvider: CellOutPointProvider;
+  readonly upgradableContracts: Array<string>;
+  readonly mercury: MercuryClient;
+  readonly rpc: RPC;
+  readonly rpcUrl: string;
+
+  constructor(
+    mercuryRpc = 'http://127.0.0.1:8116',
+    ckbRpc = 'http://127.0.0.1:8114',
+    outPointProviderConfig?: OutPointProviderConfig,
+  ) {
+    super();
     this.mercury = new MercuryClient(mercuryRpc);
+    this.rpc = new RPC(ckbRpc);
+    this.rpcUrl = ckbRpc;
+    if (outPointProviderConfig) {
+      this.depOutPointProvider = outPointProviderConfig[0];
+      this.upgradableContracts = outPointProviderConfig[1];
+    } else {
+      this.depOutPointProvider = new LatestOutPointProvider(this.config, ckbRpc, mercuryRpc);
+      this.upgradableContracts = ['RC_LOCK'];
+    }
   }
 
   async batchRequestCkb<T>(request: BatchRequest[]): Promise<T[]> {

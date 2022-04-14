@@ -13,22 +13,14 @@ import {
 } from '@ckb-lumos/base';
 import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
-import { RPC } from '@ckb-lumos/rpc';
 import { generateTypeIdScript } from './typeid';
 import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint, CellOutPointProvider } from './';
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
   private _config: ProviderConfig | undefined;
-  readonly rpc: RPC;
-  readonly rpcUrl: string;
-  readonly indexerUrl: string;
-
-  constructor(ckbRpc = 'http://127.0.0.1:8114', indexerUrl = 'http://127.0.0.1:8116') {
-    this.rpc = new RPC(ckbRpc);
-    this.rpcUrl = ckbRpc;
-    this.indexerUrl = indexerUrl;
-  }
+  abstract readonly depOutPointProvider: CellOutPointProvider;
+  abstract readonly upgradableContracts: Array<string>;
 
   get config(): ProviderConfig {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');
@@ -58,34 +50,24 @@ export abstract class AbstractProvider implements Provider {
     return generateTypeIdScript(input, outputIndex);
   }
 
-  async getCellDep(configKey: string, depOutPointProvider?: CellOutPointProvider): Promise<CellDep | undefined> {
+  async getCellDep(configKey: string): Promise<CellDep | undefined> {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
 
     const outPoint = { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX };
-    if (!depOutPointProvider) {
+    if (!this.depOutPointProvider || !this.upgradableContracts.includes(configKey)) {
       return {
         dep_type: scriptConfig.DEP_TYPE,
         out_point: outPoint,
       };
     }
 
-    const depCellStatus = await this.rpc.get_live_cell(outPoint, false);
-    if (depCellStatus.status === 'live') {
-      return {
-        dep_type: scriptConfig.DEP_TYPE,
-        out_point: outPoint,
-      };
-    } else {
-      const typeScript = depCellStatus.cell?.output.type;
-      if (!typeScript) return undefined;
-      const outPoint = await depOutPointProvider.getOutPointByType(typeScript);
-      if (!outPoint) return undefined;
-      return {
-        dep_type: scriptConfig.DEP_TYPE,
-        out_point: outPoint,
-      };
-    }
+    const newOutPoint = await this.depOutPointProvider.getOutPointByType(outPoint);
+    if (!newOutPoint) return undefined;
+    return {
+      dep_type: scriptConfig.DEP_TYPE,
+      out_point: outPoint,
+    };
   }
 
   findCellDepByAddress(address: Address): CellDep | undefined {

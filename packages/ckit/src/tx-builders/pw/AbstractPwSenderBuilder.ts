@@ -1,5 +1,4 @@
 import { Address, Script } from '@ckb-lumos/base';
-import { StaticFutureOutPointProvider } from '@ckitjs/mercury-client';
 import { SerializeRcLockWitnessLock } from '@ckitjs/rc-lock';
 import { Builder, Cell, CellDep, WitnessArgs } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
@@ -15,10 +14,9 @@ export abstract class AbstractPwSenderBuilder extends Builder {
   }
 
   protected async getCellDepByKey(key: CkitConfigKeys): Promise<CellDep[]> {
-    const cellDepOutPointProvider = new StaticFutureOutPointProvider(this.provider.config);
     if (key === 'RC_LOCK') {
       return [
-        Pw.toPwCellDep(await this.provider.getCellDep('RC_LOCK', cellDepOutPointProvider)),
+        Pw.toPwCellDep(await this.provider.getCellDep('RC_LOCK')),
         Pw.toPwCellDep(await this.provider.getCellDep('SECP256K1_BLAKE160')),
       ];
     }
