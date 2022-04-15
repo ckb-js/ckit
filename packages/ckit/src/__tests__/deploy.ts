@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Cell, CellProvider, Script, utils, CellCollector, QueryOptions, Indexer } from '@ckb-lumos/base';
+import { Cell, CellProvider, Script, utils, CellCollector, QueryOptions } from '@ckb-lumos/base';
 import { Indexer as CkbIndexer } from '@ckb-lumos/ckb-indexer';
 import { common, deploy } from '@ckb-lumos/common-scripts';
 import { ScriptConfig } from '@ckb-lumos/config-manager';
