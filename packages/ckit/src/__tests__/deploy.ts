@@ -14,6 +14,7 @@ import {
   generateSecp256k1Blake160Address,
 } from '@ckb-lumos/helpers';
 import { CkitConfigKeys } from '@ckitjs/ckit';
+import { debug } from '@ckitjs/utils';
 import { predefined } from '../predefined';
 import { CkitConfig, CkitProvider } from '../providers';
 import { bytesToHex, nonNullable } from '../utils';
@@ -137,6 +138,10 @@ export async function upgradeScriptWithTypeId(
       dep_type: secp256k1Config.DEP_TYPE,
     });
   });
+
+  for (let index = 0; index < txSkeleton.get('inputs').size; index++) {
+    debug('upgradeScriptWithTypeId tx skelenton inputs are %o', txSkeleton.get('inputs').get(index)?.out_point);
+  }
 
   const txHash = await signAndSendTransaction(provider, txSkeleton, privateKey);
 

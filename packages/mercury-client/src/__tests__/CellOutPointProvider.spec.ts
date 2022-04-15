@@ -1,7 +1,7 @@
 import { OutPoint } from '@ckb-lumos/base';
 import { ProviderConfig } from '@ckitjs/base';
 
-import { StaticFutureOutPointProvider } from '../CellOutPointProvider';
+import { LatestOutPointProvider, StaticFutureOutPointProvider } from '../CellOutPointProvider';
 
 const config = {
   lumosConfig: {
@@ -39,7 +39,7 @@ const config = {
         CODE_HASH: '0xb91e81f5f817e901c4a3bca9e108417dbcc2e34ebf720d24327a1a97a3e22ad8',
         HASH_TYPE: 'type',
         TX_HASH: '0x4af8a7cb36cf8f3665ecc03e8c1da8dcc975a782d44e0b9168ce06d98fc591c5',
-        INDEX: '0x4',
+        INDEX: '0x0',
         DEP_TYPE: 'code',
       },
       CHEQUE: {
@@ -76,30 +76,31 @@ const config = {
     MIN_FEE_RATE: '0x3e8',
   },
 };
-test('test the dummy wallet', async () => {
+test('should StaticFutureOutPointProvider work fine', async () => {
   const staticFutureOutPointProvider = new StaticFutureOutPointProvider(config.lumosConfig as ProviderConfig);
-  const mockRpc = jest.fn();
-  mockRpc.mockReturnValue({
-    cell: {
-      data: null,
-      output: {
-        capacity: '0x984a47d2d00',
-        lock: {
-          args: '0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7',
-          code_hash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
-          hash_type: 'type',
+  const mockRpcGetLiveCell = jest.fn();
+  mockRpcGetLiveCell.mockReturnValue({
+    cell: null,
+    status: 'unkown',
+  });
+  const mockRpcGetTx = jest.fn();
+  mockRpcGetTx.mockReturnValue({
+    transaction: {
+      outputs: [
+        {
+          type: {
+            args: '0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7',
+            code_hash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
+            hash_type: 'type',
+          },
         },
-        type: {
-          args: '0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7',
-          code_hash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
-          hash_type: 'type',
-        },
-      },
+      ],
     },
-    status: 'dead',
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  staticFutureOutPointProvider.rpc.get_live_cell = mockRpc as any;
+  staticFutureOutPointProvider.rpc.get_live_cell = mockRpcGetLiveCell as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  staticFutureOutPointProvider.rpc.get_transaction = mockRpcGetTx as any;
   const originalOutPoint: OutPoint = {
     tx_hash: config.lumosConfig.SCRIPTS.RC_LOCK.TX_HASH,
     index: config.lumosConfig.SCRIPTS.RC_LOCK.INDEX,
@@ -107,4 +108,48 @@ test('test the dummy wallet', async () => {
   const newOutPoint = await staticFutureOutPointProvider.getOutPointByOriginalOutPoint(originalOutPoint);
 
   expect(newOutPoint).toStrictEqual({ index: '0x1', tx_hash: 'FUTURE_RC_LOCK_TX_HASH' });
+});
+
+test('should LatestOutPointProvider work fine', async () => {
+  const latestFutureOutPointProvider = new LatestOutPointProvider(config.lumosConfig as ProviderConfig);
+  const mockMercuryGetCell = jest.fn();
+  mockMercuryGetCell.mockReturnValue({
+    objects: [
+      {
+        out_point: { index: '0x2', tx_hash: 'LATEST_RC_LOCK_TX_HASH' },
+      },
+    ],
+  });
+  const mockRpcGetLiveCell = jest.fn();
+  mockRpcGetLiveCell.mockReturnValue({
+    cell: null,
+    status: 'unkown',
+  });
+  const mockRpcGetTx = jest.fn();
+  mockRpcGetTx.mockReturnValue({
+    transaction: {
+      outputs: [
+        {
+          type: {
+            args: '0xc8328aabcd9b9e8e64fbc566c4385c3bdeb219d7',
+            code_hash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
+            hash_type: 'type',
+          },
+        },
+      ],
+    },
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  latestFutureOutPointProvider.mercuryClient.get_cells = mockMercuryGetCell as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  latestFutureOutPointProvider.rpc.get_live_cell = mockRpcGetLiveCell as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  latestFutureOutPointProvider.rpc.get_transaction = mockRpcGetTx as any;
+  const originalOutPoint: OutPoint = {
+    tx_hash: config.lumosConfig.SCRIPTS.RC_LOCK.TX_HASH,
+    index: config.lumosConfig.SCRIPTS.RC_LOCK.INDEX,
+  };
+  const newOutPoint = await latestFutureOutPointProvider.getOutPointByOriginalOutPoint(originalOutPoint);
+
+  expect(newOutPoint).toStrictEqual({ index: '0x2', tx_hash: 'LATEST_RC_LOCK_TX_HASH' });
 });

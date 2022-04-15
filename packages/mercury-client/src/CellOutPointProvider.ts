@@ -52,8 +52,10 @@ export class StaticFutureOutPointProvider extends BaseCellOutPointProvider {
     if (depCellStatus.status === 'live') {
       return originalOutPoint;
     }
-    const type = depCellStatus.cell?.output.type;
-    if (!type) return undefined;
+
+    const liveCellTx = await this.rpc.get_transaction(originalOutPoint.tx_hash);
+    const type = liveCellTx?.transaction.outputs[Number(originalOutPoint.index)]?.type;
+    if (type === undefined) return undefined;
 
     const futureScripts = this.config.FUTURE_SCRIPTS;
     if (!futureScripts) return undefined;
