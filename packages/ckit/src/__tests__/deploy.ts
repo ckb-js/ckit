@@ -141,13 +141,6 @@ export async function upgradeScriptWithTypeId(
     return new PureCkbCellProvider(provider.mercuryUrl, provider.rpcUrl);
   });
 
-  for (let index = 0; index < txSkeleton.inputs.size; index++) {
-    debug('upgradeScriptWithTypeId before completeTx', txSkeleton.inputs.get(index));
-  }
-  txSkeleton = await completeTxWithOutPayFee(txSkeleton, fromAddress);
-  for (let index = 0; index < txSkeleton.inputs.size; index++) {
-    debug('upgradeScriptWithTypeId after completeTx', txSkeleton.inputs.get(index));
-  }
   txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
     return cellDeps.clear();
   });
