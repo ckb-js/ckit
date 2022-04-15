@@ -343,8 +343,7 @@ test('test serialize and deserialized', async () => {
   const serialized = builder.serialize(unsigned);
   const deserialized = TransferCkbBuilder.serde.deserialize(serialized);
 
-  const txHash = await provider.sendTransaction(await genesisSigner.seal(deserialized));
-
+  const txHash = await provider.sendTxUntilCommitted(await genesisSigner.seal(deserialized));
   expect(txHash).toBeTruthy();
 });
 
