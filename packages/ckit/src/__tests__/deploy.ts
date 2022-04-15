@@ -144,7 +144,7 @@ export async function upgradeScriptWithTypeId(
   for (let index = 0; index < txSkeleton.inputs.size; index++) {
     debug('upgradeScriptWithTypeId before completeTx', txSkeleton.inputs.get(index));
   }
-  txSkeleton = await completeTx(txSkeleton, fromAddress);
+  txSkeleton = await completeTxWithOutPayFee(txSkeleton, fromAddress);
   for (let index = 0; index < txSkeleton.inputs.size; index++) {
     debug('upgradeScriptWithTypeId after completeTx', txSkeleton.inputs.get(index));
   }
@@ -259,8 +259,20 @@ async function deployScripts(
     UNIPASS: predefined.Aggron.SCRIPTS.UNIPASS,
   };
 }
+async function completeTx(
+  txSkeleton: TransactionSkeletonType,
+  fromAddress: string,
+  feeRate = BigInt(10000),
+): Promise<TransactionSkeletonType> {
+  txSkeleton = await completeTxWithOutPayFee(txSkeleton, fromAddress);
+  await common.payFeeByFeeRate(txSkeleton, [fromAddress], feeRate);
+  return txSkeleton;
+}
 
-async function completeTx(txSkeleton: TransactionSkeletonType, fromAddress: string): Promise<TransactionSkeletonType> {
+async function completeTxWithOutPayFee(
+  txSkeleton: TransactionSkeletonType,
+  fromAddress: string,
+): Promise<TransactionSkeletonType> {
   const inputCapacity = txSkeleton
     .get('inputs')
     .map((c) => BigInt(c.cell_output.capacity))
@@ -270,7 +282,9 @@ async function completeTx(txSkeleton: TransactionSkeletonType, fromAddress: stri
     .map((c) => BigInt(c.cell_output.capacity))
     .reduce((a, b) => a + b, BigInt(0));
   const needCapacity = outputCapacity - inputCapacity + BigInt(10) ** BigInt(8);
-  txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined);
+  txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
+    enableDeductCapacity: false,
+  });
   return txSkeleton;
 }
 
