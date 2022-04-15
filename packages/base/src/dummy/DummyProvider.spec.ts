@@ -5,7 +5,7 @@ import { DummyProvider } from './DummyProvider';
 describe('convert between address and script', () => {
   const provider = new DummyProvider();
   beforeAll(async () => {
-    await provider.init({ MIN_FEE_RATE: '1000', PREFIX: 'ckt', SCRIPTS: {}, FUTURE_SCRIPTS: {} });
+    await provider.init({ MIN_FEE_RATE: '1000', PREFIX: 'ckt', SCRIPTS: {} });
   });
 
   const script: Script = {

@@ -67,4 +67,6 @@ export class MercuryClient {
   }
 }
 
-export * from './CellOutPointProvider';
+export { BaseCellOutPointProvider, DefaultOutPointProvider } from './CellOutPointProvider';
+export { LatestOutPointProvider } from './LatestOutPointProvider';
+export { StaticFutureOutPointProvider } from './StaticFutureOutPointProvider';

@@ -12,7 +12,7 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Cell,
 } from '@ckb-lumos/base';
-import { Config as RawLumosConfig, ScriptConfigs } from '@ckb-lumos/config-manager';
+import { Config as LumosConfig } from '@ckb-lumos/config-manager';
 
 export type ConnectStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -89,16 +89,14 @@ export interface Provider {
 export type OptionalConfig = {
   MIN_FEE_RATE: Hexadecimal;
 };
-export type LumosConfig = RawLumosConfig & {
-  FUTURE_SCRIPTS: ScriptConfigs;
-};
+
 export type ProviderConfig = LumosConfig & Partial<OptionalConfig>;
 export type InitOptions<T extends LumosConfig = LumosConfig> = Omit<T, keyof OptionalConfig> & Partial<OptionalConfig>;
 export type OutPointOpt = OutPoint | undefined;
 export type PromisableOutPointOpt = Promise<OutPointOpt> | OutPointOpt;
 
 export interface CellOutPointProvider {
-  getOutPointByOriginalOutPoint(originalOutPoint: OutPoint): PromisableOutPointOpt;
+  getScriptDep(configKey: string): PromisableOutPointOpt;
 }
 
 export { ScriptManager } from './ScriptManager';

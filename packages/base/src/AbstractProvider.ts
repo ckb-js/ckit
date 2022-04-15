@@ -54,19 +54,18 @@ export abstract class AbstractProvider implements Provider {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
 
-    const outPoint = { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX };
-    if (!this.depOutPointProvider || !this.upgradableContracts?.includes(configKey)) {
+    if (this.depOutPointProvider) {
+      const newOutPoint = await this.depOutPointProvider.getScriptDep(configKey);
+      if (!newOutPoint) return undefined;
       return {
         dep_type: scriptConfig.DEP_TYPE,
-        out_point: outPoint,
+        out_point: newOutPoint,
       };
     }
 
-    const newOutPoint = await this.depOutPointProvider.getOutPointByOriginalOutPoint(outPoint);
-    if (!newOutPoint) return undefined;
     return {
       dep_type: scriptConfig.DEP_TYPE,
-      out_point: newOutPoint,
+      out_point: { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX },
     };
   }
 
@@ -105,8 +104,8 @@ export abstract class AbstractProvider implements Provider {
       const txPoolInfo = await this.getTxPoolInfo();
 
       this._config = isMainnet
-        ? { ...predefined.LINA, MIN_FEE_RATE: txPoolInfo.min_fee_rate, FUTURE_SCRIPTS: {} }
-        : { ...predefined.AGGRON4, MIN_FEE_RATE: txPoolInfo.min_fee_rate, FUTURE_SCRIPTS: {} };
+        ? { ...predefined.LINA, MIN_FEE_RATE: txPoolInfo.min_fee_rate }
+        : { ...predefined.AGGRON4, MIN_FEE_RATE: txPoolInfo.min_fee_rate };
     }
 
     this.initialized = true;

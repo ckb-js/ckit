@@ -1,7 +1,7 @@
-import { OutPoint } from '@ckb-lumos/base';
 import { ProviderConfig } from '@ckitjs/base';
 
-import { LatestOutPointProvider, StaticFutureOutPointProvider } from '../CellOutPointProvider';
+import { LatestOutPointProvider } from '../LatestOutPointProvider';
+import { StaticFutureOutPointProvider } from '../StaticFutureOutPointProvider';
 
 const config = {
   lumosConfig: {
@@ -64,15 +64,6 @@ const config = {
         HASH_TYPE: 'type',
       },
     },
-    FUTURE_SCRIPTS: {
-      RC_LOCK: {
-        CODE_HASH: '0xb91e81f5f817e901c4a3bca9e108417dbcc2e34ebf720d24327a1a97a3e22ad8',
-        HASH_TYPE: 'type',
-        TX_HASH: 'FUTURE_RC_LOCK_TX_HASH',
-        INDEX: '0x1',
-        DEP_TYPE: 'code',
-      },
-    },
     MIN_FEE_RATE: '0x3e8',
   },
 };
@@ -101,13 +92,10 @@ test('should StaticFutureOutPointProvider work fine', async () => {
   staticFutureOutPointProvider.rpc.get_live_cell = mockRpcGetLiveCell as any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   staticFutureOutPointProvider.rpc.get_transaction = mockRpcGetTx as any;
-  const originalOutPoint: OutPoint = {
-    tx_hash: config.lumosConfig.SCRIPTS.RC_LOCK.TX_HASH,
-    index: config.lumosConfig.SCRIPTS.RC_LOCK.INDEX,
-  };
-  const newOutPoint = await staticFutureOutPointProvider.getOutPointByOriginalOutPoint(originalOutPoint);
 
-  expect(newOutPoint).toStrictEqual({ index: '0x1', tx_hash: 'FUTURE_RC_LOCK_TX_HASH' });
+  const depOutPoint = await staticFutureOutPointProvider.getScriptDep('RC_LOCK');
+
+  expect(depOutPoint).toStrictEqual({ index: '0x1', tx_hash: 'FUTURE_RC_LOCK_TX_HASH' });
 });
 
 test('should LatestOutPointProvider work fine', async () => {
@@ -145,11 +133,7 @@ test('should LatestOutPointProvider work fine', async () => {
   latestFutureOutPointProvider.rpc.get_live_cell = mockRpcGetLiveCell as any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   latestFutureOutPointProvider.rpc.get_transaction = mockRpcGetTx as any;
-  const originalOutPoint: OutPoint = {
-    tx_hash: config.lumosConfig.SCRIPTS.RC_LOCK.TX_HASH,
-    index: config.lumosConfig.SCRIPTS.RC_LOCK.INDEX,
-  };
-  const newOutPoint = await latestFutureOutPointProvider.getOutPointByOriginalOutPoint(originalOutPoint);
+  const depOutPoint = await latestFutureOutPointProvider.getScriptDep('RC_LOCK');
 
-  expect(newOutPoint).toStrictEqual({ index: '0x2', tx_hash: 'LATEST_RC_LOCK_TX_HASH' });
+  expect(depOutPoint).toStrictEqual({ index: '0x2', tx_hash: 'LATEST_RC_LOCK_TX_HASH' });
 });
