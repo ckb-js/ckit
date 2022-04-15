@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { Cell, CellProvider, Script, utils } from '@ckb-lumos/base';
-import { Indexer } from '@ckb-lumos/ckb-indexer';
+import { Cell, CellProvider, Script, utils, CellCollector, QueryOptions, Indexer } from '@ckb-lumos/base';
+import { Indexer as CkbIndexer } from '@ckb-lumos/ckb-indexer';
 import { common, deploy } from '@ckb-lumos/common-scripts';
 import { ScriptConfig } from '@ckb-lumos/config-manager';
 import { key } from '@ckb-lumos/hd';
@@ -55,7 +55,7 @@ export async function deployWithTypeId(
   const secp256k1Config = await loadSecp256k1ScriptDep(provider);
   const fromAddress = generateSecp256k1Blake160Address(key.privateKeyToBlake160(privateKey));
   const fromLockscript = parseAddress(fromAddress);
-  const indexer = new Indexer(provider.mercuryUrl, provider.rpcUrl);
+  const indexer = new CkbIndexer(provider.mercuryUrl, provider.rpcUrl);
   const deployOptions = {
     cellProvider: indexer as CellProvider,
     scriptBinary: scriptBin,
@@ -98,6 +98,16 @@ export async function deployWithTypeId(
     CODE_HASH: utils.computeScriptHash(deployment.typeId),
   };
 }
+
+class PureCkbCellProvider implements CellProvider {
+  readonly indexer;
+  constructor(indexerUrl: string, rpcUrl: string) {
+    this.indexer = new CkbIndexer(indexerUrl, rpcUrl);
+  }
+  collector(queryOptions: QueryOptions): CellCollector {
+    return this.indexer.collector({ ...queryOptions, outputDataLenRange: ['0x0', '0x1'] });
+  }
+}
 export async function upgradeScriptWithTypeId(
   provider: CkitProvider,
   scriptBin: Buffer,
@@ -107,9 +117,9 @@ export async function upgradeScriptWithTypeId(
   const secp256k1Config = await loadSecp256k1ScriptDep(provider);
   const fromAddress = generateSecp256k1Blake160Address(key.privateKeyToBlake160(privateKey));
   const fromLockscript = parseAddress(fromAddress);
-  const indexer = new Indexer(provider.mercuryUrl, provider.rpcUrl);
+  const indexer = new CkbIndexer(provider.mercuryUrl, provider.rpcUrl);
   const deployOptions = {
-    cellProvider: indexer as CellProvider,
+    cellProvider: indexer,
     scriptBinary: scriptBin,
     fromInfo: fromAddress,
     typeId,
@@ -127,6 +137,7 @@ export async function upgradeScriptWithTypeId(
   output.cell_output.capacity = `0x${cellCapacity.toString(16)}`;
   let txSkeleton = deployment.txSkeleton;
 
+  txSkeleton.set('cellProvider', new PureCkbCellProvider(provider.mercuryUrl, provider.rpcUrl) as CellProvider);
   txSkeleton = await completeTx(txSkeleton, fromAddress);
 
   txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
