@@ -318,9 +318,7 @@ export async function upgradeScript(
   } else {
     const liveCellTx = await provider.rpc.get_transaction(scriptConfig.TX_HASH);
     if (liveCellTx === null) throw new Error("Upgrade fail, Can't get transaction of the original script");
-    const typeIdCell = liveCellTx.transaction.outputs[Number(scriptConfig.INDEX)];
-    if (typeIdCell === undefined) throw new Error("Upgrade fail, Can't get typeIdCell of the original script");
-    const typeId = typeIdCell.type;
+    const typeId = liveCellTx.transaction.outputs[Number(scriptConfig.INDEX)]?.type;
     if (typeId === undefined) throw new Error("Upgrade fail, Can't get typeId of the original script");
     return await upgradeScriptWithTypeId(provider, scriptBin, ckbPrivateKey, typeId);
   }
