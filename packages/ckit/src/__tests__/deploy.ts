@@ -137,7 +137,9 @@ export async function upgradeScriptWithTypeId(
   output.cell_output.capacity = `0x${cellCapacity.toString(16)}`;
   let txSkeleton = deployment.txSkeleton;
 
-  txSkeleton.set('cellProvider', new PureCkbCellProvider(provider.mercuryUrl, provider.rpcUrl) as CellProvider);
+  txSkeleton.update('cellProvider', (_) => {
+    return new PureCkbCellProvider(provider.mercuryUrl, provider.rpcUrl);
+  });
   txSkeleton = await completeTx(txSkeleton, fromAddress);
 
   txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
