@@ -140,8 +140,14 @@ export async function upgradeScriptWithTypeId(
   txSkeleton.update('cellProvider', (_) => {
     return new PureCkbCellProvider(provider.mercuryUrl, provider.rpcUrl);
   });
-  txSkeleton = await completeTx(txSkeleton, fromAddress);
 
+  for (let index = 0; index < txSkeleton.inputs.size; index++) {
+    debug('upgradeScriptWithTypeId before completeTx', txSkeleton.inputs.get(index));
+  }
+  txSkeleton = await completeTx(txSkeleton, fromAddress);
+  for (let index = 0; index < txSkeleton.inputs.size; index++) {
+    debug('upgradeScriptWithTypeId after completeTx', txSkeleton.inputs.get(index));
+  }
   txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => {
     return cellDeps.clear();
   });
@@ -254,11 +260,7 @@ async function deployScripts(
   };
 }
 
-async function completeTx(
-  txSkeleton: TransactionSkeletonType,
-  fromAddress: string,
-  feeRate = BigInt(10000),
-): Promise<TransactionSkeletonType> {
+async function completeTx(txSkeleton: TransactionSkeletonType, fromAddress: string): Promise<TransactionSkeletonType> {
   const inputCapacity = txSkeleton
     .get('inputs')
     .map((c) => BigInt(c.cell_output.capacity))
@@ -268,10 +270,7 @@ async function completeTx(
     .map((c) => BigInt(c.cell_output.capacity))
     .reduce((a, b) => a + b, BigInt(0));
   const needCapacity = outputCapacity - inputCapacity + BigInt(10) ** BigInt(8);
-  txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined, {
-    enableDeductCapacity: false,
-  });
-  txSkeleton = await common.payFeeByFeeRate(txSkeleton, [fromAddress], feeRate);
+  txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], needCapacity, undefined, undefined);
   return txSkeleton;
 }
 
