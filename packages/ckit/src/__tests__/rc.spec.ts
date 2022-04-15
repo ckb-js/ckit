@@ -64,23 +64,31 @@ test('should upgraded rc lock pass', async () => {
 
   const recipient = provider.generateAcpSigner();
 
-  await provider.sendTxUntilCommitted(
-    await rcSigner.seal(
-      await new TransferCkbBuilder(
-        {
-          recipients: [
-            {
-              recipient: await recipient.getAddress(),
-              capacityPolicy: 'createCell',
-              amount: CkbAmount.fromCkb(100).toHex(),
-            },
-          ],
-        },
-        provider,
-        await rcSigner.getAddress(),
-      ).build(),
-    ),
+  const tx = await rcSigner.seal(
+    await new TransferCkbBuilder(
+      {
+        recipients: [
+          {
+            recipient: await recipient.getAddress(),
+            capacityPolicy: 'createCell',
+            amount: CkbAmount.fromCkb(100).toHex(),
+          },
+        ],
+      },
+      provider,
+      await rcSigner.getAddress(),
+    ).build(),
   );
+
+  const cellDeps = tx.cell_deps;
+  const oldRcLockOutPointFound = cellDeps.findIndex((cellDep) => {
+    cellDep.out_point.tx_hash === provider.config.SCRIPTS.RC_LOCK.TX_HASH &&
+      cellDep.out_point.index === provider.config.SCRIPTS.RC_LOCK.INDEX;
+  });
+  // new rc lock is deployed, so the dead script should be absent in cell deps
+  expect(oldRcLockOutPointFound).toBe(-1);
+
+  await provider.sendTxUntilCommitted(tx);
 
   const received = await provider.getCkbLiveCellsBalance(await recipient.getAddress());
   expect(CkbAmount.fromShannon(received).eq(CkbAmount.fromCkb(100))).toBe(true);
