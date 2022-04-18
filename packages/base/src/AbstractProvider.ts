@@ -14,12 +14,11 @@ import {
 import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { generateTypeIdScript } from './typeid';
-import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint, CellOutPointProvider } from './';
+import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint } from './';
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
   private _config: ProviderConfig | undefined;
-  abstract depOutPointProvider: CellOutPointProvider | undefined;
 
   get config(): ProviderConfig {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');
@@ -52,15 +51,6 @@ export abstract class AbstractProvider implements Provider {
   async getCellDep(configKey: string): Promise<CellDep | undefined> {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
-
-    if (this.depOutPointProvider) {
-      const newOutPoint = await this.depOutPointProvider.getScriptDep(configKey);
-      if (!newOutPoint) return undefined;
-      return {
-        dep_type: scriptConfig.DEP_TYPE,
-        out_point: newOutPoint,
-      };
-    }
 
     return {
       dep_type: scriptConfig.DEP_TYPE,

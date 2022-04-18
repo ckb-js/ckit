@@ -46,9 +46,22 @@ export class MercuryProvider extends AbstractProvider {
   }
 
   override async getCellDep(configKey: string): Promise<CellDep> {
-    const dep = await super.getCellDep(configKey);
-    if (!dep) throw new Error('No cell dep found');
-    return dep;
+    const scriptConfig = this.getScriptConfig(configKey);
+    if (!scriptConfig) throw new Error('No scriptConfig found');
+
+    if (this.depOutPointProvider) {
+      const newOutPoint = await this.depOutPointProvider.getScriptDep(configKey);
+      if (!newOutPoint) throw new Error('No cell dep found');
+      return {
+        dep_type: scriptConfig.DEP_TYPE,
+        out_point: newOutPoint,
+      };
+    }
+
+    return {
+      dep_type: scriptConfig.DEP_TYPE,
+      out_point: { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX },
+    };
   }
 
   override init(config: ProviderConfig): Promise<void> {
