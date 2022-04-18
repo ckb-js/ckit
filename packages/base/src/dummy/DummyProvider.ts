@@ -1,16 +1,9 @@
 import { Cell, ChainInfo, Hash, TxPoolInfo } from '@ckb-lumos/base';
 import { unimplemented } from '@ckitjs/utils';
-import { CellOutPointProvider, ResolvedOutpoint } from '..';
+import { ResolvedOutpoint } from '..';
 import { AbstractProvider } from '../AbstractProvider';
 
 export class DummyProvider extends AbstractProvider {
-  depOutPointProvider: CellOutPointProvider;
-
-  constructor() {
-    super();
-    this.depOutPointProvider = null as unknown as CellOutPointProvider;
-  }
-
   collectCkbLiveCells(): Promise<ResolvedOutpoint[]> {
     unimplemented();
   }
