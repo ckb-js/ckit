@@ -1,4 +1,5 @@
 import { Address, Script } from '@ckb-lumos/base';
+import { ScriptConfig } from '@ckb-lumos/config-manager';
 import { SerializeRcLockWitnessLock } from '@ckitjs/rc-lock';
 import { Builder, Cell, CellDep, WitnessArgs } from '@lay2/pw-core';
 import { Reader } from 'ckb-js-toolkit';
@@ -11,6 +12,10 @@ import { getCellDeps } from '../unipass/config';
 export abstract class AbstractPwSenderBuilder extends Builder {
   protected constructor(protected readonly provider: CkitProvider) {
     super(Number(provider.config.MIN_FEE_RATE));
+  }
+
+  setScriptConfigByKey(configKey: string, config: ScriptConfig): void {
+    this.provider.setScriptConfigByKey(configKey, config);
   }
 
   protected getCellDepByKey(key: CkitConfigKeys): CellDep[] {

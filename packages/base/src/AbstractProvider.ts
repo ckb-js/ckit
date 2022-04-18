@@ -32,8 +32,9 @@ export abstract class AbstractProvider implements Provider {
     return this._config;
   }
 
-  setConfig(config: ProviderConfig): void {
-    this._config = config;
+  setScriptConfigByKey(configKey: string, config: ScriptConfig): void {
+    const originalScriptConfig = this.config.SCRIPTS;
+    this._config = { ...this.config, SCRIPTS: { ...originalScriptConfig, [configKey]: config } };
   }
 
   getScriptConfig(key: string): ScriptConfig | undefined {
