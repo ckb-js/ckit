@@ -343,7 +343,7 @@ test('test serialize and deserialized', async () => {
   const serialized = builder.serialize(unsigned);
   const deserialized = TransferCkbBuilder.serde.deserialize(serialized);
 
-  const txHash = await provider.sendTransaction(await genesisSigner.seal(deserialized));
+  const txHash = await provider.sendTxUntilCommitted(await genesisSigner.seal(deserialized));
 
   expect(txHash).toBeTruthy();
 });
@@ -396,7 +396,7 @@ test('test find_acp_transfer_sudt with extra capacity supply', async () => {
   ];
 
   const unsigned = await new MintSudtBuilder({ recipients }, provider, await issuerSigner.getAddress()).build();
-  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned));
+  const mintTxHash = await provider.rpc.send_transaction(await issuerSigner.seal(unsigned), 'passthrough');
   const mintTx = await provider.waitForTransactionCommitted(mintTxHash);
 
   expect(mintTx != null).toBe(true);
