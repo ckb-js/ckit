@@ -52,7 +52,7 @@ test('test rc signer', async () => {
 test('should upgraded rc lock pass', async () => {
   const provider = new TestProvider();
   await provider.init();
-  const upgradeDeployment = await provider.upgradeScript('rc_lock_new', 'RC_LOCK');
+  const upgradeDeployment = await provider.upgradeScript('rc_lock_ddaeae8', 'RC_LOCK');
   await provider.waitForTransactionCommitted(upgradeDeployment.TX_HASH);
 
   const rcSigner = new RCLockSigner(randomHexString(64), provider);
