@@ -1,4 +1,4 @@
-import { Address, Cell, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
+import { Address, Cell, CellDep, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
 import { AbstractProvider, CellOutPointProvider, CkbTypeScript, ProviderConfig, ResolvedOutpoint } from '@ckitjs/base';
 import { MercuryClient, SearchKey, LatestOutPointProvider } from '@ckitjs/mercury-client';
@@ -43,6 +43,12 @@ export class MercuryProvider extends AbstractProvider {
     this.mercury = new MercuryClient(mercuryRpc);
     this.rpcUrl = ckbRpc;
     this.rpc = new RPC(ckbRpc);
+  }
+
+  override async getCellDep(configKey: string): Promise<CellDep> {
+    const dep = await super.getCellDep(configKey);
+    if (!dep) throw new Error('No cell dep found');
+    return dep;
   }
 
   override init(config: ProviderConfig): Promise<void> {
