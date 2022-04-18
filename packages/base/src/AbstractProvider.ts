@@ -20,7 +20,6 @@ export abstract class AbstractProvider implements Provider {
   private initialized = false;
   private _config: ProviderConfig | undefined;
   abstract depOutPointProvider: CellOutPointProvider | undefined;
-  abstract upgradableContracts: Array<string> | undefined;
 
   get config(): ProviderConfig {
     if (!this._config) throw new Error('Cannot find the config, maybe provider is not initialied');

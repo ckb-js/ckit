@@ -5,12 +5,10 @@ import { AbstractProvider } from '../AbstractProvider';
 
 export class DummyProvider extends AbstractProvider {
   depOutPointProvider: CellOutPointProvider;
-  upgradableContracts: string[];
 
   constructor() {
     super();
     this.depOutPointProvider = null as unknown as CellOutPointProvider;
-    this.upgradableContracts = [''];
   }
 
   collectCkbLiveCells(): Promise<ResolvedOutpoint[]> {

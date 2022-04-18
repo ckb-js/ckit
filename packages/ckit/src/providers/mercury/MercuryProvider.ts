@@ -32,7 +32,6 @@ interface BatchRequest {
 
 export class MercuryProvider extends AbstractProvider {
   depOutPointProvider: CellOutPointProvider | undefined;
-  upgradableContracts: Array<string> | undefined;
   readonly mercuryUrl: string;
   readonly mercury: MercuryClient;
   readonly rpc: RPC;
@@ -48,7 +47,6 @@ export class MercuryProvider extends AbstractProvider {
 
   override init(config: ProviderConfig): Promise<void> {
     this.depOutPointProvider = new LatestOutPointProvider(config, this.rpcUrl, this.mercuryUrl);
-    this.upgradableContracts = ['RC_LOCK'];
     return super.init(config);
   }
 
