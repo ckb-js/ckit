@@ -180,7 +180,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       new RawTransaction(
         senderSudtInputCells.concat(recipientSudtInputCells),
         senderSudtOutputCells.concat(recipientSudtOutputCells).concat(recipientCreateOutputCells),
-        this.getCellDepsByCells(
+        await this.getCellDepsByCells(
           senderSudtInputCells.concat(recipientSudtInputCells),
           senderSudtOutputCells.concat(recipientSudtOutputCells),
         ),
@@ -230,7 +230,7 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
       .concat(recipientCreateOutputCells)
       .concat([capacityChangeCell]);
     const txWithSupplyCapacity = new Transaction(
-      new RawTransaction(inputCells, outputs, this.getCellDepsByCells(inputCells, outputs)),
+      new RawTransaction(inputCells, outputs, await this.getCellDepsByCells(inputCells, outputs)),
       senderSudtInputCells.map(() => this.getWitnessPlaceholder(this.sender)),
     );
     const fee = Builder.calcFee(txWithSupplyCapacity, Number(this.provider.config.MIN_FEE_RATE));

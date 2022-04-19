@@ -1488,6 +1488,18 @@
   dependencies:
     jsbi "^4.1.0"
 
+"@ckb-lumos/ckb-indexer@^0.17.0-rc9":
+  version "0.17.0-rc9"
+  resolved "https://registry.yarnpkg.com/@ckb-lumos/ckb-indexer/-/ckb-indexer-0.17.0-rc9.tgz#9020642baaf0150fb0955c249c7192f1d50b4971"
+  integrity sha512-bVGqiblprtm4/5x2Crlzz2eNXSE8ISz2M/JkWH7Fyg6OtT7T0eqSWasyB7Gv8aXH1GRV0CrVXFAtl4AknShT1Q==
+  dependencies:
+    "@ckb-lumos/base" "0.17.0-rc9"
+    "@ckb-lumos/bi" "^0.17.0-rc8"
+    "@ckb-lumos/rpc" "0.17.0-rc9"
+    "@ckb-lumos/toolkit" "0.17.0-rc9"
+    cross-fetch "^3.1.4"
+    events "^3.3.0"
+
 "@ckb-lumos/common-scripts@^0.17.0-rc9":
   version "0.17.0-rc9"
   resolved "https://registry.yarnpkg.com/@ckb-lumos/common-scripts/-/common-scripts-0.17.0-rc9.tgz#d30ccc02fa37c66fd2e60aa85e42020604628ad0"
@@ -7507,7 +7519,7 @@ eventemitter3@^4.0.0, eventemitter3@^4.0.4, eventemitter3@^4.0.7:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
 
-events@^3.0.0:
+events@^3.0.0, events@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
   integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==

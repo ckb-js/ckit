@@ -4,7 +4,6 @@ import {
   CellDep,
   ChainInfo,
   Hash,
-  Hexadecimal,
   HexNumber,
   HexString,
   Input,
@@ -12,16 +11,10 @@ import {
   Transaction,
   TxPoolInfo,
 } from '@ckb-lumos/base';
-import { Config as LumosConfig, predefined, ScriptConfig } from '@ckb-lumos/config-manager';
+import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { encodeToAddress, generateAddress, parseAddress } from '@ckb-lumos/helpers';
 import { generateTypeIdScript } from './typeid';
-import { Provider, ResolvedOutpoint } from './';
-
-type OptionalConfig = {
-  MIN_FEE_RATE: Hexadecimal;
-};
-export type ProviderConfig = LumosConfig & OptionalConfig;
-export type InitOptions<T extends LumosConfig = LumosConfig> = Omit<T, keyof OptionalConfig> & Partial<OptionalConfig>;
+import { Provider, ProviderConfig, InitOptions, ResolvedOutpoint } from './';
 
 export abstract class AbstractProvider implements Provider {
   private initialized = false;
@@ -55,7 +48,7 @@ export abstract class AbstractProvider implements Provider {
     return generateTypeIdScript(input, outputIndex);
   }
 
-  getCellDep(configKey: string): CellDep | undefined {
+  async getCellDep(configKey: string): Promise<CellDep | undefined> {
     const scriptConfig = this.getScriptConfig(configKey);
     if (!scriptConfig) return undefined;
 

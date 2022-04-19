@@ -1,7 +1,7 @@
-import { Address, Cell, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
+import { Address, Cell, CellDep, ChainInfo, Hash, HexNumber, Script, Transaction, TxPoolInfo } from '@ckb-lumos/base';
 import { RPC } from '@ckb-lumos/rpc';
-import { AbstractProvider, CkbTypeScript, ResolvedOutpoint } from '@ckitjs/base';
-import { MercuryClient, SearchKey } from '@ckitjs/mercury-client';
+import { AbstractProvider, CellOutPointProvider, CkbTypeScript, ProviderConfig, ResolvedOutpoint } from '@ckitjs/base';
+import { MercuryClient, SearchKey, LatestOutPointProvider } from '@ckitjs/mercury-client';
 import { toBigUInt128LE } from '@lay2/pw-core';
 import { BigNumber } from 'bignumber.js';
 import fetch from 'isomorphic-fetch';
@@ -31,16 +31,42 @@ interface BatchRequest {
 }
 
 export class MercuryProvider extends AbstractProvider {
+  depOutPointProvider: CellOutPointProvider | undefined;
+  readonly mercuryUrl: string;
   readonly mercury: MercuryClient;
   readonly rpc: RPC;
   readonly rpcUrl: string;
 
   constructor(mercuryRpc = 'http://127.0.0.1:8116', ckbRpc = 'http://127.0.0.1:8114') {
     super();
-
+    this.mercuryUrl = mercuryRpc;
     this.mercury = new MercuryClient(mercuryRpc);
-    this.rpc = new RPC(ckbRpc);
     this.rpcUrl = ckbRpc;
+    this.rpc = new RPC(ckbRpc);
+  }
+
+  override async getCellDep(configKey: string): Promise<CellDep> {
+    const scriptConfig = this.getScriptConfig(configKey);
+    if (!scriptConfig) throw new Error('No scriptConfig found');
+
+    if (this.depOutPointProvider) {
+      const newOutPoint = await this.depOutPointProvider.getScriptDep(configKey);
+      if (!newOutPoint) throw new Error('No cell dep found');
+      return {
+        dep_type: scriptConfig.DEP_TYPE,
+        out_point: newOutPoint,
+      };
+    }
+
+    return {
+      dep_type: scriptConfig.DEP_TYPE,
+      out_point: { tx_hash: scriptConfig.TX_HASH, index: scriptConfig.INDEX },
+    };
+  }
+
+  override init(config: ProviderConfig): Promise<void> {
+    this.depOutPointProvider = new LatestOutPointProvider(config, this.rpcUrl, this.mercuryUrl);
+    return super.init(config);
   }
 
   async batchRequestCkb<T>(request: BatchRequest[]): Promise<T[]> {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { Address, Hash, HexNumber, HexString, Script, Transaction } from '@ckb-lumos/base';
-import { predefined } from '@ckb-lumos/config-manager';
+import { predefined, ScriptConfig } from '@ckb-lumos/config-manager';
 import { EntrySigner } from '@ckitjs/base';
 import { TippyClient } from '@ckitjs/tippy-client';
 import { createDebugger, debug } from '@ckitjs/utils';
@@ -9,7 +9,7 @@ import { CkitConfig, CkitConfigKeys, CkitProvider } from '../providers';
 import { AbstractTransactionBuilder, MintOptions, MintSudtBuilder, TransferCkbBuilder } from '../tx-builders';
 import { nonNullable, randomHexString } from '../utils';
 import { Secp256k1Signer } from '../wallets/Secp256k1Wallet';
-import { deployCkbScripts } from './deploy';
+import { deployCkbScripts, upgradeScript } from './deploy';
 
 export class TestProvider extends CkitProvider {
   public readonly debug = createDebugger('ckit-test');
@@ -47,6 +47,17 @@ export class TestProvider extends CkitProvider {
     return new Secp256k1Signer(nonNullable(this.testPrivateKeys[index]), this, this.newScript('SECP256K1_BLAKE160'));
   }
 
+  async upgradeScript(scriptPath: string, scriptConfigName: CkitConfigKeys): Promise<ScriptConfig> {
+    const deployment = await upgradeScript(
+      appRootPath.resolve(`/deps/build/${scriptPath}`),
+      scriptConfigName,
+      this,
+      this.#_assemberPrivateKey,
+    );
+    debug('scripts are deploying via %s', deployment);
+    return deployment;
+  }
+
   private async deployDeps(): Promise<CkitConfig> {
     if (this.setupStatus === 'pending' || this.setupStatus === 'fulfilled') throw new Error('is deploying');
 
@@ -60,7 +71,10 @@ export class TestProvider extends CkitProvider {
       debug('read scripts info from cache %o', lumosConfig);
       return lumosConfig;
     } else {
-      fs.mkdirSync(appRootPath.resolve('/tmp'));
+      const tmpDir = appRootPath.resolve('/tmp');
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir);
+      }
     }
 
     debug('scripts are deploying via %s', this.assemberPrivateKey);

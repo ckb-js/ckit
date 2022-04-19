@@ -66,3 +66,7 @@ export class MercuryClient {
     return this.client.request({ method: 'get_transactions', params: [] });
   }
 }
+
+export { BaseCellOutPointProvider, DefaultOutPointProvider } from './CellOutPointProvider';
+export { LatestOutPointProvider } from './LatestOutPointProvider';
+export { StaticFutureOutPointProvider } from './StaticFutureOutPointProvider';
