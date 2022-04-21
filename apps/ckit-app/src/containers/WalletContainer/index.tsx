@@ -5,7 +5,12 @@ import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
 import { CkitProviderContainer } from '../CkitProviderContainer';
-import { ObservableAcpPwLockWallet, ObservableNonAcpPwLockWallet, ObservableUnipassWallet } from 'wallets';
+import {
+  ObservableAcpPwLockWallet,
+  ObservableNonAcpPwLockWallet,
+  ObservableUnipassWallet,
+  ObservableOmnilockWallet,
+} from 'wallets';
 
 export interface WalletConnectError {
   error: Error;
@@ -37,6 +42,7 @@ function useWallet() {
         new ObservableUnipassWallet(ckitProvider),
         new ObservableNonAcpPwLockWallet(ckitProvider),
         new ObservableAcpPwLockWallet(ckitProvider),
+        new ObservableOmnilockWallet(ckitProvider),
       );
       wallets.find((value) => value.descriptor.name === currentWalletName)?.connect();
     });
