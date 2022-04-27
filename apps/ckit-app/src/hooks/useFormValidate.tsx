@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useProvider } from 'containers';
 import { AssetAmount } from 'utils';
 import { toBuffer } from '@ckitjs/easy-byte';
-import { RcLockFlag } from '@ckitjs/rc-lock';
+import { RcLockFlag, RcIdentityLockArgs } from '@ckitjs/rc-lock';
 
 interface ValidationHelper {
   validateCkbAddress: (value: Address) => string | undefined;
@@ -42,9 +42,9 @@ export function useFormValidate(): ValidationHelper {
   );
 
   const checkRcLockFlag = (args: string, flag: RcLockFlag) => {
-    const checkedByte = toBuffer(args)[21];
+    const argsBytes = toBuffer(args);
 
-    return (checkedByte >> (flag - 1)) & 1;
+    return !!(RcIdentityLockArgs.decode(argsBytes).rc_lock_flag & flag);
   };
 
   const validateACPAddress = useCallback(
