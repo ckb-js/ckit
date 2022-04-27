@@ -1,6 +1,6 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
 import { CkbTypeScript } from '@ckitjs/base';
-import { Button, Col, Input, Modal, Row, Typography } from 'antd';
+import { Button, Col, Input, Modal, Row, Typography, Select } from 'antd';
 import { useFormik } from 'formik';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -65,11 +65,13 @@ interface ModalFormProps {
 }
 
 interface ModalFormValues {
+  policy: 'findAcp' | 'createCell';
   recipient: Address;
   amount: HexNumber;
 }
 
 interface ModalFormErrors {
+  policy?: string;
   recipient?: string;
   amount?: string;
 }
@@ -77,22 +79,24 @@ interface ModalFormErrors {
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const { visible, setVisible, assetMeta, isMint } = props;
 
-  const { validateCkbAddress, validateIssueAddress, validateTransferAddress, validateAmount } = useFormValidate();
+  const { validateCkbAddress, validateIssueAcpAddress, validateTransferAddress, validateAmount } = useFormValidate();
   const { mutateAsync: sendTransferTransaction, isLoading: isTransferLoading } = useSendTransferTx();
   const { mutateAsync: sendIssueTransaction, isLoading: isIssueLoading } = useSendIssueTx();
 
-  const initialValues: ModalFormValues = { recipient: '', amount: '' };
+  const initialValues: ModalFormValues = { policy: 'findAcp', recipient: '', amount: '' };
   const title = (isMint ? 'Mint ' : 'Send ') + assetMeta.symbol;
   const onSubmit = useCallback(
     (values: ModalFormValues) => {
       if (isMint) {
         sendIssueTransaction({
+          policy: values.policy,
           recipient: values.recipient,
           amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
           operationKind: 'issue',
         }).then(() => setVisible(false));
       } else {
         sendTransferTransaction({
+          policy: values.policy,
           recipient: values.recipient,
           amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
           script: assetMeta.script,
@@ -109,11 +113,17 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
     if (isMint) {
       // issue sudt
       if (!assetMeta.script) throw new Error('exception: issued sudt should have script');
-      const recipientError = await validateIssueAddress(values.recipient, assetMeta.script);
-      if (recipientError) errors.recipient = recipientError;
+
+      if (values.policy === 'findAcp') {
+        const recipientError = await validateIssueAcpAddress(values.recipient, assetMeta.script);
+        if (recipientError) errors.recipient = recipientError;
+      } else {
+        const recipientError = await validateCkbAddress(values.recipient);
+        if (recipientError) errors.recipient = recipientError;
+      }
     } else {
-      if (assetMeta.script) {
-        // transfer sudt
+      if (assetMeta.script && values.policy === 'findAcp') {
+        // transfer sudt & use findAcp
         const recipientError = await validateTransferAddress(values.recipient, assetMeta.script);
         if (recipientError) errors.recipient = recipientError;
       } else {
@@ -145,6 +155,28 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
   return (
     <Modal title={title} closable width={312} visible={visible} onCancel={onCancel} footer={null}>
       <div>
+        <Row justify="center" align="middle">
+          <Col span={7}>
+            <label htmlFor="policy">policy:</label>
+          </Col>
+          <Col span={16}>
+            <Select
+              style={{ width: '100%' }}
+              {...formik.getFieldProps('policy')}
+              onChange={(value) => formik.setFieldValue('policy', value)}
+            >
+              <Select.Option key="findAcp" value="findAcp">
+                findAcp
+              </Select.Option>
+              <Select.Option key="createCell" value="createCell">
+                createCell
+              </Select.Option>
+            </Select>
+          </Col>
+        </Row>
+      </div>
+
+      <div style={{ marginTop: '24px' }}>
         <Row justify="center" align="middle">
           <Col span={7}>
             <label htmlFor="recipient">recipient</label>

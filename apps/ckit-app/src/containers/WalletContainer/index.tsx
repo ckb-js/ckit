@@ -10,6 +10,7 @@ import {
   ObservableNonAcpPwLockWallet,
   ObservableUnipassWallet,
   ObservableOmnilockWallet,
+  ObservableAcpOmnilockWallet,
 } from 'wallets';
 
 export interface WalletConnectError {
@@ -40,9 +41,8 @@ function useWallet() {
       wallets.splice(0);
       wallets.push(
         new ObservableUnipassWallet(ckitProvider),
-        new ObservableNonAcpPwLockWallet(ckitProvider),
-        new ObservableAcpPwLockWallet(ckitProvider),
         new ObservableOmnilockWallet(ckitProvider),
+        new ObservableAcpOmnilockWallet(ckitProvider),
       );
       wallets.find((value) => value.descriptor.name === currentWalletName)?.connect();
     });

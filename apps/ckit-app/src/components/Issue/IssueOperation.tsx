@@ -1,5 +1,5 @@
 import { Address, HexNumber } from '@ckb-lumos/base';
-import { Button, Col, Input, Modal, Row, Typography } from 'antd';
+import { Button, Col, Input, Modal, Row, Typography, Select } from 'antd';
 import { useFormik } from 'formik';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useState } from 'react';
@@ -51,6 +51,7 @@ interface ModalFormProps {
 interface ModalFormValues {
   inviteRecipient: Address;
   issueRecipient: Address;
+  issuePolicy: 'findAcp' | 'createCell';
   amount: HexNumber;
 }
 
@@ -63,10 +64,15 @@ interface ModalFormErrors {
 export const ModalForm: React.FC<ModalFormProps> = (props) => {
   const { visible, setVisible, operationKind, assetMeta } = props;
 
-  const { validateInviteAddress, validateIssueAddress, validateAmount } = useFormValidate();
+  const { validateInviteAddress, validateIssueAcpAddress, validateAmount } = useFormValidate();
   const { mutateAsync: sendIssueTransaction, isLoading: isIssueLoading } = useSendIssueTx();
 
-  const initialValues: ModalFormValues = { inviteRecipient: '', issueRecipient: '', amount: '' };
+  const initialValues: ModalFormValues = {
+    inviteRecipient: '',
+    issueRecipient: '',
+    amount: '',
+    issuePolicy: 'findAcp',
+  };
   const title = operationKind === 'invite' ? 'Invite user' : 'Issue ' + assetMeta.symbol;
   const recipientFieldDisplayName = operationKind === 'invite' ? 'user:' : 'recipient:';
 
@@ -86,8 +92,11 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
     if (operationKind === 'issue') {
       if (!values.issueRecipient) {
         errors.issueRecipient = 'recipient required';
+      } else if (values.issuePolicy === 'findAcp') {
+        const recipientError = await validateIssueAcpAddress(values.issueRecipient, assetMeta.script);
+        if (recipientError) errors.issueRecipient = recipientError;
       } else {
-        const recipientError = await validateIssueAddress(values.issueRecipient, assetMeta.script);
+        const recipientError = await validateInviteAddress(values.issueRecipient, assetMeta.script);
         if (recipientError) errors.issueRecipient = recipientError;
       }
       if (!values.amount) {
@@ -106,9 +115,10 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
     validate,
     onSubmit: (values: ModalFormValues) => {
       sendIssueTransaction({
-        recipient: values.inviteRecipient,
+        recipient: operationKind === 'issue' ? values.issueRecipient : values.inviteRecipient,
         amount: AssetAmount.fromHumanize(values.amount, assetMeta.decimal).toRawString(),
         operationKind: operationKind,
+        policy: values.issuePolicy,
       }).then(() => setVisible(false));
     },
   });
@@ -143,6 +153,28 @@ export const ModalForm: React.FC<ModalFormProps> = (props) => {
       {operationKind === 'issue' && (
         <div>
           <div>
+            <Row justify="center" align="middle">
+              <Col span={7}>
+                <label htmlFor="issuePolicy">policy:</label>
+              </Col>
+              <Col span={16}>
+                <Select
+                  style={{ width: '100%' }}
+                  {...formik.getFieldProps('issuePolicy')}
+                  onChange={(value) => formik.setFieldValue('issuePolicy', value)}
+                >
+                  <Select.Option key="findAcp" value="findAcp">
+                    findAcp
+                  </Select.Option>
+                  <Select.Option key="createCell" value="createCell">
+                    createCell
+                  </Select.Option>
+                </Select>
+              </Col>
+            </Row>
+          </div>
+
+          <div style={{ marginTop: '24px' }}>
             <Row justify="center" align="middle">
               <Col span={7}>
                 <label htmlFor="issueRecipient">{recipientFieldDisplayName}</label>
