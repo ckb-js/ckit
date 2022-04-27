@@ -7,6 +7,7 @@ export interface SendIssueTxInput {
   recipient: Address;
   amount: HexNumber;
   operationKind: 'invite' | 'issue';
+  policy?: 'createCell' | 'findAcp';
 }
 
 export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueTxInput> {
@@ -15,6 +16,7 @@ export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueT
   return useMutation(['sendIssueTx'], async (input: SendIssueTxInput) => {
     const buildTx = async (provider: CkitProvider, signer: EntrySigner) => {
       const recipientsParams: RecipientOptions = {
+        capacityPolicy: input.policy,
         recipient: input.recipient,
         amount: input.amount,
       };
@@ -23,7 +25,7 @@ export function useSendIssueTx(): UseMutationResult<unknown, unknown, SendIssueT
         recipientsParams.additionalCapacity = helpers.CkbAmount.fromCkb(1).toHex();
         recipientsParams.amount = '0';
       } else {
-        recipientsParams.capacityPolicy = 'findAcp';
+        recipientsParams.capacityPolicy = input.policy || 'findAcp';
       }
       const txBuilder = new MintSudtBuilder({ recipients: [recipientsParams] }, provider, await signer.getAddress());
       return txBuilder.build();

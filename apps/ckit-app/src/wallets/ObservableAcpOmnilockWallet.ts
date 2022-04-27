@@ -1,10 +1,10 @@
-import { CkitProvider, RcOwnerWallet } from '@ckitjs/ckit';
+import { CkitProvider, RcAcpWallet } from '@ckitjs/ckit';
 import { makeObservable, observable } from 'mobx';
 
-export class ObservableOmnilockWallet extends RcOwnerWallet {
+export class ObservableAcpOmnilockWallet extends RcAcpWallet {
   constructor(provider: CkitProvider) {
     super(provider);
-    this.setDescriptor({ name: 'MetaMask(Omnilock Non-ACP)' });
+    this.setDescriptor({ name: 'MetaMask(Omnilock Acp)' });
     makeObservable(this, {
       connectStatus: observable,
       signer: observable,

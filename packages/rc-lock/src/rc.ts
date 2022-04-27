@@ -29,6 +29,16 @@ function Bytes(byteWidth: number): Field<HexString> {
   };
 }
 
+export const RcIdentityAcpLockArgs = createFixedStruct()
+  .field(
+    'rc_identity_flag',
+    createField<RcIdentityFlag>(1, (buf, offset) => convertToRcIdentityFlag(buf.readUInt8(offset)), U8.write),
+  )
+  .field('rc_identity_pubkey_hash', Bytes(20))
+  .field('rc_lock_flag', U8)
+  .field('rc_lock_acp_minimum_ckb', U8)
+  .field('rc_lock_acp_minimum_udt', U8);
+
 export const RcIdentityLockArgs = createFixedStruct()
   .field(
     'rc_identity_flag',

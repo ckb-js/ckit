@@ -5,6 +5,7 @@ import { AssetMeta } from './useAssetMetaStorage';
 import { useSendTransaction } from './useSendTransaction';
 
 export interface SendTransferTxInput {
+  policy?: 'createCell' | 'findAcp';
   recipient: Address;
   amount: HexNumber;
   script: AssetMeta['script'];
@@ -23,7 +24,7 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
                 recipient: input.recipient,
                 sudt: input.script,
                 amount: input.amount,
-                policy: 'findAcp',
+                policy: input.policy || 'findAcp',
               },
             ],
           },
@@ -33,7 +34,11 @@ export function useSendTransferTx(): UseMutationResult<unknown, unknown, SendTra
         return txBuilder.build();
       } else {
         const txBuilder = new TransferCkbBuilder(
-          { recipients: [{ recipient: input.recipient, amount: input.amount, capacityPolicy: 'createCell' }] },
+          {
+            recipients: [
+              { recipient: input.recipient, amount: input.amount, capacityPolicy: input.policy || 'createCell' },
+            ],
+          },
           provider,
           await signer.getAddress(),
         );

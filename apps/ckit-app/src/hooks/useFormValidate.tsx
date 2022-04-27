@@ -2,11 +2,13 @@ import { Address, Script } from '@ckb-lumos/base';
 import { useCallback } from 'react';
 import { useProvider } from 'containers';
 import { AssetAmount } from 'utils';
+import { toBuffer } from '@ckitjs/easy-byte';
+import { RcLockFlag } from '@ckitjs/rc-lock';
 
 interface ValidationHelper {
   validateCkbAddress: (value: Address) => string | undefined;
   validateInviteAddress: (value: Address, sudtScript: Script) => Promise<string | undefined>;
-  validateIssueAddress: (value: Address, sudtScript: Script) => Promise<string | undefined>;
+  validateIssueAcpAddress: (value: Address, sudtScript: Script) => Promise<string | undefined>;
   validateTransferAddress: (value: Address, sudtScript: Script) => Promise<string | undefined>;
   validateAmount: (amount: string, decimal: number) => string | undefined;
 }
@@ -32,11 +34,18 @@ export function useFormValidate(): ValidationHelper {
       return (
         script.code_hash === scripts.ANYONE_CAN_PAY.CODE_HASH ||
         script.code_hash === scripts.PW_ANYONE_CAN_PAY.CODE_HASH ||
-        script.code_hash === scripts.UNIPASS.CODE_HASH
+        script.code_hash === scripts.UNIPASS.CODE_HASH ||
+        (script.code_hash === scripts.RC_LOCK.CODE_HASH && checkRcLockFlag(script.args, RcLockFlag.ACP_MASK))
       );
     },
     [provider],
   );
+
+  const checkRcLockFlag = (args: string, flag: RcLockFlag) => {
+    const checkedByte = toBuffer(args)[21];
+
+    return (checkedByte >> (flag - 1)) & 1;
+  };
 
   const validateACPAddress = useCallback(
     (value: Address) => {
@@ -57,7 +66,7 @@ export function useFormValidate(): ValidationHelper {
     [provider, validateACPAddress],
   );
 
-  const validateIssueAddress = useCallback(
+  const validateIssueAcpAddress = useCallback(
     async (value: Address, sudtScript: Script) => {
       const error = validateACPAddress(value);
       if (error) return error;
@@ -83,5 +92,11 @@ export function useFormValidate(): ValidationHelper {
     if (assetAmount.rawAmount.lt(1)) return 'at least issue one token';
   }, []);
 
-  return { validateCkbAddress, validateInviteAddress, validateIssueAddress, validateTransferAddress, validateAmount };
+  return {
+    validateCkbAddress,
+    validateInviteAddress,
+    validateIssueAcpAddress,
+    validateTransferAddress,
+    validateAmount,
+  };
 }
