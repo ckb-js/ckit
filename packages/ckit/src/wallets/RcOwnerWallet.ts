@@ -105,6 +105,10 @@ export class RcAcpWallet extends RcOwnerWallet {
     this.setDescriptor({ name: 'RcWallet(ACP)', features: this.describeFeatures() });
   }
 
+  protected describeFeatures(): WalletFeature[] {
+    return [];
+  }
+
   protected getRcSigner(ethProvider: EthereumProvider): RcSigner {
     return new RcAcpPwSigner(this.provider, ethProvider);
   }
