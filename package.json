@@ -46,9 +46,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "dependencies": {
-    "@types/isomorphic-fetch": "^0.0.35",
-    "isomorphic-fetch": "3.0.0"
   }
 }

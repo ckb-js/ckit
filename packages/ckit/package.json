@@ -34,7 +34,9 @@
     "@ckitjs/tippy-client": "0.2.0",
     "@nervosnetwork/ckb-sdk-core": "^0.43.0",
     "@types/app-root-path": "^1.2.4",
-    "app-root-path": "^3.0.0"
+    "@types/isomorphic-fetch": "^0.0.35",
+    "app-root-path": "^3.0.0",
+    "isomorphic-fetch": "3.0.0"
   },
   "peerDependencies": {
     "jsbi": "^4.1.0"
