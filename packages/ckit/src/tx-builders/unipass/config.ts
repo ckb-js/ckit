@@ -38,7 +38,7 @@ const AggronCellDeps = [
 ];
 
 const LinaCellDeps = [
-  new CellDep(DepType.code, new OutPoint('0x1a04142a2a745fb3b7e0e9b61241676c1c94ad8cdacb36f223661130a23fb007', '0x0')),
+  new CellDep(DepType.code, new OutPoint('0x825e0e2f8c15a4740fb0043116e8aa4e664c2e6a41c79df71ba29c48a7a0ea62', '0x0')),
   new CellDep(DepType.code, new OutPoint('0xf247a0e9dfe9d559ad8486428987071b65d441568075465c2810409e889f4081', '0x0')),
   new CellDep(DepType.code, new OutPoint('0x1196caaf9e45f1959ea3583f92914ee8306d42e27152f7068f9eeb52ac23eeae', '0x0')),
 ];

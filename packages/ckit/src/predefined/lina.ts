@@ -30,7 +30,7 @@ export const SCRIPTS: CkitConfig['SCRIPTS'] = {
 
   UNIPASS: {
     INDEX: '0x0',
-    TX_HASH: '0x1a04142a2a745fb3b7e0e9b61241676c1c94ad8cdacb36f223661130a23fb007',
+    TX_HASH: '0x825e0e2f8c15a4740fb0043116e8aa4e664c2e6a41c79df71ba29c48a7a0ea62',
     DEP_TYPE: 'code',
     CODE_HASH: '0x614d40a86e1b29a8f4d8d93b9f3b390bf740803fa19a69f1c95716e029ea09b3',
     HASH_TYPE: 'type',
