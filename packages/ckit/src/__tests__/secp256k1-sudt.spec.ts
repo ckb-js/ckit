@@ -1,9 +1,10 @@
 // because of hot cell problem
 // we need to ensure that different genesisSigner is used in different cases
 
-import { utils } from '@ckb-lumos/base';
+import { Cell, utils } from '@ckb-lumos/base';
 import { key } from '@ckb-lumos/hd';
 import { Amount, CkbAmount } from '../helpers';
+import { Pw } from '../helpers/pw';
 import {
   AcpTransferSudtBuilder,
   MintOptions,
@@ -13,6 +14,8 @@ import {
   ChequeDepositBuilder,
   ChequeClaimBuilder,
   ChequeWithdrawBuilder,
+  ExchangeSudtForCkbBuilder,
+  ExchangeSudtForCkbOptions,
 } from '../tx-builders';
 import { randomHexString, asyncSleep, nonNullable } from '../utils';
 import { InternalNonAcpPwLockSigner } from '../wallets/PwWallet';
@@ -818,6 +821,136 @@ test('deposit sudt cheque and claim it', async () => {
 
   eqAmount(await provider.getUdtBalance(receiver.getAddress(), sudt), 500);
 });
+
+test('exchange sudt for ckb', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const { debug } = provider;
+  debug('exchange sudt for ckb');
+
+  const { SECP256K1_BLAKE160, SUDT } = provider.config.SCRIPTS;
+
+  const exchangeProviderPrivKey = randomHexString(64);
+  const exchangeProviderAddr = provider.parseToAddress({
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+    code_hash: SECP256K1_BLAKE160.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(exchangeProviderPrivKey),
+  });
+
+  const sudtSenderPrivKey = randomHexString(64);
+  const sudtSenderAddr = provider.parseToAddress({
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+    code_hash: SECP256K1_BLAKE160.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(sudtSenderPrivKey),
+  });
+
+  const recipientPrivKey = randomHexString(64);
+  const recipientAddr = provider.parseToAddress({
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+    code_hash: SECP256K1_BLAKE160.CODE_HASH,
+    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey),
+  });
+
+  const issuerPrivateKey = provider.testPrivateKeys[testPrivateKeyIndex]!;
+  const issuerLockHash = utils.computeScriptHash({
+    code_hash: SECP256K1_BLAKE160.CODE_HASH,
+    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
+    args: key.privateKeyToBlake160(issuerPrivateKey),
+  });
+
+  const testUdt = {
+    code_hash: SUDT.CODE_HASH,
+    hash_type: SUDT.HASH_TYPE,
+    args: issuerLockHash,
+  };
+
+  const exchangeProviderCells = await prepareForExchange(provider, exchangeProviderAddr, sudtSenderAddr);
+
+  // assume: 1 SUDT = 380 CKB
+  // transfer 1 SUDT and exchange 1 SUDT for 380 CKB
+  const builderOptions: ExchangeSudtForCkbOptions = {
+    sudt: testUdt,
+    sudtSender: sudtSenderAddr,
+    sudtAmountForExchange: Amount.from(1, 8).toHex(),
+    sudtAmountForRecipient: Amount.from(1, 8).toHex(),
+    exchangeProvider: exchangeProviderCells as Cell[],
+    // exchangeProvider: exchangeProviderAddr,
+    ckbAmountForRecipient: CkbAmount.fromCkb(380).toHex(),
+    exchangeRecipient: recipientAddr,
+  };
+
+  const exchangeProviderSigner = new Secp256k1Signer(
+    exchangeProviderPrivKey,
+    provider,
+    provider.newScript('SECP256K1_BLAKE160'),
+  );
+  const unsigned = await new ExchangeSudtForCkbBuilder(builderOptions, provider).build();
+  const partialSignedTx = await exchangeProviderSigner.partialSeal(unsigned);
+
+  expect(partialSignedTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(recipientAddr, testUdt), '0x0');
+  eqAmount(await provider.getUdtBalance(sudtSenderAddr, testUdt), '0xbebc200');
+
+  const sudtHolderSigner = new Secp256k1Signer(sudtSenderPrivKey, provider, provider.newScript('SECP256K1_BLAKE160'));
+  const fullySignedTx = await sudtHolderSigner.seal(partialSignedTx);
+  const fullySignedTxHash = await provider.sendTransaction(fullySignedTx);
+  const exchangeTx = await provider.waitForTransactionCommitted(fullySignedTxHash);
+
+  expect(exchangeTx != null).toBe(true);
+  eqAmount(await provider.getUdtBalance(recipientAddr, testUdt), '0x5f5e100');
+  eqAmount(await provider.getUdtBalance(sudtSenderAddr, testUdt), '0x0');
+});
+
+async function prepareForExchange(
+  provider: TestProvider,
+  exchangeProviderAddr: string,
+  sudtSenderAddr: string,
+): Promise<Cell[]> {
+  const { debug } = provider;
+
+  // mint sudt for exchangeProvider
+  const { sudt, txHash } = await provider.mintSudtFromGenesis(
+    {
+      recipients: [
+        {
+          recipient: exchangeProviderAddr,
+          amount: Amount.from(1, 8).toHex(),
+          additionalCapacity: CkbAmount.fromCkb(600).toHex(),
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    { testPrivateKeysIndex: testPrivateKeyIndex },
+  );
+  debug('[prepare] mint ckb for exchangeProvider: 600 ckb, txHash: %s', txHash);
+
+  const exchangProviderPoint = await provider.collectUdtCells(exchangeProviderAddr, sudt, '0');
+  expect(exchangProviderPoint).toHaveLength(1);
+
+  // mint sudt for sudtSender
+  const res = await provider.mintSudtFromGenesis(
+    {
+      recipients: [
+        {
+          recipient: sudtSenderAddr,
+          amount: Amount.from(2, 8).toHex(),
+          additionalCapacity: CkbAmount.fromCkb(200).toHex(),
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    { testPrivateKeysIndex: testPrivateKeyIndex },
+  );
+  debug('[prepare] mint sudt for sudtSender: 2 unit, tx hash: %s', res.txHash);
+
+  const senderReceived = await provider.collectUdtCells(sudtSenderAddr, sudt, '0');
+  expect(senderReceived).toHaveLength(1);
+
+  const exchangProviderPwCells = exchangProviderPoint.map(Pw.toPwCell);
+  const exchangProviderCells = exchangProviderPwCells.map(Pw.fromPwCell);
+  return exchangProviderCells;
+}
 
 /**
  * Using Tippy to test this case.

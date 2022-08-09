@@ -227,6 +227,46 @@ export class MercuryProvider extends AbstractProvider {
     return acc.cells;
   }
 
+  async collectUdtCellsByMinCkb(
+    address: Address,
+    udt: CkbTypeScript,
+    minimalCapacity: HexNumber,
+  ): Promise<ResolvedOutpoint[]> {
+    const lock = this.parseToScript(address);
+    const searchKey: SearchKey = {
+      script: lock,
+      script_type: 'lock',
+      filter: {
+        script: udt,
+        output_capacity_range: [minimalCapacity, '0xffffffffffffffff'],
+      },
+    };
+
+    const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
+      expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
+      takeWhile((res) => res.objects.length > 0),
+      concatMap((res) => res.objects),
+      scan(
+        (acc, next) => ({
+          cells: acc.cells.concat(next),
+          amount: BN(acc.amount).plus(BN(next.output.capacity)),
+        }),
+        { amount: BN(0), cells: [] } as CellsAccumulator,
+      ),
+      takeWhile((acc) => BN(acc.amount).lt(BN(minimalCapacity)), true),
+    );
+
+    const acc = await lastValueFrom<CellsAccumulator, CellsAccumulator>(cells$, {
+      defaultValue: { amount: BN(0), cells: [] },
+    });
+
+    if (acc.amount.lt(BN(minimalCapacity))) {
+      throw new NoEnoughCkbError({ lock, expected: minimalCapacity, actual: Amount.from(acc.amount).toHex() });
+    }
+
+    return acc.cells;
+  }
+
   getUdtBalance(address: Address, udt: CkbTypeScript): Promise<HexNumber> {
     const searchKey: SearchKey = {
       script: this.parseToScript(address),

@@ -53,7 +53,7 @@ function fromPwCell(x: PwCell): LumosCell {
       lock: fromPwScript(x.lock),
     },
     out_point: x.outPoint ? { tx_hash: x.outPoint.txHash, index: x.outPoint.index } : undefined,
-    data: x.getData(),
+    data: x.getHexData(),
   };
 }
 

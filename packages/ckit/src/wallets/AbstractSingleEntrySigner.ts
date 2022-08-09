@@ -19,6 +19,10 @@ export abstract class AbstractSingleEntrySigner implements EntrySigner {
   abstract getAddress(): Promise<string> | string;
   abstract signMessage(message: HexString): Promise<HexString> | HexString;
 
+  async partialSeal(tx: PwTransaction): Promise<PwTransaction> {
+    return await this.adapter.sign(tx as PwTransaction);
+  }
+
   // TODO refactor to sig entry to adapt mercury
   /**
    *
