@@ -152,13 +152,22 @@ export class MercuryProvider extends AbstractProvider {
     }));
   }
 
-  collectCells({ searchKey }: { searchKey: SearchKey }, takeWhile_: (cell: Cell[]) => boolean): Promise<Cell[]> {
+  collectCells(
+    { searchKey }: { searchKey: SearchKey },
+    takeWhile_: (cell: Cell[]) => boolean,
+    options?: { inclusive?: boolean },
+  ): Promise<Cell[]> {
+    let inclusive = false;
+    if (options && options.inclusive) {
+      inclusive = options.inclusive;
+    }
+
     const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
       expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
       takeWhile((res) => res.objects.length > 0),
       concatMap((res) => res.objects.map(toCell)),
       scan((acc, next) => acc.concat(next), [] as Cell[]),
-      takeWhile((acc) => takeWhile_(acc)),
+      takeWhile((acc) => takeWhile_(acc), inclusive),
     );
 
     return lastValueFrom(cells$, { defaultValue: [] });
@@ -222,46 +231,6 @@ export class MercuryProvider extends AbstractProvider {
 
     if (BN(acc.amount).lt(minimalAmount)) {
       throw new NoEnoughUdtError({ lock, expected: minimalAmount, actual: Amount.from(acc.amount).toHex() });
-    }
-
-    return acc.cells;
-  }
-
-  async collectUdtCellsByMinCkb(
-    address: Address,
-    udt: CkbTypeScript,
-    minimalCapacity: HexNumber,
-  ): Promise<ResolvedOutpoint[]> {
-    const lock = this.parseToScript(address);
-    const searchKey: SearchKey = {
-      script: lock,
-      script_type: 'lock',
-      filter: {
-        script: udt,
-        output_capacity_range: [minimalCapacity, '0xffffffffffffffff'],
-      },
-    };
-
-    const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
-      expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
-      takeWhile((res) => res.objects.length > 0),
-      concatMap((res) => res.objects),
-      scan(
-        (acc, next) => ({
-          cells: acc.cells.concat(next),
-          amount: BN(acc.amount).plus(BN(next.output.capacity)),
-        }),
-        { amount: BN(0), cells: [] } as CellsAccumulator,
-      ),
-      takeWhile((acc) => BN(acc.amount).lt(BN(minimalCapacity)), true),
-    );
-
-    const acc = await lastValueFrom<CellsAccumulator, CellsAccumulator>(cells$, {
-      defaultValue: { amount: BN(0), cells: [] },
-    });
-
-    if (acc.amount.lt(BN(minimalCapacity))) {
-      throw new NoEnoughCkbError({ lock, expected: minimalCapacity, actual: Amount.from(acc.amount).toHex() });
     }
 
     return acc.cells;

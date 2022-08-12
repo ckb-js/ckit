@@ -1,4 +1,5 @@
-import { Address, Cell, HexNumber } from '@ckb-lumos/base';
+import { Address, Cell, HexNumber, Script } from '@ckb-lumos/base';
+import { minimalCellCapacity } from '@ckb-lumos/helpers';
 import { CkbTypeScript } from '@ckitjs/base';
 import {
   Amount,
@@ -10,12 +11,13 @@ import {
   cellOccupiedBytes,
   WitnessArgs,
 } from '@lay2/pw-core';
+import { SearchKey } from '@ckitjs/mercury-client';
 import { BigNumber } from 'bignumber.js';
 import { Pw } from '../helpers/pw';
 import { CkitProvider } from '../providers';
 import { AbstractPwSenderBuilder } from './pw/AbstractPwSenderBuilder';
+import { NoEnoughCkbError } from '../errors';
 
-const minExchangeProviderCkb = new Amount('441', AmountUnit.ckb); // 379 + 61 + 1
 const feeCkb = new Amount('1', AmountUnit.ckb);
 
 export interface ExchangeSudtForCkbOptions {
@@ -57,39 +59,19 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
           - data.amount: sudtAmountForRecipient
   */
   async build(): Promise<Transaction> {
-    const sudtAmountForExchange = new Amount(new BigNumber(this.options.sudtAmountForExchange).toString(), 0);
-    const sudtAmountForRecipient = new Amount(new BigNumber(this.options.sudtAmountForRecipient).toString(), 0);
-    const neededSudtAmount = sudtAmountForExchange.add(sudtAmountForRecipient);
+    const inExchangeProviderCells = await this.collectExchangeProviderCells(this.calcMinExchangeProviderCkb());
+    const inSudtCells = await this.collectSudtCells(this.calcNeededSudtAmount());
 
-    const { inExchangeProviderCells, inExchangeProviderCkbSum, inExchangeProviderSudtSum } =
-      await this.collectExchangeProviderCells(this.minExchangeProviderCkb());
-
-    const { inSudtCells, inSudtSum } = await this.collectSudtCells(neededSudtAmount);
-
-    const outExchangeCell = inExchangeProviderCells[0]!.clone();
-    const ckbAmountForRecipient = new Amount(
-      new BigNumber(this.options.ckbAmountForRecipient).toString(),
-      AmountUnit.shannon,
-    );
-    outExchangeCell.capacity = inExchangeProviderCkbSum.sub(ckbAmountForRecipient);
-    outExchangeCell.setSUDTAmount(inExchangeProviderSudtSum.add(sudtAmountForExchange));
-
-    const outSudtCell = inSudtCells[0]!.clone();
-    outSudtCell.setSUDTAmount(inSudtSum.sub(neededSudtAmount));
-
-    const outRecipientCell = new PwCell(
-      ckbAmountForRecipient,
-      Pw.toPwScript(this.provider.parseToScript(this.options.exchangeRecipient)),
-      Pw.toPwScript(this.options.sudt),
-    );
-    outRecipientCell.setSUDTAmount(sudtAmountForRecipient);
+    const outExchangeCell = this.createOutExchangeCell(inExchangeProviderCells);
+    const outSudtCell = this.createOutSudtCell(inSudtCells);
+    const outRecipientCell = this.createOutRecipientCell();
 
     const inputs = [...inExchangeProviderCells, ...inSudtCells];
     const outputs = [outExchangeCell, outSudtCell, outRecipientCell];
     const cellDeps = await this.getCellDepsByCells(inputs, outputs);
     const rawTx = new RawTransaction(inputs, outputs, cellDeps);
 
-    const tx = new Transaction(rawTx, this.witness(inExchangeProviderCells, inSudtCells) as WitnessArgs[]);
+    const tx = new Transaction(rawTx, this.createWitness(inExchangeProviderCells, inSudtCells) as WitnessArgs[]);
 
     const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
     outExchangeCell.capacity = outExchangeCell.capacity.sub(fee);
@@ -99,7 +81,104 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
     return tx;
   }
 
-  private witness(firstInputs: PwCell[], secondInputs: PwCell[]): WitnessArgs[] {
+  private async collectSudtCells(neededSudtAmount: Amount) {
+    const sudtOutpoints = await this.provider.collectUdtCells(
+      this.options.sudtSender,
+      this.options.sudt,
+      neededSudtAmount.toHexString(),
+    );
+
+    const inSudtCells = sudtOutpoints.map(Pw.toPwCell);
+    return inSudtCells;
+  }
+
+  private async collectExchangeProviderCells(minimalCapacity: Amount): Promise<PwCell[]> {
+    let inExchangeProviderCells: PwCell[] = [];
+    let lock: Script;
+    if (typeof this.options.exchangeProvider === 'string') {
+      lock = this.provider.parseToScript(this.options.exchangeProvider);
+      const searchKey: SearchKey = {
+        script: lock,
+        script_type: 'lock',
+        filter: {
+          script: this.options.sudt,
+        },
+      };
+      const exchangeOutputs = await this.provider.collectCells(
+        { searchKey },
+        (cells) =>
+          cells.reduce((sum, cell) => sum.add(new Amount(cell.cell_output.capacity)), Amount.ZERO).lt(minimalCapacity),
+        { inclusive: true },
+      );
+
+      inExchangeProviderCells = exchangeOutputs.map(Pw.toPwCell);
+    } else {
+      lock = this.options.exchangeProvider[0]!.cell_output.lock;
+      inExchangeProviderCells = this.options.exchangeProvider.map(Pw.toPwCell);
+    }
+
+    const inExchangeProviderCkbSum = inExchangeProviderCells.reduce((sum, cell) => sum.add(cell.capacity), Amount.ZERO);
+
+    if (inExchangeProviderCkbSum.lt(minimalCapacity)) {
+      throw new NoEnoughCkbError({
+        lock,
+        expected: minimalCapacity.toString(),
+        actual: inExchangeProviderCkbSum.toString(),
+      });
+    }
+
+    return inExchangeProviderCells;
+  }
+
+  private createOutExchangeCell(inExchangeProviderCells: PwCell[]): PwCell {
+    const outExchangeCell = inExchangeProviderCells[0]!.clone();
+
+    const [inExchangeProviderCkbSum, inExchangeProviderSudtSum] = this.calcCkbAndSudtSum(inExchangeProviderCells);
+
+    const ckbAmountForRecipient = new Amount(
+      new BigNumber(this.options.ckbAmountForRecipient).toString(),
+      AmountUnit.shannon,
+    );
+    outExchangeCell.capacity = inExchangeProviderCkbSum.sub(ckbAmountForRecipient);
+
+    const sudtAmountForExchange = new Amount(
+      new BigNumber(this.options.sudtAmountForExchange).toString(),
+      AmountUnit.shannon,
+    );
+    outExchangeCell.setSUDTAmount(inExchangeProviderSudtSum.add(sudtAmountForExchange));
+
+    return outExchangeCell;
+  }
+
+  private createOutSudtCell(inSudtCells: PwCell[]) {
+    const outSudtCell = inSudtCells[0]!.clone();
+    const inSudtSum = inSudtCells.reduce((sum, cell) => sum.add(cell.getSUDTAmount()), Amount.ZERO);
+    outSudtCell.setSUDTAmount(inSudtSum.sub(this.calcNeededSudtAmount()));
+    return outSudtCell;
+  }
+
+  private createOutRecipientCell(): PwCell {
+    const ckbAmountForRecipient = new Amount(
+      new BigNumber(this.options.ckbAmountForRecipient).toString(),
+      AmountUnit.shannon,
+    );
+
+    const outRecipientCell = new PwCell(
+      ckbAmountForRecipient,
+      Pw.toPwScript(this.provider.parseToScript(this.options.exchangeRecipient)),
+      Pw.toPwScript(this.options.sudt),
+    );
+
+    const sudtAmountForRecipient = new Amount(
+      new BigNumber(this.options.sudtAmountForRecipient).toString(),
+      AmountUnit.shannon,
+    );
+    outRecipientCell.setSUDTAmount(sudtAmountForRecipient);
+
+    return outRecipientCell;
+  }
+
+  private createWitness(firstInputs: PwCell[], secondInputs: PwCell[]): WitnessArgs[] {
     const witness: WitnessArgs[] = [];
     if (typeof this.options.exchangeProvider === 'string') {
       firstInputs.map(() => witness.push(this.getWitnessPlaceholder(this.options.exchangeProvider as Address)));
@@ -113,59 +192,56 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
     return witness;
   }
 
-  private async collectSudtCells(neededSudtAmount: Amount) {
-    const sudtOutpoints = await this.provider.collectUdtCells(
-      this.options.sudtSender,
-      this.options.sudt,
-      neededSudtAmount.toHexString(),
-    );
-
-    const inSudtCells = sudtOutpoints.map(Pw.toPwCell);
-    const inSudtSum = inSudtCells.reduce((acc, next) => acc.add(next.getSUDTAmount()), Amount.ZERO);
-    return { inSudtCells, inSudtSum };
-  }
-
-  private async collectExchangeProviderCells(minExchangeProviderCkb: Amount) {
-    let inExchangeProviderCells: PwCell[] = [];
+  private calcMinExchangeProviderCkb() {
+    let lock: Script;
     if (typeof this.options.exchangeProvider === 'string') {
-      const exchangeOutputs = await this.provider.collectUdtCellsByMinCkb(
-        this.options.exchangeProvider as Address,
-        this.options.sudt,
-        minExchangeProviderCkb.toHexString(),
-      );
-      inExchangeProviderCells = exchangeOutputs.map(Pw.toPwCell);
+      lock = this.provider.parseToScript(this.options.exchangeProvider as string);
     } else {
-      inExchangeProviderCells = this.options.exchangeProvider.map(Pw.toPwCell);
+      const cell = this.options.exchangeProvider[0]! as Cell;
+      lock = cell.cell_output.lock;
     }
 
-    const inCkbAndSudt = this.calcCkbAndSudtSum(inExchangeProviderCells);
-    const [inExchangeProviderCkbSum, inExchangeProviderSudtSum] = inCkbAndSudt;
+    const exchangeProviderCell = {
+      cell_output: {
+        capacity: '0x0',
+        lock: lock,
+        type: this.options.sudt,
+      },
+      data: new Amount('0').toUInt128LE(),
+    };
 
-    return { inExchangeProviderCells, inExchangeProviderCkbSum, inExchangeProviderSudtSum };
-  }
-
-  private minExchangeProviderCkb() {
     const ckbAmountForRecipient = new Amount(
       new BigNumber(this.options.ckbAmountForRecipient).toString(),
       AmountUnit.shannon,
     );
-    let ckbAmount = ckbAmountForRecipient;
-    if (ckbAmountForRecipient.lt(minExchangeProviderCkb)) {
-      ckbAmount = minExchangeProviderCkb;
-    }
+    const ckbAmount = ckbAmountForRecipient.add(
+      new Amount(minimalCellCapacity(exchangeProviderCell).toString(), AmountUnit.shannon),
+    );
     return ckbAmount.add(feeCkb);
   }
 
-  private checkCellsCapacity(cells: PwCell[]) {
-    for (const cell of cells) {
-      const minCapacity = new Amount(cellOccupiedBytes(cell).toString(), AmountUnit.ckb);
+  private calcNeededSudtAmount() {
+    const sudtAmountForExchange = new Amount(
+      new BigNumber(this.options.sudtAmountForExchange).toString(),
+      AmountUnit.shannon,
+    );
+    const sudtAmountForRecipient = new Amount(
+      new BigNumber(this.options.sudtAmountForRecipient).toString(),
+      AmountUnit.shannon,
+    );
+    return sudtAmountForExchange.add(sudtAmountForRecipient);
+  }
 
-      if (minCapacity.gt(cell.capacity)) {
-        throw new Error(
-          `Capacity of the cell is too small! Capacity: ${cell.capacity}, Occupied bytes: ${minCapacity}`,
-        );
-      }
-    }
+  private calcCkbAndSudtSum(cells: PwCell[]): [Amount, Amount] {
+    const [ckbSum, sudtSum] = cells.reduce(
+      ([cellCapacity, sudtAmount], input) => {
+        cellCapacity = cellCapacity.add(input.capacity);
+        sudtAmount = sudtAmount.add(input.getSUDTAmount());
+        return [cellCapacity, sudtAmount];
+      },
+      [Amount.ZERO, Amount.ZERO],
+    );
+    return [ckbSum, sudtSum];
   }
 
   private checkTransaction(tx: Transaction) {
@@ -189,15 +265,15 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
     }
   }
 
-  private calcCkbAndSudtSum(cells: PwCell[]): [Amount, Amount] {
-    const [ckbSum, sudtSum] = cells.reduce(
-      ([cellCapacity, sudtAmount], input) => {
-        cellCapacity = cellCapacity.add(input.capacity);
-        sudtAmount = sudtAmount.add(input.getSUDTAmount());
-        return [cellCapacity, sudtAmount];
-      },
-      [Amount.ZERO, Amount.ZERO],
-    );
-    return [ckbSum, sudtSum];
+  private checkCellsCapacity(cells: PwCell[]) {
+    for (const cell of cells) {
+      const minCapacity = new Amount(cellOccupiedBytes(cell).toString(), AmountUnit.ckb);
+
+      if (minCapacity.gt(cell.capacity)) {
+        throw new Error(
+          `Capacity of the cell is too small! Capacity: ${cell.capacity}, Occupied bytes: ${minCapacity}`,
+        );
+      }
+    }
   }
 }

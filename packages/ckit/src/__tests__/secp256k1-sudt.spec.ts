@@ -831,26 +831,14 @@ test('exchange sudt for ckb', async () => {
 
   const { SECP256K1_BLAKE160, SUDT } = provider.config.SCRIPTS;
 
-  const exchangeProviderPrivKey = randomHexString(64);
-  const exchangeProviderAddr = provider.parseToAddress({
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-    code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    args: Secp256k1Signer.privateKeyToBlake160(exchangeProviderPrivKey),
-  });
+  const exchangeProviderSigner = provider.generateAcpSigner('SECP256K1_BLAKE160');
+  const exchangeProviderAddr = exchangeProviderSigner.getAddress();
 
-  const sudtSenderPrivKey = randomHexString(64);
-  const sudtSenderAddr = provider.parseToAddress({
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-    code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    args: Secp256k1Signer.privateKeyToBlake160(sudtSenderPrivKey),
-  });
+  const sudtSenderSigner = provider.generateAcpSigner('SECP256K1_BLAKE160');
+  const sudtSenderAddr = sudtSenderSigner.getAddress();
 
-  const recipientPrivKey = randomHexString(64);
-  const recipientAddr = provider.parseToAddress({
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-    code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    args: Secp256k1Signer.privateKeyToBlake160(recipientPrivKey),
-  });
+  const recipientSigner = provider.generateAcpSigner('SECP256K1_BLAKE160');
+  const recipientAddr = recipientSigner.getAddress();
 
   const issuerPrivateKey = provider.testPrivateKeys[testPrivateKeyIndex]!;
   const issuerLockHash = utils.computeScriptHash({
@@ -880,11 +868,6 @@ test('exchange sudt for ckb', async () => {
     exchangeRecipient: recipientAddr,
   };
 
-  const exchangeProviderSigner = new Secp256k1Signer(
-    exchangeProviderPrivKey,
-    provider,
-    provider.newScript('SECP256K1_BLAKE160'),
-  );
   const unsigned = await new ExchangeSudtForCkbBuilder(builderOptions, provider).build();
   const partialSignedTx = await exchangeProviderSigner.partialSeal(unsigned);
 
@@ -892,8 +875,7 @@ test('exchange sudt for ckb', async () => {
   eqAmount(await provider.getUdtBalance(recipientAddr, testUdt), '0x0');
   eqAmount(await provider.getUdtBalance(sudtSenderAddr, testUdt), '0xbebc200');
 
-  const sudtHolderSigner = new Secp256k1Signer(sudtSenderPrivKey, provider, provider.newScript('SECP256K1_BLAKE160'));
-  const fullySignedTx = await sudtHolderSigner.seal(partialSignedTx);
+  const fullySignedTx = await sudtSenderSigner.seal(partialSignedTx);
   const fullySignedTxHash = await provider.sendTransaction(fullySignedTx);
   const exchangeTx = await provider.waitForTransactionCommitted(fullySignedTxHash);
 
