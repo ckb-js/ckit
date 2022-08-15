@@ -829,8 +829,6 @@ test('exchange sudt for ckb', async () => {
   const { debug } = provider;
   debug('exchange sudt for ckb');
 
-  const { SECP256K1_BLAKE160, SUDT } = provider.config.SCRIPTS;
-
   const exchangeProviderSigner = provider.generateAcpSigner('SECP256K1_BLAKE160');
   const exchangeProviderAddr = exchangeProviderSigner.getAddress();
 
@@ -841,17 +839,10 @@ test('exchange sudt for ckb', async () => {
   const recipientAddr = recipientSigner.getAddress();
 
   const issuerPrivateKey = provider.testPrivateKeys[testPrivateKeyIndex]!;
-  const issuerLockHash = utils.computeScriptHash({
-    code_hash: SECP256K1_BLAKE160.CODE_HASH,
-    hash_type: SECP256K1_BLAKE160.HASH_TYPE,
-    args: key.privateKeyToBlake160(issuerPrivateKey),
-  });
+  const issuerLock = provider.newScript('SECP256K1_BLAKE160', key.privateKeyToBlake160(issuerPrivateKey));
+  const issuerLockHash = utils.computeScriptHash(issuerLock);
 
-  const testUdt = {
-    code_hash: SUDT.CODE_HASH,
-    hash_type: SUDT.HASH_TYPE,
-    args: issuerLockHash,
-  };
+  const testUdt = provider.newScript('SUDT', issuerLockHash);
 
   const exchangeProviderCells = await prepareForExchange(provider, exchangeProviderAddr, sudtSenderAddr);
 
@@ -874,6 +865,7 @@ test('exchange sudt for ckb', async () => {
   expect(partialSignedTx != null).toBe(true);
   eqAmount(await provider.getUdtBalance(recipientAddr, testUdt), '0x0');
   eqAmount(await provider.getUdtBalance(sudtSenderAddr, testUdt), '0xbebc200');
+  eqAmount(await provider.getUdtBalance(exchangeProviderAddr, testUdt), '0x0');
 
   const fullySignedTx = await sudtSenderSigner.seal(partialSignedTx);
   const fullySignedTxHash = await provider.sendTransaction(fullySignedTx);
@@ -882,6 +874,7 @@ test('exchange sudt for ckb', async () => {
   expect(exchangeTx != null).toBe(true);
   eqAmount(await provider.getUdtBalance(recipientAddr, testUdt), '0x5f5e100');
   eqAmount(await provider.getUdtBalance(sudtSenderAddr, testUdt), '0x0');
+  eqAmount(await provider.getUdtBalance(exchangeProviderAddr, testUdt), '0x5f5e100');
 });
 
 async function prepareForExchange(
@@ -897,7 +890,7 @@ async function prepareForExchange(
       recipients: [
         {
           recipient: exchangeProviderAddr,
-          amount: Amount.from(1, 8).toHex(),
+          amount: Amount.from(0).toHex(),
           additionalCapacity: CkbAmount.fromCkb(600).toHex(),
           capacityPolicy: 'createCell',
         },
