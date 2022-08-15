@@ -15,6 +15,8 @@ import {
 import { Pw } from '../../helpers/pw';
 import { AbstractSingleEntrySigner } from '../AbstractSingleEntrySigner';
 
+const emptySig = '';
+
 export class PwAdapterSigner {
   constructor(
     private rawSigner: AbstractSingleEntrySigner,
@@ -27,7 +29,14 @@ export class PwAdapterSigner {
     const signerLock = Pw.toPwScript(this.provider.parseToScript(await this.rawSigner.getAddress()));
 
     for (const item of messages) {
-      if (item.lock.codeHash !== signerLock.codeHash || item.lock.hashType !== signerLock.hashType) continue;
+      if (
+        item.lock.codeHash !== signerLock.codeHash ||
+        item.lock.hashType !== signerLock.hashType ||
+        item.lock.args.substring(0, 40) !== signerLock.args.substring(0, 40)
+      ) {
+        sigs.push(emptySig);
+        continue;
+      }
 
       const sig = await this.rawSigner.signMessage(item.message);
       sigs.push(sig);
@@ -42,7 +51,7 @@ export class PwAdapterSigner {
 
     for (let i = 0; i < messages.length; i++) {
       const { index } = messages[i]!;
-      if (index < tx.witnessArgs.length && typeof tx.witnessArgs[index] !== 'string') {
+      if (index < tx.witnessArgs.length && witnesses[i] != emptySig && typeof tx.witnessArgs[index] !== 'string') {
         witnesses[i] = new Reader(
           SerializeWitnessArgs(
             normalizers.NormalizeWitnessArgs({
@@ -110,6 +119,9 @@ function FillSignedWitnesses(tx: Transaction, messages: Message[], witnesses: st
     throw new Error('Invalid number of witnesses!');
   }
   for (let i = 0; i < messages.length; i++) {
+    if (witnesses[i] === emptySig) {
+      continue;
+    }
     tx.witnesses[messages[i]!.index] = witnesses[i]!;
   }
   return tx;

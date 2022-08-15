@@ -152,13 +152,22 @@ export class MercuryProvider extends AbstractProvider {
     }));
   }
 
-  collectCells({ searchKey }: { searchKey: SearchKey }, takeWhile_: (cell: Cell[]) => boolean): Promise<Cell[]> {
+  collectCells(
+    { searchKey }: { searchKey: SearchKey },
+    takeWhile_: (cell: Cell[]) => boolean,
+    options?: { inclusive?: boolean },
+  ): Promise<Cell[]> {
+    let inclusive = false;
+    if (options && options.inclusive) {
+      inclusive = options.inclusive;
+    }
+
     const cells$ = from(this.mercury.get_cells({ search_key: searchKey })).pipe(
       expand((res) => this.mercury.get_cells({ search_key: searchKey, after_cursor: res.last_cursor }), 1),
       takeWhile((res) => res.objects.length > 0),
       concatMap((res) => res.objects.map(toCell)),
       scan((acc, next) => acc.concat(next), [] as Cell[]),
-      takeWhile((acc) => takeWhile_(acc)),
+      takeWhile((acc) => takeWhile_(acc), inclusive),
     );
 
     return lastValueFrom(cells$, { defaultValue: [] });
