@@ -48,10 +48,10 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
           - capacity: sudtCkbSum
           - data.amount: sudtSum
     outputs
-      - exchangeProviderCells
+      - exchangeProviderCell
           - capacity: exchangeCkbSum - ckbAmountForRecipient - fee
           - data.amount: exchangeSudtSum + sudtAmountForExchange
-      - sudtCells
+      - sudtCell
           - capacity: sudtCkbSum
           - data.amount: sudtSum - sudtAmountForExchange - sudtAmountForRecipient
       - recipientCell
