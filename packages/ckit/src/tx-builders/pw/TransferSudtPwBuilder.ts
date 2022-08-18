@@ -49,7 +49,9 @@ export class TransferSudtPwBuilder extends AbstractPwSenderBuilder {
     // 1. handle sudt cells
     for (const item of optionsGroupBySudt) {
       let [, optionsOfSameSudt] = item;
-      optionsOfSameSudt = this.deduplicateOptions(optionsOfSameSudt);
+      if (!this.options.allowDuplicateRecipient) {
+        optionsOfSameSudt = this.deduplicateOptions(optionsOfSameSudt);
+      }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const sudtScript = optionsOfSameSudt[0]!.sudt;
       let totalTransferAmount = new Amount('0', 0);

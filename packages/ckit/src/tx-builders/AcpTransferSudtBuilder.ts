@@ -25,6 +25,7 @@ export interface RecipientOption {
 
 export interface TransferSudtOptions {
   recipients: RecipientOption[];
+  allowDuplicateRecipient?: boolean;
 }
 
 export class AcpTransferSudtBuilder extends AbstractTransactionBuilder {
