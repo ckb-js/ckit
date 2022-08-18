@@ -678,6 +678,98 @@ test('transfer CKB and sudt at same time', async () => {
   );
 });
 
+test('transfer CKB with spilit duplicate cell and sudt with acp', async () => {
+  const provider = new TestProvider();
+  await provider.init();
+
+  const recipient1 = provider.generateAcpSigner();
+  const recipient2 = provider.generateAcpSigner();
+  const recipient3 = provider.generateAcpSigner();
+
+  const { sudt } = await provider.mintSudtFromGenesis(
+    {
+      recipients: [
+        {
+          recipient: recipient1.getAddress(),
+          amount: '1000',
+          additionalCapacity: CkbAmount.fromCkb(10000000).toHex(),
+          capacityPolicy: 'createCell',
+        },
+      ],
+    },
+    { testPrivateKeysIndex: testPrivateKeyIndex },
+  );
+
+  await provider.signAndSendTxUntilCommitted(
+    recipient1,
+    new AcpTransferSudtBuilder(
+      {
+        recipients: [
+          {
+            recipient: recipient2.getAddress(),
+            amount: '1',
+            policy: 'createCell',
+            sudt,
+            additionalCapacity: CkbAmount.fromCkb(10).toHex(),
+          },
+          {
+            recipient: recipient2.getAddress(),
+            amount: '1',
+            policy: 'createCell',
+            sudt,
+            additionalCapacity: CkbAmount.fromCkb(10).toHex(),
+          },
+        ],
+      },
+      provider,
+      recipient1.getAddress(),
+    ),
+  );
+
+  expect(await provider.collectUdtCells(recipient2.getAddress(), sudt, '0')).toHaveLength(1);
+
+  await provider.signAndSendTxUntilCommitted(
+    recipient1,
+    new AcpTransferSudtBuilder(
+      {
+        allowDuplicateRecipient: true,
+        recipients: [
+          {
+            recipient: recipient3.getAddress(),
+            amount: '1',
+            policy: 'createCell',
+            sudt,
+            additionalCapacity: CkbAmount.fromCkb(10).toHex(),
+          },
+          {
+            recipient: recipient3.getAddress(),
+            amount: '1',
+            policy: 'createCell',
+            sudt,
+            additionalCapacity: CkbAmount.fromCkb(10).toHex(),
+          },
+        ],
+      },
+      provider,
+      recipient1.getAddress(),
+    ),
+  );
+
+  expect(
+    (
+      await provider.mercury.get_cells({
+        search_key: {
+          script: provider.parseToScript(recipient3.getAddress()),
+          script_type: 'lock',
+          filter: {
+            script: sudt,
+          },
+        },
+      })
+    ).objects,
+  ).toHaveLength(2);
+});
+
 test('transfer CKB with split cell and sudt with acp', async () => {
   const provider = new TestProvider();
   await provider.init();
