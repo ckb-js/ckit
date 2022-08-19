@@ -726,7 +726,19 @@ test('transfer CKB with spilit duplicate cell and sudt with acp', async () => {
     ),
   );
 
-  expect(await provider.collectUdtCells(recipient2.getAddress(), sudt, '0')).toHaveLength(1);
+  expect(
+    (
+      await provider.mercury.get_cells({
+        search_key: {
+          script: provider.parseToScript(recipient2.getAddress()),
+          script_type: 'lock',
+          filter: {
+            script: sudt,
+          },
+        },
+      })
+    ).objects,
+  ).toHaveLength(1);
 
   await provider.signAndSendTxUntilCommitted(
     recipient1,
