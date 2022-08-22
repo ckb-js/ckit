@@ -152,7 +152,8 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
 
   private createOutSudtCell(inSudtCells: PwCell[]) {
     const outSudtCell = inSudtCells[0]!.clone();
-    const inSudtSum = inSudtCells.reduce((sum, cell) => sum.add(cell.getSUDTAmount()), Amount.ZERO);
+    const [inCkbSum, inSudtSum] = this.calcCkbAndSudtSum(inSudtCells);
+    outSudtCell.capacity = inCkbSum;
     outSudtCell.setSUDTAmount(inSudtSum.sub(this.calcNeededSudtAmount()));
     return outSudtCell;
   }
