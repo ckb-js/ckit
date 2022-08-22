@@ -71,7 +71,7 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
     const cellDeps = await this.getCellDepsByCells(inputs, outputs);
     const rawTx = new RawTransaction(inputs, outputs, cellDeps);
 
-    const tx = new Transaction(rawTx, this.createWitness(inExchangeProviderCells, inSudtCells) as WitnessArgs[]);
+    const tx = new Transaction(rawTx, this.createWitness(inExchangeProviderCells, inSudtCells));
 
     const fee = Builder.calcFee(tx, Number(this.provider.config.MIN_FEE_RATE));
     outExchangeCell.capacity = outExchangeCell.capacity.sub(fee);
@@ -152,7 +152,8 @@ export class ExchangeSudtForCkbBuilder extends AbstractPwSenderBuilder {
 
   private createOutSudtCell(inSudtCells: PwCell[]) {
     const outSudtCell = inSudtCells[0]!.clone();
-    const inSudtSum = inSudtCells.reduce((sum, cell) => sum.add(cell.getSUDTAmount()), Amount.ZERO);
+    const [inCkbSum, inSudtSum] = this.calcCkbAndSudtSum(inSudtCells);
+    outSudtCell.capacity = inCkbSum;
     outSudtCell.setSUDTAmount(inSudtSum.sub(this.calcNeededSudtAmount()));
     return outSudtCell;
   }
