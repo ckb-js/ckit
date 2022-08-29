@@ -138,9 +138,9 @@ export class MercuryProvider extends AbstractProvider {
     return acc.cells;
   }
 
-  override async collectLockOnlyCells(lock: Address | Script, capacity: HexNumber): Promise<Cell[]> {
+  override async collectLockOnlyCells(fromInfo: Address | Script, capacity: HexNumber): Promise<Cell[]> {
     const result = await this.collectCkbLiveCells(
-      typeof lock === 'string' ? lock : this.parseToAddress(lock),
+      typeof fromInfo === 'string' ? fromInfo : this.parseToAddress(fromInfo),
       capacity,
     );
 
