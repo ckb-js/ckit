@@ -122,15 +122,15 @@ export abstract class AbstractProvider implements Provider {
   abstract getChainInfo(): Promise<ChainInfo>;
   /**
    * @deprecated please migrate to {@link collectLockOnlyCells}
-   * @param lock
+   * @param address
    * @param capacity
    */
-  abstract collectCkbLiveCells(lock: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
+  abstract collectCkbLiveCells(address: Address, capacity: HexNumber): Promise<ResolvedOutpoint[]>;
   /**
    *
-   * @param lock
+   * @param address
    * @param capacity
    */
-  abstract collectLockOnlyCells(lock: Address, capacity: HexNumber): Promise<Cell[]>;
+  abstract collectLockOnlyCells(address: Address, capacity: HexNumber): Promise<Cell[]>;
   abstract sendTransaction(tx: Transaction): Promise<Hash>;
 }
