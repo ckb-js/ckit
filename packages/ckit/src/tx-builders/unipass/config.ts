@@ -33,7 +33,7 @@ export const nets = [
 
 const AggronCellDeps = [
   new CellDep(DepType.code, new OutPoint('0x04a1ac7fe15e454741d3c5c9a409efb9a967714ad2f530870514417978a9f655', '0x0')),
-  new CellDep(DepType.code, new OutPoint('0x3d41e1c543f0fddcbb17157d15a2845d7c5fb0363561cd8f50ecd0e118b34f84', '0x0')),
+  new CellDep(DepType.code, new OutPoint('0x65080f85a9c270c1208cc8648f8d73dfb630bab659699f56fb27cff9039c5820', '0x0')),
   new CellDep(DepType.code, new OutPoint('0xd346695aa3293a84e9f985448668e9692892c959e7e83d6d8042e59c08b8cf5c', '0x0')),
 ];
 

@@ -8,6 +8,7 @@ CKB kit
 
 ### Requirement
 
+- Python 3.10
 - NodeJS 12.x
 - yarn 1.x
 
