@@ -8,11 +8,14 @@ interface UnipassContext {
   cacheTx: (tx: string | null) => void;
   clearTx: () => void;
   cachedTx: string | null;
+  host: string;
 }
 
 export function useUnipass(): UnipassContext {
   const [cachedTx, cacheTx] = useLocalStorage<string | null>('unipassTx');
-  const adapter = new UnipassWallet.UnipassRedirectAdapter({ host: 'https://unipass.xyz' }); // TODO  use the config
+  // TODO unipass.xyz is deprecated, change it when the new host is ready
+  const host = 'https://unipass.xyz';
+  const adapter = new UnipassWallet.UnipassRedirectAdapter({ host }); // TODO  use the config
   return {
     shouldLogin: adapter.hasLoginInfo(),
     cacheLogin: () => adapter.saveLoginInfo(),
@@ -20,5 +23,6 @@ export function useUnipass(): UnipassContext {
     cacheTx,
     clearTx: () => cacheTx(null),
     cachedTx,
+    host,
   };
 }

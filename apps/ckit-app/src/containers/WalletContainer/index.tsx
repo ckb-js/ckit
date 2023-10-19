@@ -4,6 +4,7 @@ import { autorun, runInAction } from 'mobx';
 import { useLocalObservable } from 'mobx-react-lite';
 import { useCallback, useEffect, useState } from 'react';
 import { createContainer } from 'unstated-next';
+import { useUnipass } from '../../hooks/useUnipass';
 import { CkitProviderContainer } from '../CkitProviderContainer';
 import {
   ObservableAcpPwLockWallet,
@@ -28,6 +29,7 @@ function useWallet() {
   const [error, setError] = useState<WalletConnectError | null>(null);
   const [visible, setVisible] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const { host } = useUnipass();
 
   const setModalVisible = useCallback((visible: boolean) => {
     setVisible(visible);
@@ -40,13 +42,13 @@ function useWallet() {
     runInAction(() => {
       wallets.splice(0);
       wallets.push(
-        new ObservableUnipassWallet(ckitProvider),
+        new ObservableUnipassWallet(ckitProvider, { host, loginDataCacheKey: '__unipass__' }),
         new ObservableOmnilockWallet(ckitProvider),
         new ObservableAcpOmnilockWallet(ckitProvider),
       );
       wallets.find((value) => value.descriptor.name === currentWalletName)?.connect();
     });
-  }, [ckitProvider]);
+  }, [ckitProvider, currentWalletName, host]);
 
   useEffect(
     () =>
@@ -81,21 +83,22 @@ function useWallet() {
           );
         });
       }),
-    [setModalVisible, wallets],
+    [setCurrentWalletName, setModalVisible, wallets],
   );
 
   const currentWallet = wallets.find((value) => value.descriptor.name === currentWalletName);
 
   useEffect(() => {
     autorun(() => {
+      if (!currentWallet || !currentWallet.signer) return;
+
       setSignerAddress(undefined);
-      const wallet = wallets.find((value) => value.descriptor.name === currentWalletName);
-      void Promise.resolve(wallet?.signer?.getAddress()).then((address) => {
+      void Promise.resolve(currentWallet.signer.getAddress()).then((address) => {
         setSignerAddress(address);
         setIsInitialized(true);
       });
     });
-  }, [currentWalletName]);
+  }, [currentWallet, currentWalletName, wallets]);
 
   return {
     isInitialized,

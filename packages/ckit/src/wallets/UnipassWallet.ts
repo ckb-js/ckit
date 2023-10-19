@@ -4,6 +4,8 @@ import { CkitProvider } from '../providers';
 import { AbstractSingleEntrySigner } from './AbstractSingleEntrySigner';
 import { AdapterConfig, UnipassRedirectAdapter } from './unipass/UnipassAdapter';
 
+export { AdapterConfig as UnipassAdapterConfig } from './unipass/UnipassAdapter';
+
 export class UnipassWallet extends AbstractWallet {
   static UnipassRedirectAdapter: typeof UnipassRedirectAdapter = UnipassRedirectAdapter;
 
